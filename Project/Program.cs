@@ -15,6 +15,7 @@ using Project.Features.Storage.R2Sync;
 using Project.Features.Storage.Validation;
 using Project.Features.Veiculos.Services;
 using Project.Infrastructure.Storage;
+using Project.Infrastructure.Deployment;
 using Project.Shared;
 using System.Globalization;
 using System.Net;
@@ -25,6 +26,10 @@ CultureInfo.DefaultThreadCurrentCulture = brCulture;
 CultureInfo.DefaultThreadCurrentUICulture = brCulture;
 
 var builder = WebApplication.CreateBuilder(args);
+var applyStartupMigrations = StartupDatabasePolicy.ShouldApplyMigrations(
+    builder.Environment.IsDevelopment(),
+    builder.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup"));
+var releaseCommit = DeploymentRelease.ReadCommit(builder.Configuration["Deployment:Commit"]);
 
 // ==============================
 // BANCO DE DADOS
@@ -178,8 +183,9 @@ else
 // ==============================
 // MIGRATIONS AUTOMATICAS
 // ==============================
-using (var scope = app.Services.CreateScope())
+if (applyStartupMigrations)
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
 
@@ -226,6 +232,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok("OK")).AllowAnonymous();
+app.MapGet("/health/release", () => Results.Ok(new { commit = releaseCommit })).AllowAnonymous();
 
 app.MapGet("/Admin/Login", (HttpContext context) =>
 {

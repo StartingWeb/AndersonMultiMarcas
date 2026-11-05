@@ -4,4 +4,5 @@
   <Project Path="../Domain/Domain.csproj" />
   <Project Path="Project.csproj" />
   <Project Path="../StorageMigrator/StorageMigrator.csproj" />
+  <Project Path="../Project.Tests/Project.Tests.csproj" />
 </Solution>
