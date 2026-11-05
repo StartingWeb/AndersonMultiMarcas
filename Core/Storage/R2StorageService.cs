@@ -13,12 +13,14 @@ public sealed class R2StorageService : IStorageService, IDisposable
     private readonly IOptions<StorageOptions> options;
     private readonly ILogger<R2StorageService> logger;
     private readonly Lazy<AmazonS3Client> client;
+    private readonly bool ownsClient;
 
-    public R2StorageService(IOptions<StorageOptions> options, ILogger<R2StorageService> logger)
+    public R2StorageService(IOptions<StorageOptions> options, ILogger<R2StorageService> logger, AmazonS3Client? clientOverride = null)
     {
         this.options = options;
         this.logger = logger;
-        client = new Lazy<AmazonS3Client>(CreateClient);
+        ownsClient = clientOverride is null;
+        client = new Lazy<AmazonS3Client>(() => clientOverride ?? CreateClient());
     }
 
     public bool IsConfigured => options.Value.R2.IsConfigured;
@@ -38,17 +40,43 @@ public sealed class R2StorageService : IStorageService, IDisposable
             Key = normalizedKey,
             InputStream = content,
             ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+            UseChunkEncoding = false,
+            DisablePayloadSigning = true,
+            DisableDefaultChecksumValidation = true,
             AutoCloseStream = false
         };
 
-        var response = await client.Value.PutObjectAsync(request, ct);
+        PutObjectResponse response;
+        try
+        {
+            response = await client.Value.PutObjectAsync(request, ct);
+        }
+        catch (AmazonServiceException ex)
+        {
+            throw new InvalidOperationException(
+                $"Falha ao enviar {normalizedKey} para o R2. Status={(int)ex.StatusCode}; ErrorCode={ex.ErrorCode}; RequestId={ex.RequestId}; Bucket={BucketName}; Endpoint={options.Value.R2.ResolveServiceUrl()}.", ex);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new InvalidOperationException($"Falha ao enviar {normalizedKey} para o R2. Bucket={BucketName}; Tipo={ex.GetType().Name}.", ex);
+        }
         if (response.HttpStatusCode is < HttpStatusCode.OK or >= HttpStatusCode.MultipleChoices)
         {
             throw new InvalidOperationException($"Falha ao enviar {normalizedKey} para o R2. Status: {(int)response.HttpStatusCode}.");
         }
 
-        var metadata = await GetMetadataAsync(normalizedKey, ct)
-            ?? throw new InvalidOperationException($"Upload de {normalizedKey} para o R2 nao foi confirmado via HEAD.");
+        // A successful PUT is authoritative: missing HEAD permission must not make a saved upload look failed.
+        var size = content.CanSeek ? content.Length : 0;
+        try
+        {
+            var metadata = await GetMetadataAsync(normalizedKey, ct);
+            if (metadata?.SizeBytes is { } confirmedSize) size = confirmedSize;
+            else logger.LogWarning("Upload de {StorageKey} aceito pelo R2, sem confirmacao de metadados via HEAD.", normalizedKey);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Upload de {StorageKey} aceito pelo R2, mas a consulta HEAD falhou.", normalizedKey);
+        }
 
         return new StoredFile(
             normalizedKey,
@@ -56,7 +84,7 @@ public sealed class R2StorageService : IStorageService, IDisposable
             StoragePath.GetFileName(normalizedKey),
             BucketName,
             request.ContentType,
-            metadata.SizeBytes ?? (content.CanSeek ? content.Length : 0));
+            size);
     }
 
     public async Task<bool> ExistsAsync(string key, CancellationToken ct)
@@ -183,7 +211,7 @@ public sealed class R2StorageService : IStorageService, IDisposable
 
     public void Dispose()
     {
-        if (client.IsValueCreated)
+        if (ownsClient && client.IsValueCreated)
         {
             client.Value.Dispose();
         }
@@ -198,7 +226,9 @@ public sealed class R2StorageService : IStorageService, IDisposable
         {
             ServiceURL = r2.ResolveServiceUrl(),
             ForcePathStyle = true,
-            AuthenticationRegion = string.IsNullOrWhiteSpace(r2.Region) ? "auto" : r2.Region.Trim()
+            AuthenticationRegion = string.IsNullOrWhiteSpace(r2.Region) ? "auto" : r2.Region.Trim(),
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+            ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED
         };
 
         return new AmazonS3Client(credentials, config);

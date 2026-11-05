@@ -16,47 +16,7 @@ public class ContatoModel(ApplicationDbContext db, IStorageImageResolver imageRe
     {
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-        var lojas = await db.Lojas
-            .AsNoTracking()
-            .OrderBy(x => x.Id)
-            .Select(x => new ContactStoreViewModel
-            {
-                Nome = x.Nome,
-                EnderecoCompleto = BuildEnderecoCompleto(
-                    x.Endereco.Logradouro,
-                    x.Endereco.Numero,
-                    x.Endereco.Complemento,
-                    x.Endereco.Bairro,
-                    x.Endereco.Cidade,
-                    x.Endereco.Uf.ToString(),
-                    x.Endereco.Cep),
-                Telefone = x.Telefone.Valor,
-                TelefoneExibicao = FormatPhone(x.Telefone.Valor),
-                Email = x.Email.Valor,
-                MapsQuery = Uri.EscapeDataString(BuildEnderecoCompleto(
-                    x.Endereco.Logradouro,
-                    x.Endereco.Numero,
-                    x.Endereco.Complemento,
-                    x.Endereco.Bairro,
-                    x.Endereco.Cidade,
-                    x.Endereco.Uf.ToString(),
-                    x.Endereco.Cep)),
-                Vendedores = x.Vendedores
-                    .Where(v => v.Ativo && v.Nome != null && v.Nome != "")
-                    .OrderBy(v => v.Nome)
-                    .Select(v => new ContactSellerViewModel
-                    {
-                        Nome = v.Nome,
-                        Telefone = v.Whatsapp != null ? v.Whatsapp.Value.Valor : (v.Telefone != null ? v.Telefone.Value.Valor : string.Empty),
-                        TelefoneExibicao = v.Whatsapp != null
-                            ? FormatPhone(v.Whatsapp.Value.Valor)
-                            : (v.Telefone != null ? FormatPhone(v.Telefone.Value.Valor) : string.Empty),
-                        Cargo = v.Cargo,
-                        FotoUrl = v.FotoUrl
-                    })
-                    .ToList()
-            })
-            .ToListAsync(ct);
+        var lojas = await PublicStoreQueries.GetContactStoresAsync(db, ct);
 
         var lojasResolvidas = new List<ContactStoreViewModel>();
         foreach (var loja in lojas)

@@ -80,6 +80,15 @@ public static class StoragePath
             return false;
         }
 
+        // On Unix, Uri.TryCreate("/img/photo.png", Absolute) also succeeds as
+        // a file URI. A rooted web path must be handled before URI detection;
+        // removing its single slash keeps NormalizeKey's traversal check intact.
+        if (normalized.StartsWith('/'))
+        {
+            return !normalized.StartsWith("//", StringComparison.Ordinal)
+                && TryNormalizeKey(normalized[1..], out key);
+        }
+
         foreach (var publicBaseUrl in publicBaseUrls.Where(x => !string.IsNullOrWhiteSpace(x)))
         {
             var baseUrl = publicBaseUrl!.TrimEnd('/');
@@ -91,6 +100,10 @@ public static class StoragePath
 
         if (Uri.TryCreate(normalized, UriKind.Absolute, out var uri))
         {
+            if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            {
+                return false;
+            }
             var absolutePath = Uri.UnescapeDataString(uri.AbsolutePath).TrimStart('/');
             var knownPrefixIndex = FindKnownStoragePrefixIndex(absolutePath);
             if (knownPrefixIndex >= 0)
@@ -99,11 +112,6 @@ public static class StoragePath
             }
 
             return false;
-        }
-
-        if (normalized.StartsWith('/'))
-        {
-            return TryNormalizeKey(normalized, out key);
         }
 
         if (normalized.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)

@@ -104,26 +104,26 @@
                 }
 
                 <div class="detail-summary-card detail-description-card">
-                    <h2>Descrição</h2>
+                    <h2>DescriÃ§Ã£o</h2>
                     <p class="detail-description-text">@Model.Vehicle.Descricao</p>
                 </div>
 
                 <div class="detail-bottom-stack">
                     <details class="detail-summary-card detail-summary-accordion" open>
                         <summary class="detail-summary-toggle">
-                            <h2>Resumo do veículo</h2>
+                            <h2>Resumo do veÃ­culo</h2>
                             <span class="detail-summary-icon" aria-hidden="true"></span>
                         </summary>
 
                         <div class="detail-summary-list">
                             <div><span>Marca</span><strong>@Model.Vehicle.Marca</strong></div>
                             <div><span>Modelo</span><strong>@Model.Vehicle.Modelo</strong></div>
-                            <div><span>Versão</span><strong>@(string.IsNullOrWhiteSpace(Model.Vehicle.Versao) ? "Não informado" : Model.Vehicle.Versao)</strong></div>
+                            <div><span>VersÃ£o</span><strong>@(string.IsNullOrWhiteSpace(Model.Vehicle.Versao) ? "NÃ£o informado" : Model.Vehicle.Versao)</strong></div>
                             <div><span>Ano</span><strong>@(Model.Vehicle.AnoFabricacao.HasValue ? $"{Model.Vehicle.AnoFabricacao} / {Model.Vehicle.AnoModelo}" : Model.Vehicle.AnoModelo.ToString())</strong></div>
-                            <div><span>Câmbio</span><strong>@Model.Vehicle.Cambio</strong></div>
-                            <div><span>Combustível</span><strong>@Model.Vehicle.Combustivel</strong></div>
+                            <div><span>CÃ¢mbio</span><strong>@Model.Vehicle.Cambio</strong></div>
+                            <div><span>CombustÃ­vel</span><strong>@Model.Vehicle.Combustivel</strong></div>
                             <div><span>Cor</span><strong>@Model.Vehicle.Cor</strong></div>
-                            <div><span>KM</span><strong>@(Model.Vehicle.Quilometragem.HasValue ? $"{Model.Vehicle.Quilometragem:N0} km" : "Não informado")</strong></div>
+                            <div><span>KM</span><strong>@(Model.Vehicle.Quilometragem.HasValue ? $"{Model.Vehicle.Quilometragem:N0} km" : "NÃ£o informado")</strong></div>
                         </div>
                     </details>
                 </div>
@@ -134,7 +134,7 @@
                     <div class="detail-price detail-sidebar-price">
                         @(Model.Vehicle.PrecoVenda > 0 ? Model.Vehicle.PrecoVenda.ToString("C") : "Consulte")
                     </div>
-                    <p>Fale com nossa equipe em poucos toques e tire suas dúvidas sobre este veículo com rapidez.</p>
+                    <p>Fale com nossa equipe em poucos toques e tire suas dÃºvidas sobre este veÃ­culo com rapidez.</p>
                     <div class="commerce-actions">
                         <button type="button" class="btn btn-danger-brand" data-whatsapp-modal="true" data-vehicle-title="@Model.Vehicle.NomeCompleto" data-track-vehicle-click="true" data-vehicle-id="@Model.Vehicle.Id">
                             Falar com vendedor
@@ -143,7 +143,7 @@
                 </div>
 
                 <div class="detail-summary-card">
-                    <h2>Características</h2>
+                    <h2>CaracterÃ­sticas</h2>
                     @if (Model.Vehicle.Opcionais.Count > 0)
                     {
                         <div class="feature-pills-wrap" data-feature-list>
@@ -165,7 +165,7 @@
                     }
                     else
                     {
-                        <p class="detail-description-text mb-0">Consulte nossa equipe para mais detalhes sobre os itens deste veículo.</p>
+                        <p class="detail-description-text mb-0">Consulte nossa equipe para mais detalhes sobre os itens deste veÃ­culo.</p>
                     }
                 </div>
 

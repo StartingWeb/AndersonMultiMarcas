@@ -12,7 +12,8 @@ public sealed class HomeVehicleCardViewModel
     public string Combustivel { get; init; } = string.Empty;
     public bool Destaque { get; init; }
     public bool Disponivel { get; init; }
-    public bool ZeroKm => AnoModelo >= DateTime.UtcNow.Year;
+    public bool Seminovo { get; init; }
+    public bool ZeroKm => !Seminovo;
     public decimal Preco { get; init; }
     public string? MidiaUrl { get; init; }
     public int Cliques { get; init; }

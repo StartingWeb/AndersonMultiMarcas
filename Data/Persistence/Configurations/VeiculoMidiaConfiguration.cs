@@ -25,7 +25,7 @@ public sealed class VeiculoMidiaConfiguration : IEntityTypeConfiguration<Veiculo
         builder.Property(x => x.Ativo).IsRequired();
         builder.Property(x => x.DataCadastro).IsRequired();
 
-        builder.HasIndex(x => new { x.VeiculoId, x.Capa });
+        builder.HasIndex(x => new { x.VeiculoId, x.Capa }).IsUnique().HasFilter("[Capa] = 1");
         builder.HasIndex(x => new { x.VeiculoId, x.Ordem });
     }
 }

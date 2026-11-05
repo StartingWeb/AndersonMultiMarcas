@@ -1,0 +1,88 @@
+@page
+@model Project.Pages.Admin.Ferramentas.RevisarCapasVeiculosModel
+@using Project.Shared
+@{
+    var review = Model.Review;
+    var current = review.Current;
+}
+
+<div class="container-fluid">
+    <h1 class="h3">Revisar capas dos veiculos</h1>
+    <p class="text-muted">Escolha a imagem que aparece primeiro no catalogo. A selecao preserva as demais imagens.</p>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-sm-4">
+            <label asp-for="Mode" class="form-label">Exibir</label>
+            <select asp-for="Mode" class="form-select">
+                @foreach (var filter in Model.FilterOptions)
+                {
+                    <option value="@filter.Value">@filter.Label</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-2">
+            <label asp-for="MaisQue" class="form-label">Quantidade de imagens</label>
+            <input asp-for="MaisQue" min="1" class="form-control" />
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="Busca" class="form-label">ID, marca ou modelo</label>
+            <input asp-for="Busca" class="form-control" />
+        </div>
+        <div class="col-sm-2 align-self-end"><button class="btn btn-danger w-100" type="submit">Filtrar</button></div>
+    </form>
+    <p id="cover-message" role="status" aria-live="polite"></p>
+    @if (current is null)
+    {
+        <div class="alert alert-info">Nenhum veiculo encontrado para estes filtros.</div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                    <div>
+                        <h2 class="h4">@current.Nome</h2>
+                        <p class="mb-0 text-muted">ID @current.Id · @current.Marca · @current.Ano · @current.QuantidadeImagens imagens · @review.Position de @review.Total</p>
+                    </div>
+                    <a class="btn btn-outline-secondary" href="/Admin/Veiculo/Upsert/@current.Id">Editar veiculo</a>
+                </div>
+                <form id="cover-form" data-vehicle-id="@current.Id" data-position="@review.Position" data-mode="@review.Mode" data-search="@review.Busca" data-more-than="@review.MaisQue">
+                    @Html.AntiForgeryToken()
+                    <fieldset>
+                        <legend class="h6">Selecione a capa</legend>
+                        <div class="row g-3">
+                            @foreach (var image in review.Images)
+                            {
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <label class="card h-100 p-2">
+                                        <img src="@VehicleImageHelper.Normalize(image.Url)" alt="@image.NomeArquivo" class="w-100 rounded" style="height:160px;object-fit:contain" loading="lazy" onerror="this.onerror=null;this.src='@VehicleImageHelper.DefaultVehicleImage';" />
+                                        <span class="mt-2 text-break"><input type="radio" name="mediaId" value="@image.Id" checked="@image.Capa" required /> @image.NomeArquivo</span>
+                                        @if (image.Capa) { <span class="badge bg-success mt-2">Capa atual</span> }
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </fieldset>
+                    @if (review.Images.Count > 0)
+                    {
+                        <button id="save-cover" class="btn btn-danger mt-3" type="submit">Salvar capa e continuar</button>
+                    }
+                </form>
+            </div>
+        </div>
+        <nav aria-label="Revisao de capas" class="d-flex justify-content-between">
+            @if (review.Previous is not null)
+            {
+                <a class="btn btn-outline-secondary" asp-route-Position="@(review.Position - 1)" asp-route-Mode="@review.Mode" asp-route-Busca="@review.Busca" asp-route-MaisQue="@review.MaisQue">Anterior</a>
+            }
+            else { <span></span> }
+            @if (review.Next is not null)
+            {
+                <a class="btn btn-outline-secondary" asp-route-Position="@(review.Position + 1)" asp-route-Mode="@review.Mode" asp-route-Busca="@review.Busca" asp-route-MaisQue="@review.MaisQue">Proximo</a>
+            }
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/cover-review.js" asp-append-version="true" defer></script>
+}

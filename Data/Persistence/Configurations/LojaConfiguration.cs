@@ -19,9 +19,9 @@ public sealed class LojaConfiguration : IEntityTypeConfiguration<Loja>
         builder.Property(x => x.DataAtualizacao);
 
         builder.Property(x => x.Cnpj)
-            .HasConversion(x => x.Valor, x => new Documento(x))
+            .HasConversion(x => x.HasValue ? x.Value.Valor : null, x => string.IsNullOrWhiteSpace(x) ? (Documento?)null : new Documento(x))
             .HasColumnName("Cnpj")
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(14);
 
         builder.Property(x => x.Email)

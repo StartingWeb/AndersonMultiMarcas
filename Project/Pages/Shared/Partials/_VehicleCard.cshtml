@@ -1,7 +1,7 @@
 @model Project.Pages.ViewModels.HomeVehicleCardViewModel
 @{
     var imageSrc = VehicleImageHelper.Normalize(Model.MidiaUrl);
-    var optimizedFallback = ImageUrlBuilder.Build(VehicleImageHelper.DefaultVehicleImage, 640, 66);
+    var fallbackImage = VehicleImageHelper.DefaultVehicleImage;
     var imageLoading = (ViewData["VehicleCardLoading"] as string) ?? "lazy";
     var fetchPriority = (ViewData["VehicleCardFetchPriority"] as string) ?? (imageLoading == "eager" ? "high" : "auto");
 }
@@ -17,7 +17,14 @@
              loading="@imageLoading"
              decoding="async"
              fetchpriority="@fetchPriority"
-             onerror="this.onerror=null;this.src='@optimizedFallback';" />
+             onerror="this.onerror=function(){var frame=this.closest('.vehicle-media');if(frame){frame.classList.add('is-fallback');}this.hidden=true;};this.removeAttribute('srcset');this.src='@fallbackImage';" />
+        <span class="vehicle-placeholder" aria-hidden="true">
+            <span class="vehicle-placeholder-icon">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M5 11h14l-1.2-3.2A2 2 0 0 0 15.9 6H8.1a2 2 0 0 0-1.9 1.8L5 11zm-.5 1.5A2.5 2.5 0 0 0 2 15v2h2v1a2 2 0 0 0 4 0v-1h8v1a2 2 0 0 0 4 0v-1h2v-2a2.5 2.5 0 0 0-2.5-2.5h-15zM6.5 16A1.5 1.5 0 1 1 8 14.5 1.5 1.5 0 0 1 6.5 16zm11 0a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 17.5 16z" />
+                </svg>
+            </span>
+        </span>
         <span class="vehicle-tag">@(Model.Destaque ? "Destaque" : Model.Disponivel ? "Disponível" : "Indisponível")</span>
     </div>
     <div class="vehicle-body">

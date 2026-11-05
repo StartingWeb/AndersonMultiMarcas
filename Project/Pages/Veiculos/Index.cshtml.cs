@@ -38,7 +38,6 @@ public class IndexModel(ISender sender, ApplicationDbContext db, IStorageImageRe
     {
         PaginaAtual = ReadCurrentPage();
 
-        var anoAtual = DateTime.UtcNow.Year;
         var anoMinimo = AnoMinimo;
         var anoMaximo = AnoMaximo;
         var busca = Busca;
@@ -97,11 +96,11 @@ public class IndexModel(ISender sender, ApplicationDbContext db, IStorageImageRe
 
         if (string.Equals(Condicao, "zerokm", StringComparison.OrdinalIgnoreCase))
         {
-            anoMinimo = Math.Max(anoMinimo ?? anoAtual, anoAtual);
+            seminovo = false;
         }
         else if (string.Equals(Condicao, "seminovo", StringComparison.OrdinalIgnoreCase))
         {
-            anoMaximo = anoMaximo.HasValue ? Math.Min(anoMaximo.Value, anoAtual - 1) : anoAtual - 1;
+            seminovo = true;
         }
 
         var filtro = new BuscarVeiculosFiltroDto
@@ -133,11 +132,12 @@ public class IndexModel(ISender sender, ApplicationDbContext db, IStorageImageRe
         PaginaAtual = currentPage;
         var items = pageResult?.Items?.ToList() ?? [];
         var destaquesRecentes = items.OrderByDescending(x => x.Destaque).ThenByDescending(x => x.Id).Take(3).ToList();
-        var outros = items.Skip(destaquesRecentes.Count).ToList();
+        var featuredIds = destaquesRecentes.Select(x => x.Id).ToHashSet();
+        var outros = items.Where(x => !featuredIds.Contains(x.Id)).ToList();
 
         var vendedores = await db.Vendedores
             .AsNoTracking()
-            .Where(x => x.Ativo)
+            .Where(x => x.Ativo && x.Loja.Ativo)
             .OrderBy(x => x.Nome)
             .Select(x => new SellerProjection
             {
@@ -196,16 +196,8 @@ public class IndexModel(ISender sender, ApplicationDbContext db, IStorageImageRe
 
         ViewData["FaqSchema"] = SeoJsonLd.Faq(visibleFaqs.Select(x => (x.Question, x.Answer)).ToArray());
 
-        var itemList = Vm.DestaquesRecentes.Concat(Vm.OutrosVeiculos)
-            .Select((x, i) => new { @type = "ListItem", position = i + 1, url = $"{baseUrl}/veiculo/{x.Id}/", name = x.Titulo });
-
-        ViewData["ItemListSchema"] = SeoJsonLd.Serialize(new
-        {
-            @context = "https://schema.org",
-            @type = "ItemList",
-            numberOfItems = Vm.TotalItems,
-            itemListElement = itemList
-        });
+        ViewData["ItemListSchema"] = SeoJsonLd.ItemList(Vm.TotalItems,
+            Vm.DestaquesRecentes.Concat(Vm.OutrosVeiculos).Select(x => (x.Id, x.Titulo)), baseUrl);
     }
 
     private IReadOnlyList<HomeSellerViewModel> ToSellerViewModels(IEnumerable<SellerProjection> sellers)
