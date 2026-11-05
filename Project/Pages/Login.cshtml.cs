@@ -55,7 +55,7 @@ public class LoginModel : PageModel
         }
 
         var userName = user.UserName ?? Input.Email;
-        var result = await signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        var result = await signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
 
         if (result.Succeeded)
         {

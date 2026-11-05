@@ -5,15 +5,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace Project.Pages.Admin.Auth.Usuarios;
 
 [Authorize(Roles = "Desenvolvedor")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class IndexModel(
     UserManager<AspNetCoreUser> userManager,
     RoleManager<IdentityRole<Guid>> roleManager) : PageModel
 {
-    private const string DefaultResetPassword = "123456@Senha";
 
     [BindProperty(SupportsGet = true)]
     public string? Busca { get; set; }
@@ -164,11 +166,9 @@ public class IndexModel(
         }
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
-        var result = await userManager.ResetPasswordAsync(user, token, DefaultResetPassword);
-
-        TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Succeeded
-            ? $"Senha do usuario {user.UserName ?? user.Email} redefinida com sucesso."
-            : string.Join(" ", result.Errors.Select(x => x.Description));
+        var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        TempData["PasswordResetLink"] = Url.Page("/ResetPassword", null, new { userId = user.Id, code });
+        TempData["SuccessMessage"] = "Link individual gerado. Compartilhe por um canal privado com o usuario; validade de uma hora. A senha atual permanece valida ate a confirmacao.";
 
         return RedirectToPage(new { Busca, Perfil, Status });
     }

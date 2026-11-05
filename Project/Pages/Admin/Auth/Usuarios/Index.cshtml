@@ -118,7 +118,15 @@
     <section class="auth-panel">
         <div class="auth-panel-header">
             <div>
-                <h1 class="auth-panel-title">Usuarios da plataforma</h1>
+                @if (TempData["PasswordResetLink"] is string resetLink)
+{
+    <div class="alert alert-info" role="status">
+        <p>Link privado de redefinição, válido por uma hora:</p>
+        <a href="@resetLink">@resetLink</a>
+    </div>
+}
+
+<h1 class="auth-panel-title">Usuarios da plataforma</h1>
                 <div class="text-muted small">Filtre, consulte e mantenha acessos administrativos.</div>
             </div>
             <button type="button" class="btn btn-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#usuarioModal" data-user-new>
@@ -191,7 +199,7 @@
                                     </button>
                                 </form>
                                 <form method="post" asp-page-handler="ResetPassword" asp-route-id="@user.Id" class="d-inline"
-                                      onsubmit="return confirm('Redefinir a senha deste usuario para 123456@Senha?');">
+                                      onsubmit="return confirm('Gerar link individual para o usuario escolher uma nova senha?');">
                                     <button type="submit" class="btn btn-sm btn-outline-warning" title="Resetar senha">
                                         <i class="bi bi-key"></i>
                                     </button>
@@ -232,7 +240,7 @@
                             </button>
                         </form>
                         <form method="post" asp-page-handler="ResetPassword" asp-route-id="@user.Id" class="flex-fill"
-                              onsubmit="return confirm('Redefinir a senha deste usuario para 123456@Senha?');">
+                              onsubmit="return confirm('Gerar link individual para o usuario escolher uma nova senha?');">
                             <button type="submit" class="btn btn-sm btn-outline-warning w-100">
                                 Resetar senha
                             </button>

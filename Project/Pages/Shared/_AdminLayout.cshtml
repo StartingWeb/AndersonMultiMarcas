@@ -6,57 +6,8 @@
 @{
     var title = (ViewData["Title"] as string) ?? "Painel administrativo";
     var path = Context.Request.Path.Value ?? string.Empty;
-    var isDeveloper = User.IsInRole("Desenvolvedor");
-    var allowedMenuIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    var hasAnyConfiguredMenu = false;
-
-    var currentUser = await UserManager.GetUserAsync(User);
-    var roleNames = currentUser is null
-        ? []
-        : await UserManager.GetRolesAsync(currentUser);
-
-    foreach (var roleName in roleNames)
-    {
-        var role = await RoleManager.FindByNameAsync(roleName);
-        if (role is null)
-        {
-            continue;
-        }
-
-        var claims = await RoleManager.GetClaimsAsync(role);
-        var menuClaims = claims.Where(x => x.Type == AdminMenuCatalog.ClaimType).ToList();
-
-        if (menuClaims.Count > 0)
-        {
-            hasAnyConfiguredMenu = true;
-        }
-
-        foreach (var claim in menuClaims)
-        {
-            allowedMenuIds.Add(claim.Value);
-        }
-    }
-
     bool CanShowMenu(AdminMenuItem item)
-    {
-        if (item.RequiredRoles is { Count: > 0 }
-            && !roleNames.Any(role => item.RequiredRoles.Contains(role, StringComparer.OrdinalIgnoreCase)))
-        {
-            return false;
-        }
-
-        if (hasAnyConfiguredMenu)
-        {
-            return allowedMenuIds.Contains(item.Id);
-        }
-
-        if (isDeveloper)
-        {
-            return true;
-        }
-
-        return !item.DeveloperOnly;
-    }
+        => Project.Infrastructure.Security.AdminAuthorization.CanAccess(User, item);
 
     bool IsMenuActive(AdminMenuItem item)
         => item.ExactMatch
