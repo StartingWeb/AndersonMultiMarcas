@@ -17,7 +17,7 @@ namespace Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.13")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -450,7 +450,6 @@ namespace Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Cnpj")
-                        .IsRequired()
                         .HasMaxLength(14)
                         .HasColumnType("nvarchar(14)")
                         .HasColumnName("Cnpj");
@@ -941,7 +940,9 @@ namespace Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("VeiculoId", "Capa");
+                    b.HasIndex("VeiculoId", "Capa")
+                        .IsUnique()
+                        .HasFilter("[Capa] = 1");
 
                     b.HasIndex("VeiculoId", "Ordem");
 
