@@ -20,7 +20,7 @@ public class RepairProductionSchemaDrift : Migration
                     ADD [QuantidadeCliques] int NOT NULL
                         CONSTRAINT [DF_Veiculo_QuantidadeCliques_RepairProductionSchemaDrift] DEFAULT (0);
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeCliques') IS NOT NULL
                    AND EXISTS (
                        SELECT 1
@@ -33,7 +33,7 @@ public class RepairProductionSchemaDrift : Migration
                 BEGIN
                     THROW 51020, 'Schema drift em dbo.Veiculo.QuantidadeCliques: tipo diferente de int.', 1;
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeCliques') IS NOT NULL
                    AND EXISTS (
                        SELECT 1
@@ -45,11 +45,11 @@ public class RepairProductionSchemaDrift : Migration
                    )
                 BEGIN
                     EXEC(N'UPDATE [dbo].[Veiculo] SET [QuantidadeCliques] = 0 WHERE [QuantidadeCliques] IS NULL;');
-            
+
                     ALTER TABLE [dbo].[Veiculo]
                     ALTER COLUMN [QuantidadeCliques] int NOT NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeCliques') IS NOT NULL
                    AND NOT EXISTS (
                        SELECT 1
@@ -65,14 +65,14 @@ public class RepairProductionSchemaDrift : Migration
                     ALTER TABLE [dbo].[Veiculo]
                     ADD CONSTRAINT [DF_Veiculo_QuantidadeCliques_RepairProductionSchemaDrift] DEFAULT (0) FOR [QuantidadeCliques];
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeVisualizacoes') IS NULL
                 BEGIN
                     ALTER TABLE [dbo].[Veiculo]
                     ADD [QuantidadeVisualizacoes] int NOT NULL
                         CONSTRAINT [DF_Veiculo_QuantidadeVisualizacoes_RepairProductionSchemaDrift] DEFAULT (0);
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeVisualizacoes') IS NOT NULL
                    AND EXISTS (
                        SELECT 1
@@ -85,7 +85,7 @@ public class RepairProductionSchemaDrift : Migration
                 BEGIN
                     THROW 51021, 'Schema drift em dbo.Veiculo.QuantidadeVisualizacoes: tipo diferente de int.', 1;
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeVisualizacoes') IS NOT NULL
                    AND EXISTS (
                        SELECT 1
@@ -97,11 +97,11 @@ public class RepairProductionSchemaDrift : Migration
                    )
                 BEGIN
                     EXEC(N'UPDATE [dbo].[Veiculo] SET [QuantidadeVisualizacoes] = 0 WHERE [QuantidadeVisualizacoes] IS NULL;');
-            
+
                     ALTER TABLE [dbo].[Veiculo]
                     ALTER COLUMN [QuantidadeVisualizacoes] int NOT NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.Veiculo', 'QuantidadeVisualizacoes') IS NOT NULL
                    AND NOT EXISTS (
                        SELECT 1
@@ -118,7 +118,7 @@ public class RepairProductionSchemaDrift : Migration
                     ADD CONSTRAINT [DF_Veiculo_QuantidadeVisualizacoes_RepairProductionSchemaDrift] DEFAULT (0) FOR [QuantidadeVisualizacoes];
                 END;
             END;
-            
+
             IF OBJECT_ID(N'[dbo].[Loja]', N'U') IS NOT NULL
             BEGIN
                 IF COL_LENGTH('dbo.Loja', 'DataAtualizacao') IS NULL
@@ -126,7 +126,7 @@ public class RepairProductionSchemaDrift : Migration
                     ALTER TABLE [dbo].[Loja]
                     ADD [DataAtualizacao] datetime2 NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.Loja', 'DataAtualizacao') IS NOT NULL
                    AND EXISTS (
                        SELECT 1

@@ -18,26 +18,26 @@ public class RepairVeiculoMidiaUploadSchema : Migration
                 BEGIN
                     ALTER TABLE [dbo].[VeiculoMidia] ALTER COLUMN [BlobName] nvarchar(250) NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.VeiculoMidia', 'Container') IS NOT NULL
                 BEGIN
                     ALTER TABLE [dbo].[VeiculoMidia] ALTER COLUMN [Container] nvarchar(250) NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.VeiculoMidia', 'ContentType') IS NOT NULL
                 BEGIN
                     ALTER TABLE [dbo].[VeiculoMidia] ALTER COLUMN [ContentType] nvarchar(120) NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.VeiculoMidia', 'Tipo') IS NOT NULL
                 BEGIN
                     UPDATE [dbo].[VeiculoMidia]
                     SET [Tipo] = N'Imagem'
                     WHERE [Tipo] IS NULL OR LTRIM(RTRIM([Tipo])) = N'';
-            
+
                     ALTER TABLE [dbo].[VeiculoMidia] ALTER COLUMN [Tipo] nvarchar(20) NOT NULL;
                 END;
-            
+
                 IF COL_LENGTH('dbo.VeiculoMidia', 'Capa') IS NOT NULL
                 BEGIN
                     ;WITH CapasDuplicadas AS (
@@ -53,7 +53,7 @@ public class RepairVeiculoMidiaUploadSchema : Migration
                     INNER JOIN CapasDuplicadas cd ON cd.[Id] = vm.[Id]
                     WHERE cd.[Numero] > 1;
                 END;
-            
+
                 IF EXISTS (
                     SELECT 1
                     FROM sys.indexes
@@ -63,7 +63,7 @@ public class RepairVeiculoMidiaUploadSchema : Migration
                 BEGIN
                     DROP INDEX [IX_VeiculoMidia_VeiculoId_Capa] ON [dbo].[VeiculoMidia];
                 END;
-            
+
                 IF COL_LENGTH('dbo.VeiculoMidia', 'VeiculoId') IS NOT NULL
                    AND COL_LENGTH('dbo.VeiculoMidia', 'Capa') IS NOT NULL
                 BEGIN
@@ -71,7 +71,7 @@ public class RepairVeiculoMidiaUploadSchema : Migration
                     ON [dbo].[VeiculoMidia] ([VeiculoId], [Capa])
                     WHERE [Capa] = 1;
                 END;
-            
+
                 IF NOT EXISTS (
                     SELECT 1
                     FROM sys.indexes

@@ -30,7 +30,7 @@ public class MakeLojaCnpjNullable : Migration
                 BEGIN
                     THROW 51000, 'Nao foi possivel normalizar Loja.Cnpj: existem CNPJs duplicados apos remover mascara.', 1;
                 END;
-            
+
                 IF EXISTS
                 (
                     SELECT 1
@@ -45,12 +45,12 @@ public class MakeLojaCnpjNullable : Migration
                 BEGIN
                     THROW 51001, 'Nao foi possivel normalizar Loja.Cnpj: existem CNPJs preenchidos com quantidade de digitos diferente de 14.', 1;
                 END;
-            
+
                 IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Loja_Cnpj' AND object_id = OBJECT_ID(N'[Loja]'))
                     DROP INDEX [IX_Loja_Cnpj] ON [Loja];
-            
+
                 ALTER TABLE [Loja] ALTER COLUMN [Cnpj] nvarchar(18) NULL;
-            
+
                 ;WITH Normalized AS
                 (
                     SELECT
@@ -62,9 +62,9 @@ public class MakeLojaCnpjNullable : Migration
                 SET [Cnpj] = n.[NormalizedCnpj]
                 FROM [Loja] l
                 INNER JOIN Normalized n ON n.[Id] = l.[Id];
-            
+
                 ALTER TABLE [Loja] ALTER COLUMN [Cnpj] nvarchar(14) NULL;
-            
+
                 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Loja_Cnpj' AND object_id = OBJECT_ID(N'[Loja]'))
                     CREATE UNIQUE INDEX [IX_Loja_Cnpj] ON [Loja] ([Cnpj]) WHERE [Cnpj] IS NOT NULL;
             END
@@ -79,13 +79,13 @@ public class MakeLojaCnpjNullable : Migration
             BEGIN
                 IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Loja_Cnpj' AND object_id = OBJECT_ID(N'[Loja]'))
                     DROP INDEX [IX_Loja_Cnpj] ON [Loja];
-            
+
                 UPDATE [Loja]
                 SET [Cnpj] = N''
                 WHERE [Cnpj] IS NULL;
-            
+
                 ALTER TABLE [Loja] ALTER COLUMN [Cnpj] nvarchar(14) NOT NULL;
-            
+
                 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Loja_Cnpj' AND object_id = OBJECT_ID(N'[Loja]'))
                     CREATE UNIQUE INDEX [IX_Loja_Cnpj] ON [Loja] ([Cnpj]) WHERE [Cnpj] IS NOT NULL;
             END
