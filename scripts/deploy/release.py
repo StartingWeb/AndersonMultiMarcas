@@ -169,8 +169,9 @@ def validate_env(path):
     }
     for key, expected in required.items():
         require(values.get(key) == expected, f"Required safe runtime setting missing/invalid: {key}")
-    require(values.get("DOTNET_ENVIRONMENT", "Production") == "Production", "DOTNET_ENVIRONMENT must be Production")
-    require("Deployment__Commit" not in values, "Deployment__Commit is supplied by the release manifest")
+    normalized_values = {key.casefold(): value for key, value in values.items()}
+    require(normalized_values.get("dotnet_environment", "Production") == "Production", "DOTNET_ENVIRONMENT must be Production")
+    require("deployment__commit" not in normalized_keys, "Deployment__Commit is supplied by the release manifest")
     return values
 
 

@@ -239,6 +239,20 @@ class ReleaseTests(unittest.TestCase):
             self.deploy()
         self.assertEqual([], self.docker.calls)
 
+    def test_deployment_commit_cannot_be_overridden_with_different_case(self):
+        with self.env.open("a") as stream:
+            stream.write("DEPLOYMENT__COMMIT=" + SECOND + "\n")
+        with self.assertRaisesRegex(release.DeploymentError, "Deployment__Commit"):
+            self.deploy()
+        self.assertEqual([], self.docker.calls)
+
+    def test_dotnet_environment_cannot_bypass_production_with_different_case(self):
+        with self.env.open("a") as stream:
+            stream.write("Dotnet_Environment=Development\n")
+        with self.assertRaisesRegex(release.DeploymentError, "DOTNET_ENVIRONMENT"):
+            self.deploy()
+        self.assertEqual([], self.docker.calls)
+
     def test_first_success_retains_legacy_and_immutable_configuration(self):
         self.deploy()
         state = self.manager.state()

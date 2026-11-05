@@ -16,6 +16,8 @@ def digest(path):
 
 
 def tree(root):
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("Publish artifact must be a real directory")
     files = {}
     for path in root.rglob("*"):
         if path.is_symlink():

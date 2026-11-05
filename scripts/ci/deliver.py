@@ -58,13 +58,46 @@ def public_health(url, commit):
     return False
 
 
+def verify_local_bundle(bundle):
+    """Reject incomplete or corrupted transfers before opening an SSH session.
+
+    The server independently repeats these checks using the separately supplied
+    manifest hash. Checking here also prevents a failed CI download from touching
+    a remote deployment directory.
+    """
+    if bundle.is_symlink() or not bundle.is_dir():
+        raise ValueError("Bundle must be a real directory")
+    for name in ("release.json", "image.tar.gz", "SHA256SUMS"):
+        path = bundle / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("Missing regular release file")
+    checksums = {}
+    for line in (bundle / "SHA256SUMS").read_text(encoding="ascii").splitlines():
+        match = re.fullmatch(r"([0-9a-f]{64})  (image\.tar\.gz|release\.json)", line)
+        if not match or match[2] in checksums:
+            raise ValueError("Invalid release checksums")
+        checksums[match[2]] = match[1]
+    if set(checksums) != {"image.tar.gz", "release.json"} or any(
+            digest(bundle / name) != checksum for name, checksum in checksums.items()):
+        raise ValueError("Release artifact checksum mismatch")
+    value = json.loads((bundle / "release.json").read_text())
+    if not isinstance(value, dict) or set(value) != {"schemaVersion", "commit", "imageId", "imageTag", "ciRunId", "repository"}:
+        raise ValueError("Invalid release manifest")
+    if (value["schemaVersion"] != 1 or value["repository"] != "StartingWeb/AndersonMultiMarcas"
+            or not isinstance(value["imageId"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", value["imageId"])
+            or not isinstance(value["commit"], str) or not re.fullmatch(r"[0-9a-f]{40}", value["commit"])
+            or value["imageTag"] != "andersonmultimarcas-unified:" + value["commit"]):
+        raise ValueError("Invalid release image/source")
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--deployer", type=Path, default=Path("scripts/deploy/release.py"))
     args = parser.parse_args()
     host, user, port, root, url = configuration(os.environ)
-    release = json.loads((args.bundle / "release.json").read_text())
+    release = verify_local_bundle(args.bundle)
     commit = release["commit"]
     run_id = str(release["ciRunId"])
     attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "1")

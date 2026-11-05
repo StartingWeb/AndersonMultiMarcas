@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import subprocess
 from unittest import mock
 
 CI = Path(__file__).resolve().parents[1] / "ci"
@@ -83,6 +84,16 @@ class ProvenanceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 application_manifest.manifest(root, "a" * 40, "1")
 
+    def test_publish_root_itself_cannot_be_a_symlink(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            outside = root / "outside"
+            outside.mkdir()
+            (outside / "Project.dll").write_bytes(b"isolated fixture")
+            (root / "publish").symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "real directory"):
+                application_manifest.manifest(root, "a" * 40, "1")
+
 
 class DeliveryConfigurationTests(unittest.TestCase):
     def setUp(self):
@@ -124,9 +135,12 @@ class DeliveryConfigurationTests(unittest.TestCase):
         root = Path(directory)
         bundle = root / "bundle"
         bundle.mkdir()
-        (bundle / "release.json").write_text(json.dumps({"commit": "a" * 40, "ciRunId": "1"}))
+        (bundle / "release.json").write_text(json.dumps({"schemaVersion": 1, "commit": "a" * 40, "ciRunId": "1",
+            "imageId": "sha256:" + "1" * 64, "imageTag": "andersonmultimarcas-unified:" + "a" * 40,
+            "repository": "StartingWeb/AndersonMultiMarcas"}))
         (bundle / "image.tar.gz").write_bytes(b"isolated transfer fixture")
-        (bundle / "SHA256SUMS").write_text("fixture, remote executor is mocked")
+        (bundle / "SHA256SUMS").write_text("".join(application_manifest.digest(bundle / name) + "  " + name + "\n"
+            for name in ("image.tar.gz", "release.json")))
         deployer = root / "release.py"
         deployer.write_text("# isolated fixture")
         return bundle, deployer
@@ -156,6 +170,33 @@ class DeliveryConfigurationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     deliver.main()
             run.assert_not_called()
+
+    @mock.patch.object(deliver.subprocess, "run")
+    def test_corrupted_download_is_rejected_before_any_ssh(self, run):
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, deployer = self.delivery_fixture(directory)
+            (bundle / "image.tar.gz").write_bytes(b"tampered download")
+            env = dict(self.env, SOURCE_COMMIT="a" * 40, CI_RUN_ID="1")
+            with mock.patch.dict(deliver.os.environ, env, clear=True), mock.patch.object(sys, "argv", ["deliver.py", "--bundle", str(bundle), "--deployer", str(deployer)]):
+                with self.assertRaisesRegex(ValueError, "checksum"):
+                    deliver.main()
+            run.assert_not_called()
+
+    @mock.patch.object(deliver, "public_health")
+    @mock.patch.object(deliver.subprocess, "run")
+    def test_transfer_failure_never_activates_or_rolls_back_and_erases_keys(self, run, health):
+        run.side_effect = [subprocess.CompletedProcess(["ssh"], 0), subprocess.CalledProcessError(1, ["scp"])]
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, deployer = self.delivery_fixture(directory)
+            env = dict(self.env, SOURCE_COMMIT="a" * 40, CI_RUN_ID="1")
+            with mock.patch.dict(deliver.os.environ, env, clear=True), mock.patch.object(sys, "argv", ["deliver.py", "--bundle", str(bundle), "--deployer", str(deployer)]):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    deliver.main()
+            commands = [call.args[0] for call in run.call_args_list]
+            self.assertEqual(["ssh", "scp"], [command[0] for command in commands])
+            key_path = Path(commands[0][commands[0].index("-i") + 1])
+            self.assertFalse(key_path.exists())
+            health.assert_not_called()
 
 
 if __name__ == "__main__":
