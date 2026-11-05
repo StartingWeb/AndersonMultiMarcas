@@ -30,9 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="artifacts\**;**\artifacts\**;**\bin\**;**\obj\**" />
-    <None Remove="artifacts\**;**\artifacts\**;**\bin\**;**\obj\**" />
-    <StaticWebAsset Remove="artifacts\**;**\artifacts\**;**\bin\**;**\obj\**" />
+    <Content Remove="artifacts\**;**\artifacts\**;**\bin\**;**\obj\**;wwwroot\uploads\**" />
+    <None Remove="artifacts\**;**\artifacts\**;**\bin\**;**\obj\**;wwwroot\uploads\**" />
+    <StaticWebAsset Remove="artifacts\**;**\artifacts\**;**\bin\**;**\obj\**;wwwroot\uploads\**" />
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>

@@ -58,6 +58,8 @@ O pacote contém `image.tar.gz`, `release.json` e `SHA256SUMS`; a imagem usa a t
 
 O artefato da aplicação é publicado pela CI somente após sucesso completo, para um push da `main`. A CD consome o artefato da execução de CI que a disparou, sem substituir o SHA por uma leitura posterior da ponta da branch, e constrói a imagem no runner. Se a main avançou enquanto o job aguardava aprovação, a verificação de revisão atual recusa a publicação obsoleta. O armazenamento de artefatos do GitHub é temporário: os artefatos de aplicação/evidência retêm 30 dias e os bundles da CD 90 dias. Definir retenção operacional protegida no servidor antes de ativar.
 
+O publish exclui uploads locais e `appsettings.Development.json`, preservando as mídias fora da imagem e a configuração operacional no servidor. O manifest também recusa uploads sob `wwwroot/uploads`, arquivos `.env` e a configuração de Development, mesmo que sejam incluídos por outra forma de empacotamento. A regressão usa somente arquivos sintéticos e verifica que um pacote contaminado seja rejeitado antes da entrega.
+
 Os nomes incluem a tentativa da execução: `app-<SHA>-<tentativa-CI>` e `release-<SHA>-<run-CD>-<tentativa-CD>`, mantendo `overwrite: false`. A produção baixa o bundle pelo ID imutável devolvido pelo job de empacotamento; isso também permite repetir somente jobs falhos sem procurar um artefato inexistente da nova tentativa. O servidor conserva snapshots por commit e recusa substituir uma release existente por conteúdo diferente. Uma reconstrução do mesmo SHA que produza outra imagem exige análise e novo commit, em vez de sobrescrever o pacote histórico.
 
 ## CI

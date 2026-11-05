@@ -65,6 +65,19 @@ class EnvironmentApprovalTests(unittest.TestCase):
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_publish_rejects_local_uploads_and_environment_files(self):
+        for filename in ("wwwroot/uploads/veiculos/1/photo.webp", "appsettings.Development.json", ".env", "config/.env.production"):
+            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                publish = root / "publish"
+                publish.mkdir()
+                (publish / "Project.dll").write_bytes(b"isolated assembly fixture")
+                forbidden = publish / filename
+                forbidden.parent.mkdir(parents=True, exist_ok=True)
+                forbidden.write_bytes(b"local fixture must never be packaged")
+                with self.assertRaisesRegex(ValueError, "environment files"):
+                    application_manifest.manifest(root, "a" * 40, "1")
+
     def test_publish_files_are_bound_to_source_and_detect_tampering(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

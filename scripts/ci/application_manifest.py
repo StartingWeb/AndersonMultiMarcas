@@ -23,7 +23,13 @@ def tree(root):
         if path.is_symlink():
             raise ValueError("Symlinks are not accepted in a publish artifact")
         if path.is_file():
-            files[path.relative_to(root).as_posix()] = digest(path)
+            relative = path.relative_to(root)
+            name = relative.name.casefold()
+            if (relative.as_posix().casefold().startswith("wwwroot/uploads/")
+                    or name == "appsettings.development.json"
+                    or name == ".env" or name.startswith(".env.")):
+                raise ValueError("Local uploads and environment files are not accepted in a publish artifact")
+            files[relative.as_posix()] = digest(path)
     if "Project.dll" not in files:
         raise ValueError("Missing application assembly")
     return files
