@@ -311,7 +311,7 @@ public sealed class LegacyImageImportJobManager(
         {
             foreach (var item in job.Items.Where(x => x.Status == LegacyImageImportItemStatus.Failed))
             {
-                item.MarkPending("Falha reenfileirada.");
+                item.RequestRetry(options.Value.SafeMaxAttempts);
                 quantity++;
             }
         }

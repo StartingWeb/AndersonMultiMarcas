@@ -20,7 +20,7 @@ public sealed class CriarVeiculoCommandHandler(ApplicationDbContext db) : IReque
 
         var veiculo = new Veiculo(dto.LojaId, dto.MarcaId, dto.Titulo, dto.Modelo, dto.AnoModelo, new Dinheiro(dto.PrecoVenda));
         veiculo.Update(dto.Titulo, dto.Modelo, dto.Versao, dto.AnoFabricacao, dto.AnoModelo, dto.Combustivel, dto.Cambio, dto.Quilometragem, dto.Placa, dto.Cor, dto.Descricao);
-        veiculo.AtualizarComercial(dto.AceitaTroca, dto.Financiavel, dto.Destaque, dto.Seminovo, dto.UrlVideo, null, dto.VendedorId);
+        veiculo.AtualizarComercial(dto.AceitaTroca, dto.Financiavel, dto.Destaque, dto.Seminovo, dto.UrlVideo, dto.ObservacoesInternas, dto.VendedorId);
 
         db.Veiculos.Add(veiculo);
         await db.SaveChangesAsync(cancellationToken);

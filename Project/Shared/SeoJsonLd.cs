@@ -101,5 +101,30 @@ public static class SeoJsonLd
         }).ToArray()
     });
 
+    public static string ItemList(int total, IEnumerable<(int Id, string Name)> vehicles, string baseUrl) => Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org", ["@type"] = "ItemList", ["numberOfItems"] = total,
+        ["itemListElement"] = vehicles.Select((vehicle, index) => new Dictionary<string, object?>
+        {
+            ["@type"] = "ListItem", ["position"] = index + 1,
+            ["url"] = $"{baseUrl.TrimEnd('/')}/veiculo/{vehicle.Id}/", ["name"] = vehicle.Name
+        }).ToArray()
+    });
+
+    public static string Vehicle(string name, string brand, int year, string? color, string fuel,
+        string transmission, IEnumerable<string> images, decimal price, string canonicalUrl) => Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org", ["@type"] = "Vehicle", ["name"] = name,
+        ["brand"] = new Dictionary<string, object?> { ["@type"] = "Brand", ["name"] = brand },
+        ["vehicleModelDate"] = year.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        ["color"] = color, ["fuelType"] = fuel, ["vehicleTransmission"] = transmission,
+        ["image"] = images.ToArray(), ["url"] = canonicalUrl,
+        ["offers"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "Offer", ["priceCurrency"] = "BRL", ["price"] = price > 0 ? price : null,
+            ["availability"] = "https://schema.org/InStock", ["url"] = canonicalUrl
+        }
+    });
+
     public static string Serialize(object value) => JsonSerializer.Serialize(value, Options);
 }

@@ -66,12 +66,12 @@ public sealed class BuscarVeiculosQueryHandler(
 
         query = filtro.OrdenarPor.ToLowerInvariant() switch
         {
-            "destaque" => query.OrderByDescending(x => x.Destaque).ThenByDescending(x => x.DataCadastro),
-            "preco-asc" => query.OrderBy(x => x.PrecoVenda.Valor),
-            "preco-desc" => query.OrderByDescending(x => x.PrecoVenda.Valor),
-            "ano-desc" => query.OrderByDescending(x => x.AnoModelo),
-            "ano-asc" => query.OrderBy(x => x.AnoModelo),
-            _ => query.OrderByDescending(x => x.DataCadastro)
+            "destaque" => query.OrderByDescending(x => x.Destaque).ThenByDescending(x => x.DataCadastro).ThenBy(x => x.Id),
+            "preco-asc" => query.OrderBy(x => x.PrecoVenda).ThenBy(x => x.Id),
+            "preco-desc" => query.OrderByDescending(x => x.PrecoVenda).ThenBy(x => x.Id),
+            "ano-desc" => query.OrderByDescending(x => x.AnoModelo).ThenBy(x => x.Id),
+            "ano-asc" => query.OrderBy(x => x.AnoModelo).ThenBy(x => x.Id),
+            _ => query.OrderByDescending(x => x.DataCadastro).ThenBy(x => x.Id)
         };
 
         var totalItems = await query.CountAsync(cancellationToken);
@@ -90,6 +90,7 @@ public sealed class BuscarVeiculosQueryHandler(
                 Cambio = x.Cambio,
                 PrecoVenda = x.PrecoVenda.Valor,
                 Destaque = x.Destaque,
+                Seminovo = x.Seminovo,
                 EstaDisponivel = x.Ativo && !x.Vendido,
                 Midias = x.Midias
                     .Where(m => m.Ativo && m.Tipo == TipoMidia.Imagem)
@@ -128,6 +129,7 @@ public sealed class BuscarVeiculosQueryHandler(
                 Cambio = x.Cambio,
                 PrecoVenda = x.PrecoVenda,
                 Destaque = x.Destaque,
+                Seminovo = x.Seminovo,
                 EstaDisponivel = x.EstaDisponivel,
                 MidiaCapaUrl = imageResolver.SelectVehicleCover(x.Midias.Select(ToStorageReference)),
                 MarcaNome = x.MarcaNome,
@@ -160,6 +162,7 @@ public sealed class BuscarVeiculosQueryHandler(
         public Cambio Cambio { get; init; }
         public decimal PrecoVenda { get; init; }
         public bool Destaque { get; init; }
+        public bool Seminovo { get; init; }
         public bool EstaDisponivel { get; init; }
         public IReadOnlyList<MediaProjection> Midias { get; init; } = [];
         public string MarcaNome { get; init; } = string.Empty;

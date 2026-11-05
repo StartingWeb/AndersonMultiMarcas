@@ -56,7 +56,8 @@ public sealed class ImportJobItem : BaseEntity
     }
 
     public bool IsTerminal =>
-        Status is "Concluido" or "Ignorado" or "Erro" or "PendenteRevisao";
+        Status is "Concluido" or "Ignorado" or "PendenteRevisao"
+        || (Status == "Erro" && Tentativas >= MaxTentativas);
 
     public void AttachMedia(int? veiculoMidiaId)
     {
@@ -69,6 +70,12 @@ public sealed class ImportJobItem : BaseEntity
         Erro = string.IsNullOrWhiteSpace(message) ? null : message.Trim();
         FinalizadoEm = null;
         ClearLock();
+    }
+
+    public void RequestRetry(int maxAttempts)
+    {
+        MaxTentativas = checked(Tentativas + Math.Clamp(maxAttempts, 1, 10));
+        MarkPending("Falha reenfileirada por solicitacao do usuario.");
     }
 
     public void MarkRunning(string lockId, DateTime lockExpiresAt)
