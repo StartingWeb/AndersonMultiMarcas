@@ -43,9 +43,9 @@ O script remoto não é rastreado no Git. Ele executa fetch, reset hard para `or
 
 A execução GitHub mais recente observada foi [31761697263](https://github.com/StartingWeb/AndersonMultiMarcas-Release/actions/runs/31761697263), concluída com sucesso em 2026-08-14T01:48:10Z, para `fb8a205...`. O mecanismo antigo permanece ativo; não se deve fazer push no Release como parte desta migração.
 
-## Divergência de código que impede ativação
+## Divergência histórica e recuperação local
 
-Há **26 commits no Release após o último commit da fonte**. São mudanças reais de blobs de DLL e alguns estáticos, sem commits correspondentes de fonte identificados:
+Há **26 commits no Release após o último commit da fonte**. Isso não equivale a 26 funcionalidades independentes: o inventário de blobs, assemblies, estáticos e classificação funcional está em [RECUPERACAO_RELEASE.md](./RECUPERACAO_RELEASE.md). São mudanças reais de blobs de DLL e alguns estáticos, sem commits correspondentes de fonte identificados:
 
 | Grupo | Commits de publicação de referência |
 | --- | --- |
@@ -61,7 +61,7 @@ As DLLs mantêm `1.0.0+162602aa97c58c53ffbec2aad5120219a20de214` na versão info
 
 `wwwroot/css/components.css` diverge entre fonte e Release. `wwwroot/img/home-hero-poster.jpg` só existe no Release. `Project.styles.css` só existe no Release e é normalmente gerado no build. Quatro uploads antigos também estão versionados somente no Release e são excluídos da imagem pelo `.dockerignore` legado. Não sobrepor esses arquivos a mídias vivas automaticamente.
 
-Antes de ativar: localizar a fonte usada nos últimos builds, revisar e integrar as correções necessárias, comparar fluxos funcionais em ambiente isolado e registrar a aprovação para o commit que será publicado. Se a fonte original não for recuperável, estabelecer um plano explícito de reconstrução e equivalência. Não declarar equivalência somente porque a compilação passa.
+A recuperação local preserva os commits `bcabccd` e `cabe741` na branch `feat/unified-cicd-deployment`, reaproveita o executor e atualiza SDK/runtime para .NET 10 LTS. Evidências dos fluxos recuperados ficam em [RECUPERACAO_RELEASE.md](./RECUPERACAO_RELEASE.md) e [VALIDACAO_FUNCIONAL.md](./VALIDACAO_FUNCIONAL.md). Antes de ativar, concluir a revisão humana da matriz e registrar a aprovação para o SHA exato que será publicado. Compilação e semelhança entre métodos não comprovam equivalência funcional.
 
 ## Servidor realmente identificado
 
@@ -114,7 +114,7 @@ Uma amostra de logs da aplicação foi resumida em memória sem expor linhas de 
 
 ## Nova arquitetura e requisitos locais
 
-O pipeline novo está descrito em [CI_CD_DEPLOYMENT.md](./CI_CD_DEPLOYMENT.md): imagem construída no runner, pacote por SHA, SSH com host conhecido, configuração externa, lock, health com identidade de commit e rollback da aplicação. Docker é mantido para aproveitar o runtime, a rede e o proxy existentes.
+A implementação foi adaptada para SDK .NET 10, dependências travadas, SQL Server descartável em CI, imagem oficial ASP.NET 10 Ubuntu 24.04 e ensaios Docker com falhas controladas. O pipeline novo está descrito em [CI_CD_DEPLOYMENT.md](./CI_CD_DEPLOYMENT.md): imagem construída no runner, pacote por SHA, SSH com host conhecido, configuração externa, lock, health com identidade de commit e rollback da aplicação. Docker é mantido para aproveitar o runtime, a rede e o proxy existentes.
 
 A raiz proposta `/opt/startingweb/apps/anderson-multimarcas-unified` é separada do legado. Nenhum diretório foi criado no servidor. Não se muda o origin do checkout Release nem se repõe sua pasta por uma cópia da fonte.
 
@@ -125,9 +125,9 @@ O script recusa controlar um container legado não gerido. A primeira ativação
 ### 1. Aprovação e preparação fora de produção
 
 1. Revisar a branch local e os commits; publicar branch e PR somente com autorização específica.
-2. Reconciliar a fonte com as 26 correções do Release e resolver riscos de autorização e dependências.
+2. Revisar a classificação das diferenças dos 26 commits do Release e as correções de autorização/dependências, com as evidências da recuperação local.
 3. Confirmar CI, testes funcionais, SQL revisável e pacote vinculado ao SHA correto em ambiente isolado.
-4. Testar deploy e falhas de rollback com Docker e configuração descartável, sem SQL ou R2 de produção.
+4. Conferir os ensaios locais já realizados de deploy, falhas de startup/health, imagem inválida, adulteração, transferência/configuração e rollback manual/legado; repetir se o executor mudar. Não usar SQL ou R2 de produção.
 5. Definir responsáveis, janela, critérios de aceitação, retenção e ponto de interrupção.
 
 ### 2. Backups e baseline antes de alterar qualquer serviço

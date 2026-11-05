@@ -1,6 +1,6 @@
 # CI/CD e publicação do AndersonMultiMarcas
 
-Data da investigação: 2026-11-05. Este documento descreve a implementação local e a preparação de uma ativação futura. **Nenhum deploy de produção está autorizado ou habilitado por esta entrega.**
+Atualização: 05/11/2026. Este documento descreve a implementação local e a preparação de uma ativação futura. **Nenhum deploy de produção está autorizado ou habilitado por esta entrega.**
 
 ## Situação e bloqueios
 
@@ -8,12 +8,12 @@ O repositório único é [StartingWeb/AndersonMultiMarcas](https://github.com/St
 
 Os bloqueios de ativação são concretos:
 
-- A publicação legada contém 26 commits posteriores à última revisão da fonte. Antes de substituir produção, recuperar e revisar as correções de lojas/CNPJ, schema, upload R2, catálogo e tag de veículos. A versão informacional das DLLs mantém o SHA antigo e não demonstra equivalência funcional.
-- A auditoria anterior identificou escritas de API sem autenticação, senhas constantes e dependências vulneráveis. CI verde não substitui a correção e a revisão desses riscos.
+- A publicação legada contém 26 commits posteriores à última revisão da fonte. A classificação e a recuperação estão registradas em [RECUPERACAO_RELEASE.md](./RECUPERACAO_RELEASE.md). A aprovação humana da paridade continua obrigatória; a versão informacional das DLLs mantém o SHA antigo e não demonstra equivalência funcional.
+- A auditoria anterior identificou escritas de API sem autenticação, senhas constantes e dependências vulneráveis. As correções e suas regressões são descritas em [VALIDACAO_FUNCIONAL.md](./VALIDACAO_FUNCIONAL.md); CI verde não substitui a revisão funcional e a aprovação para produção.
 - Não foi demonstrado backup recente e restaurável do banco `AndersonMultiMarcas`. O backup diário observado cobre outros sistemas.
 - Não foram configurados Environment, revisores, variáveis, secrets, diretórios ou gates no servidor. O workflow antigo continua ativo.
 - A política de limpeza diária de imagens Docker precisa preservar o baseline de rollback. Arquivos offline das imagens são necessários; tags locais isoladas não são garantia suficiente.
-- O runtime .NET 9 aproxima-se do fim do suporte em 2026-11-10. A migração para uma versão suportada integra os requisitos de ativação; o pipeline mantém .NET 9 para validar a base solicitada. [Política oficial de suporte](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
+- A fonte foi migrada para .NET 10 LTS. O SDK é fixado por [global.json](../global.json), e a imagem oficial ASP.NET 10 usa Ubuntu 24.04 e digest imutável. O ambiente legado continua em .NET 9 até um corte futuro autorizado. [Política oficial de suporte](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
 
 Veja a investigação e o plano de corte em [MIGRACAO_REPOSITORIOS.md](./MIGRACAO_REPOSITORIOS.md) e a recuperação em [ROLLBACK_PRODUCAO.md](./ROLLBACK_PRODUCAO.md).
 
@@ -62,11 +62,11 @@ Os nomes incluem a tentativa da execução: `app-<SHA>-<tentativa-CI>` e `releas
 
 ## CI
 
-O workflow [ci.yml](../.github/workflows/ci.yml) executa em pull requests, pushes em branches e acionamento manual. As etapas incluem checkout, setup do SDK .NET 9.0.320, restore, build Release, testes .NET, testes dos scripts Python, validações de segurança e geração offline de SQL idempotente revisável. Resultados de testes e relatórios são preservados também quando as verificações falham.
+O workflow [ci.yml](../.github/workflows/ci.yml) executa em pull requests, pushes em branches e acionamento manual. As etapas incluem checkout, setup do SDK .NET 10 definido em [global.json](../global.json), restore com `--locked-mode`, build Release, testes .NET, testes dos scripts Python, validações de segurança, ensaios Docker e geração offline de SQL idempotente revisável. Resultados de testes e relatórios são preservados também quando as verificações falham. Todos os pushes e pull requests constroem a imagem real `linux/amd64`, verificam arquitetura/usuário e ensaiam deploy/rollback isolado; somente um push validado da `main` disponibiliza o artefato para a CD.
 
-A verificação NuGet inclui dependências transitivas. Vulnerabilidades de severidade alta ou crítica reprovam a CI e impedem a criação do artefato de publicação; não há supressão automática para fazer o pipeline ficar verde. O inventário anterior de vulnerabilidades deve ser tratado como dívida conhecida, não como justificativa para ignorar o gate.
+Os arquivos `packages.lock.json` versionados fixam as dependências transitivas e são conferidos pelo restore. O restore também trata NU1901–NU1904 como erro e audita todo o grafo. A verificação NuGet explícita inclui dependências transitivas. Vulnerabilidades de severidade alta ou crítica reprovam a CI e impedem a criação do artefato de publicação; não há supressão automática para fazer o pipeline ficar verde. Nenhum gate de vulnerabilidade ou integridade pode ser desabilitado para permitir publicação. A instrução de manter gates desativados por padrão aplica-se aos interruptores de ativação de produção; as verificações de segurança ficam sempre ativas.
 
-Os scripts de migration são gerados com uma factory de design time, sem abrir conexão com banco real e sem executar a inicialização da aplicação. A geração do SQL não afirma que o schema de produção seja compatível: há migrations legadas inconsistentes e operações potencialmente destrutivas a revisar.
+A CI inicia SQL Server 2022 descartável no loopback do runner, com senha aleatória mascarada, e fornece `ANDERSON_TEST_SQL` aos testes de migrations. Falha de prontidão reprova o job; os testes de banco não são silenciosamente ignorados na CI. A limpeza final remove somente esse container e seus volumes anônimos. A geração de SQL usa uma factory de design time, sem conectar ao banco ou executar a inicialização da aplicação. A geração do SQL e o banco sintético não afirmam compatibilidade com os dados reais de produção, que ainda exigem cópia restaurada e revisão.
 
 Permissões de workflow são mínimas. Actions devem permanecer fixadas por commit confiável; atualizações de seus SHAs devem passar por revisão. O job que prepara o artefato não recebe credenciais de produção.
 
@@ -186,6 +186,7 @@ Esse exemplo não foi executado em produção. Usar o script correspondente à v
 | [Dockerfile](../deploy/Dockerfile) | Runtime oficial fixado por digest e configuração segura de startup |
 | [application_manifest.py](../scripts/ci/application_manifest.py) | Manifesto e checksums da aplicação publicada |
 | [package_release.py](../scripts/ci/package_release.py) | Exportação da imagem e manifesto da release |
+| [test_runtime_image.py](../scripts/ci/test_runtime_image.py) | Startup real sem rede/DB, health, estáticos, WebP nativo e recusa de migrations em produção |
 | [check_vulnerabilities.py](../scripts/ci/check_vulnerabilities.py) | Gate por severidade, incluindo dependências transitivas |
 | [verify_environment.py](../scripts/ci/verify_environment.py) | Validação por API de revisores, prevenção de autoaprovação e regra main; exige a declaração de revisão manual do bypass |
 | [deliver.py](../scripts/ci/deliver.py) | SSH/SCP com host conhecido, verificação do executor e health público |
@@ -215,38 +216,51 @@ Alteração de banco é uma atividade independente do deploy da aplicação:
 
 Nenhum script de deploy ou rollback executa SQL remoto. Voltar a imagem não reverte o banco. Restauração de backup ou correção de schema exige um plano próprio, avaliação de perda de dados e autorização explícita.
 
-Riscos concretos da cadeia atual: a conversão Identity string→Guid altera colunas sob PK/FK sem removê-las/recriá-las; o reparo `RepairMissingAuditColumns` não é descoberto pelo EF; saneamentos atribuem defaults e a primeira loja/marca sem reversão; alguns Down apagam tabelas/histórico/contadores e outros são vazios. O diagnóstico anterior identificou dez arquivos de migration e somente nove descobertos. Esta implementação não corrige essas migrations nem aplica o SQL gerado. Backup e restauração isolada devem preceder qualquer autorização de alteração de schema. A documentação Microsoft recomenda revisão dos scripts e separar privilégios de atualização do schema dos usados em runtime: [Applying Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying).
+A auditoria encontrou conversão Identity string→Guid sob PK/FK e uma migration de auditoria não descoberta. A cadeia foi corrigida e recebe regressões de banco descartável em [SqlServerMigrationTests.cs](../Project.Tests/Database/SqlServerMigrationTests.cs): criação, reaplicação idempotente, preservação de chaves/relacionamentos e recusa de IDs legados incompatíveis. Operações históricas de saneamento e Down continuam exigindo revisão. Backup e restauração isolada de uma cópia representativa devem preceder qualquer autorização de alteração de schema. A documentação Microsoft recomenda revisão dos scripts e separar privilégios de atualização do schema dos usados em runtime: [Applying Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying).
 
 ## Validação e pendências
 
-Validação executada no Mac em 05/11/2026, SDK 9.0.320/runtime 9.0.22 isolados:
+Validação local em 05/11/2026; os resultados completos da aplicação, dependências e banco estão em [VALIDACAO_FUNCIONAL.md](./VALIDACAO_FUNCIONAL.md). Os resultados desta frente de entrega são:
 
 | Verificação | Resultado |
 | --- | --- |
-| Restore da solução | Aprovado, incluindo Project.Tests |
-| Build Release | Aprovado: zero erros, seis warnings NuGet de ImageSharp |
-| Testes .NET | **61 aprovados, zero falhos, zero ignorados**: 51 anteriores e dez casos novos de segurança do startup/metadados/design time |
-| Testes dos helpers de CI/entrega | **15 aprovados**, incluindo revisão de Environment, checksums, rejeição de identidade incorreta, resposta pública inválida e chamada de rollback |
-| Testes unitários do executor | **30 aprovados**, incluindo locks, adulteração, journal, recuperação, configurações imutáveis, ausência de vazamento e retorno ao legado após primeira publicação |
-| Docker real isolado | **Aprovado**: duas publicações, candidato com HTTP503 e recuperação automática, rollback por arquivo preservado e retorno ao legado; todos os recursos tinham prefixo/label exclusivo e foram removidos/conferidos |
-| YAML e shell | actionlint1.7.12, ShellCheck0.11.0 e bash -n aprovados; binários locais verificados por checksum, sem instalação global |
-| Geração EF | Aprovada: SQL idempotente com106326 bytes, sem conexão nem execução de migrations |
-| Startup em Production com opt-in de migrations | Recusado antes de procurar conexão; nenhum banco acessado |
-| Publicação .NET em diretório local | Aprovada; sem copiar arquivos ao servidor |
-| Dockerfile e pacote reais da aplicação | Build linux/amd64 aprovado, usuário app; 264 arquivos publicados com checksums verificados e imagem exportada em arquivo de154841836 bytes; não iniciada a aplicação nem acessado SQL/R2 |
-| Gate NuGet | **Reprovado corretamente**: nove advisories distintos, sete altos e dois moderados; não foi contornado |
+| Helpers CI/entrega | **18 aprovados**, zero falhos: Environment, checksums, identidade, resposta pública inválida, transferência interrompida, rollback e remoção de chaves temporárias |
+| Helpers de banco local e codificação | **Cinco aprovados**: quatro casos de identidade/isolamento/configuração e uma regressão de texto UTF-8 |
+| Executor de deploy | **32 aprovados**, zero falhos: locks, gates, adulteração, journal, recuperação, snapshots imutáveis, variáveis sem distinção de caixa, ausência de vazamento e legado |
+| Docker real descartável | **Nove cenários aprovados**, incluindo deploy, falhas de startup/health, imagem inválida, adulteração, configuração insegura, transferência interrompida, rollback manual e retorno ao legado |
+| Limpeza Docker | Conferida ausência de containers, redes, volumes e tags da execução `amm-smoke-86553c56c28d` |
+| YAML e scripts embutidos | actionlint 1.7.12 e ShellCheck 0.11.0 aprovados |
+| Wrappers shell | ShellCheck e `bash -n` aprovados |
+| Imagem real .NET 10 | Build `linux/amd64`, usuário `app`; cinco verificações aprovadas: startup Production com rede desabilitada/banco sintético, health com commit, PNG publicado, conversão nativa WebP e recusa de migrations automáticas |
+| WebP nativo Linux | HTTP 200 `image/webp`, assinatura RIFF/WEBP, 4.886 bytes; sem biblioteca de sistema adicional além do runtime/curl |
+| Pacote real | 273 arquivos de publish verificados por SHA-256; pacote de 284.738.485 bytes exportado/revalidado/carregado localmente, sem SSH |
+| Regressões StoragePath | 12 aprovadas: caminhos web absolutos, query string, URLs legadas/públicas; traversal, file URI e protocol-relative recusados |
+| Verificação de segredos | Gitleaks 8.30.1: diff HEAD e 56 arquivos textuais não rastreados, 561.387 bytes, zero achados; `.cache` excluído, sem supressões |
+| Publicação remota | Desabilitada; nenhum workflow foi enviado ou executado no GitHub nesta recuperação |
 
-Quatro advisories altos e dois moderados são do ImageSharp em runtime. Outros três altos são das versões8 do grafo privado de tooling de Core; o runtime web seleciona versões9, conforme a auditoria anterior. O gate é deliberadamente estrito e também inclui tooling. A CI completa do commit atual deve falhar nessa etapa até correção revisada; não haverá artefato de publicação nem CD de produção bem-sucedida nesse estado.
+O ensaio Docker usa uma aplicação nginx/curl descartável. As falhas de transferência são injetadas na fronteira SSH/SCP, sem conexão remota; a aplicação anterior permanece no daemon Docker real e sua identidade/health são conferidos após a falha. O smoke comprova o ciclo do executor; SQL, R2, NPM e paridade do Anderson possuem validações próprias.
 
-O smoke real usa uma aplicação HTTP descartável, não o Anderson com SQL/R2. Ele prova o ciclo Docker do executor em ambiente seguro, não paridade funcional, credenciais, proxy/NPM ou prontidão de produção. Comando reprodutível:
+Comandos reprodutíveis:
 
 ```sh
 python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
 python3 -m unittest discover -s scripts/deploy/tests -p 'test_*.py' -v
+python3 scripts/ci/validate_workflows.py
+shellcheck scripts/deploy/release.sh scripts/deploy/rollback.sh
+bash -n scripts/deploy/release.sh scripts/deploy/rollback.sh
+# Após construir a imagem da aplicação, com o SHA revisado no label:
+python3 scripts/ci/test_runtime_image.py \
+  --image IMAGEM_LOCAL_REVISADA --commit SHA_COMPLETO \
+  --report .cache/cicd-results/runtime-image.json
 python3 scripts/deploy/tests/smoke_docker.py \
-  --base-image nginx@sha256:30f1c0d78e0ad60901648be663a710bdadf19e4c10ac6782c235200619158284
+  --base-image nginx@sha256:30f1c0d78e0ad60901648be663a710bdadf19e4c10ac6782c235200619158284 \
+  --report .cache/cicd-results/deploy-smoke.json
 ```
 
-Logs/TRX/SQL/scan locais ficam na pasta ignorada `.cache/cicd-results`; os workflows publicarão seus próprios artefatos de evidência após uma execução futura no GitHub. Não houve execução real dos workflows no GitHub porque push e alterações remotas não foram autorizados. Environment e secrets não foram criados; a validação das regras foi testada com respostas simuladas, não com acesso autenticado ao novo Environment.
+O relatório `runtime-image.json` registra cinco verificações da imagem real e a ausência dos containers ao final; `deploy-smoke.json` registra os nove cenários do executor e a limpeza. A validação local usa o snapshot compilado da worktree, com o commit base no label; esse rótulo não comprova autoria das alterações ainda não commitadas. Um artefato de produção deve ser reconstruído pela CI a partir do commit final revisado. O ensaio real encontrou e corrigiu um erro específico de Unix: `/img/carroDefault.png` era interpretado como URI `file:` por `StoragePath` e fazia a otimização devolver 404. A regressão agora é exercitada por testes e pelo request WebP dentro do container.
+
+O relatório JSON guarda o resultado de cada cenário e a verificação de limpeza. Logs/TRX/SQL/auditoria locais ficam na pasta ignorada `.cache/cicd-results`; os workflows publicam seus próprios artefatos após uma execução futura autorizada no GitHub. O relatório não contém configuração real, chaves SSH ou credenciais. Os ensaios não executam migrations, importações de mídia, prune ou remoção de volumes de aplicações existentes.
+
+Environment e secrets não foram criados; as regras do Environment foram testadas com respostas simuladas. A produção permanece bloqueada pelas variáveis ausentes, pelas aprovações humanas e pelos gates locais. Backup restaurável do banco correto, reconferência da instalação e autorização do corte continuam pendentes conforme [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md).
 
 Nenhum teste usa o banco de produção. Não houve push, PR ou merge, nem deploy, migrations, reinicializações ou alterações de configuração em produção.

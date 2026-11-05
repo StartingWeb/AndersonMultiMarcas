@@ -10,9 +10,9 @@ A publicação só deve admitir mudanças de schema compatíveis com a versão a
 
 O estado saudável de `/health` significa liveness. A confirmação do retorno exige também `/health/release`, identidade esperada quando disponível, HTTPS público e validação operacional dos fluxos pertinentes.
 
-## Baseline legado confirmado
+## Baseline legado da auditoria histórica
 
-Antes da primeira release do novo mecanismo, o retorno precisa funcionar mesmo sem uma release unificada anterior:
+Antes da primeira release do novo mecanismo, reconfirmar os valores observados abaixo. O retorno precisa funcionar mesmo sem uma release unificada anterior:
 
 | Identificador | Valor observado |
 | --- | --- |
@@ -34,7 +34,7 @@ Hashes de assemblies do checkout e do container foram correlacionados:
 | Data.dll | `9f0ee59eff1755afdb284313d4c4442dcd985b9d78f0a1e9929d8cc03fbba51f` |
 | Domain.dll | `351cc864850c26042435010565068716c5c150e03aa43f987cdbb5877a1a0c13` |
 
-Não confiar exclusivamente na tag `latest` nem no SHA de fonte embutido nas DLLs. A fonte não contém os 26 commits posteriores do Release. Reter a imagem pelo conteúdo e o pacote offline, junto à configuração correspondente.
+Não confiar exclusivamente na tag `latest` nem no SHA de fonte embutido nas DLLs. Os 26 commits posteriores de publicação não têm commits de fonte correspondentes; a matriz de recuperação em [RECUPERACAO_RELEASE.md](./RECUPERACAO_RELEASE.md) registra a reconciliação local. Reter a imagem pelo conteúdo e o pacote offline, junto à configuração correspondente.
 
 ## Preparação obrigatória antes do corte
 
@@ -118,4 +118,4 @@ Antes de considerar o novo fluxo operacional, testar isoladamente:
 - Retorno manual a release preservada e falha explícita para alvo inexistente.
 - Configuração/volume DP preservados e nenhum comando de banco executado.
 
-Foram executados 30 testes unitários do executor e um ensaio com Docker real local, incluindo duas publicações, candidato com HTTP503, recuperação automática, rollback por arquivo e retorno ao legado. Todos os recursos tinham prefixo/label exclusivo e sua limpeza foi conferida. Os 15 testes dos helpers de CI/entrega também cobrem resposta pública inválida e solicitação de rollback. Veja resultados/comando em [CI_CD_DEPLOYMENT.md](./CI_CD_DEPLOYMENT.md). O smoke usa uma aplicação HTTP descartável: não comprova paridade do Anderson nem integração com NPM/SQL/R2 de produção. Esses ensaios permanecem pendentes para uma etapa autorizada após os bloqueios de segurança, fonte e backup serem resolvidos.
+Foram executados **32 testes unitários do executor**, **18 testes dos helpers CI/entrega** e **nove cenários com Docker real local**: deploy válido; falhas de inicialização e HTTP503 com recuperação automática; imagem inválida; pacote adulterado; configuração com migrations habilitadas; transferência interrompida; rollback manual por arquivo; retorno ao mesmo container legado simulado. Falha de SSH/SCP foi injetada na fronteira de processo, sem contato remoto, com verificação posterior da aplicação no Docker real. Todos os recursos tinham prefixo/label exclusivo e a ausência de containers, redes, volumes e tags foi conferida ao final. Os testes cobrem resposta pública inválida, solicitação de rollback e destruição das chaves temporárias. Veja resultados/comando em [CI_CD_DEPLOYMENT.md](./CI_CD_DEPLOYMENT.md). O smoke usa uma aplicação HTTP descartável: não comprova paridade do Anderson nem integração com NPM/SQL/R2 de produção. A validação operacional com proxy real, cópia restaurada do banco e configuração de R2 permanece pendente para uma etapa autorizada; o ensaio isolado não habilita a publicação.
