@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '9.0.320'
+      - name: Restore
+        run: dotnet restore Project/AndersonMultiMarcas.slnx
+      - name: Build Release
+        run: dotnet build Project/AndersonMultiMarcas.slnx --configuration Release --no-restore
+      - name: Automated .NET tests
+        run: dotnet test Project.Tests/Project.Tests.csproj --configuration Release --no-build --no-restore --logger 'trx;LogFileName=tests.trx' --results-directory artifacts/test-results
+      - name: Deployment and security tests (offline)
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
+          python3 -m unittest discover -s scripts/deploy/tests -p 'test_*.py' -v
+          bash -n scripts/deploy/release.sh scripts/deploy/rollback.sh
+          shellcheck scripts/deploy/release.sh scripts/deploy/rollback.sh
+      - name: Validate workflow YAML and embedded scripts
+        run: python3 scripts/ci/validate_workflows.py
+      - name: Generate reviewable SQL without database access
+        run: |
+          dotnet tool restore
+          mkdir -p artifacts/migrations
+          dotnet ef migrations script --idempotent --project Data/Data.csproj --startup-project Project/Project.csproj --configuration Release --no-build --output artifacts/migrations/review-required.sql
+      - name: Audit all NuGet dependencies
+        run: |
+          mkdir -p artifacts/security
+          dotnet list Project/AndersonMultiMarcas.slnx package --vulnerable --include-transitive --format json > artifacts/security/nuget.json
+          python3 scripts/ci/check_vulnerabilities.py artifacts/security/nuget.json
+      - name: Prepare application artifact from this exact commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+          CI_RUN_ID: ${{ github.run_id }}
+        run: |
+          dotnet publish Project/Project.csproj --configuration Release --no-build --no-restore --output artifacts/application/publish
+          python3 scripts/ci/application_manifest.py create --application artifacts/application --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID"
+      - name: Store immutable application artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: app-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/application/
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+      - name: Publish test, SQL and vulnerability evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/test-results/
+            artifacts/security/
+            artifacts/migrations/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Failure report
+        if: failure()
+        run: echo 'CI failed. Inspect job logs and ci-evidence artifacts; no production deployment is permitted.' >> "$GITHUB_STEP_SUMMARY"

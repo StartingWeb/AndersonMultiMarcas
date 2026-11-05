@@ -70,3 +70,7 @@ appsettings.Development.json
 # Cache
 # =========================
 .cache/
+
+# Deployment validation helpers
+__pycache__/
+*.py[cod]

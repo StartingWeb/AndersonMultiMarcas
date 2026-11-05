@@ -1,0 +1,106 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: anderson-unified-production
+  cancel-in-progress: false
+
+jobs:
+  package:
+    outputs:
+      artifact_id: ${{ steps.release-artifact.outputs.artifact-id }}
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.id == github.event.repository.id
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SOURCE_COMMIT: ${{ github.event.workflow_run.head_sha }}
+      CI_RUN_ID: ${{ github.event.workflow_run.id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Refuse stale or unexpected source
+        run: |
+          test "$GITHUB_REPOSITORY" = StartingWeb/AndersonMultiMarcas
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+          test "$(git rev-parse origin/main)" = "$SOURCE_COMMIT"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: app-${{ github.event.workflow_run.head_sha }}-${{ github.event.workflow_run.run_attempt }}
+          path: artifacts/application
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Verify CI provenance and application checksums
+        run: python3 scripts/ci/application_manifest.py verify --application artifacts/application --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID"
+      - name: Build runtime image on runner, never on production server
+        run: docker build --platform linux/amd64 --file deploy/Dockerfile --build-arg COMMIT_SHA="$SOURCE_COMMIT" --tag "andersonmultimarcas-unified:$SOURCE_COMMIT" artifacts/application
+      - name: Prepare versioned delivery bundle
+        run: python3 scripts/ci/package_release.py --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID" --output artifacts/bundle
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        id: release-artifact
+        with:
+          name: release-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/bundle/
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: false
+      - name: Deployment remains disabled until explicitly authorized
+        run: echo 'Bundle ready. Production additionally requires enablement, source parity, protected Environment and server gates.' >> "$GITHUB_STEP_SUMMARY"
+
+  production:
+    needs: package
+    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true' && vars.PRODUCTION_SOURCE_PARITY_CONFIRMED == 'true' && vars.PRODUCTION_ADMIN_BYPASS_REVIEWED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: production
+    env:
+      SOURCE_COMMIT: ${{ github.event.workflow_run.head_sha }}
+      CI_RUN_ID: ${{ github.event.workflow_run.id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce Environment reviewers and main-only deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCTION_ADMIN_BYPASS_REVIEWED: ${{ vars.PRODUCTION_ADMIN_BYPASS_REVIEWED }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+          test "$(git rev-parse origin/main)" = "$SOURCE_COMMIT"
+          python3 scripts/ci/verify_environment.py
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.package.outputs.artifact_id }}
+          path: artifacts/bundle
+          merge-multiple: true
+      - name: Deliver, verify health and rollback on failure
+        env:
+          DEPLOY_ROOT: /opt/startingweb/apps/anderson-multimarcas-unified
+          PRODUCTION_PUBLIC_HEALTH_URL: ${{ vars.PRODUCTION_PUBLIC_HEALTH_URL }}
+          PRODUCTION_SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          PRODUCTION_SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          PRODUCTION_SSH_PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
+          PRODUCTION_SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          PRODUCTION_SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: python3 scripts/ci/deliver.py --bundle artifacts/bundle
+      - name: Failure report
+        if: failure()
+        run: echo 'Production job failed. Inspect server journal/history and confirm restored application; never roll back the database automatically.' >> "$GITHUB_STEP_SUMMARY"
