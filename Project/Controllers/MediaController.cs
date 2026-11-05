@@ -6,11 +6,8 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Project.Infrastructure.Storage;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using ImageMagick;
+using Project.Infrastructure.Images;
 
 namespace Project.Controllers;
 
@@ -74,22 +71,9 @@ public sealed class MediaController(
 
             await using var input = await OpenRequestedOrDefaultAsync(storageKey, ct)
                 ?? throw new FileNotFoundException("Imagem nao encontrada no storage.", storageKey);
-            using var image = await Image.LoadAsync(input, ct);
-            image.Mutate(ctx =>
-            {
-                ctx.AutoOrient();
-
-                if (width > 0 && image.Width > width)
-                {
-                    var height = (int)Math.Round(image.Height * (width / (double)image.Width));
-                    ctx.Resize(new ResizeOptions
-                    {
-                        Mode = ResizeMode.Max,
-                        Sampler = KnownResamplers.Lanczos3,
-                        Size = new Size(width, height)
-                    });
-                }
-            });
+            using var image = await SafeRasterImage.ReadAsync(input, ct);
+            if (width > 0 && image.Width > width)
+                image.Resize(new MagickGeometry((uint)width, 0));
 
             await using var output = new MemoryStream();
             var contentType = await SaveImageAsync(image, output, format, quality, ct);
@@ -160,33 +144,22 @@ public sealed class MediaController(
     private static string NormalizeFormat(string extension)
         => extension.Equals(".png", StringComparison.OrdinalIgnoreCase) ? "png" : "jpeg";
 
-    private static async Task<string> SaveImageAsync(Image image, Stream output, string format, int quality, CancellationToken ct)
+    private static async Task<string> SaveImageAsync(MagickImage image, Stream output, string format, int quality, CancellationToken ct)
     {
-        if (string.Equals(format, "webp", StringComparison.OrdinalIgnoreCase))
+        image.Quality = (uint)quality;
+        var outputFormat = format switch
         {
-            await image.SaveAsWebpAsync(output, new WebpEncoder
-            {
-                Quality = quality,
-                FileFormat = WebpFileFormatType.Lossy,
-                Method = WebpEncodingMethod.BestQuality
-            }, ct);
-            return "image/webp";
-        }
-
-        if (string.Equals(format, "png", StringComparison.OrdinalIgnoreCase))
+            "webp" => MagickFormat.WebP,
+            "png" => MagickFormat.Png,
+            _ => MagickFormat.Jpeg
+        };
+        await image.WriteAsync(output, outputFormat, ct);
+        return outputFormat switch
         {
-            await image.SaveAsPngAsync(output, new PngEncoder
-            {
-                CompressionLevel = PngCompressionLevel.Level6
-            }, ct);
-            return "image/png";
-        }
-
-        await image.SaveAsJpegAsync(output, new JpegEncoder
-        {
-            Quality = quality
-        }, ct);
-        return "image/jpeg";
+            MagickFormat.WebP => "image/webp",
+            MagickFormat.Png => "image/png",
+            _ => "image/jpeg"
+        };
     }
 
     private sealed record OptimizedImagePayload(byte[] Bytes, string ContentType);
