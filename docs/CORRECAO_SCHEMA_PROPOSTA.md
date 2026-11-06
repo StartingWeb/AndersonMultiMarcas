@@ -49,3 +49,11 @@ Os dois scripts foram enviados somente à instância SQL isolada usada para ensa
 - O banco produtivo foi consultado somente para metadados/agregados. Nenhum dado real saiu da VPS. Recursos de teste foram identificados por labels exclusivas e removidos ao término.
 
 Recibo do ensaio real: `/opt/startingweb/apps/anderson-multimarcas-unified/snapshots/amm-restore-a2483165e38b/restore-report.json`. SHA-256 da ampliação: `1fa8984cc3e5cbda2de0c4831f62c7675fb7a8ee5a62be236e2453a6bff53c6d`. A proposta não habilita deploy, aplica migrations no startup, altera proxy ou interrompe o legado.
+
+## Reavaliação em 06/11/2026
+
+O diagnóstico foi repetido por auditoria somente leitura e está detalhado em [COMPATIBILIDADE_BINARIOS_2026-11-06.md](./COMPATIBILIDADE_BINARIOS_2026-11-06.md), com evidências sanitizadas. O ensaio completo antigo → ampliação/proposta opcional → novo → rollback passou com 78 checkpoints, nove negativas SQL e DBCC, incluindo escrita máxima pela nova aplicação seguida de edição pelo binário antigo sem truncamento. Todos os recursos descartáveis foram removidos.
+
+A PR agora prepara uma alternativa **opcional** para diferenciar o ID técnico 4 sem apagar registros/mover referências, com ledger privado e undo restrito à cópia. A escolha do rótulo continua sendo decisão funcional. A criação do índice também recusa definição existente inesperada antes de removê-lo. São propostas, não autorização de DML/DDL produtivo; o schema real e os duplicados permanecem intactos e bloqueiam ativação.
+
+Usuário/grants runtime e mecanismo de credencial pertencem à PR #2. O harness recebe aquele SQL como insumo revisado; nenhuma senha foi incorporada a esta PR. A matriz usa Local storage e não aprova R2 real. Os dois PRs precisam de revisão independente; não fazer merge automaticamente.

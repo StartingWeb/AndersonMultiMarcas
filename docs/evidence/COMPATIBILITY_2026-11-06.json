@@ -1,0 +1,212 @@
+{
+  "backup_sha256": "a566d73fa4526ea9a940c8c2ea0805422e2963cdd61df0a9ca96af2c2ab19ecf",
+  "checkpoint_count": 78,
+  "cleanup": {
+    "containers": [],
+    "networks": [],
+    "volumes": []
+  },
+  "completed_at": "2026-11-06T03:12:20.975064+00:00",
+  "dbcc_checkdb": "passed",
+  "external_storage_requests": 0,
+  "legacy_image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+  "negative_permissions": [
+    {
+      "denied": true,
+      "errors": [
+        "262"
+      ],
+      "operation": "create_table"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "1088"
+      ],
+      "operation": "alter_table"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "3701"
+      ],
+      "operation": "drop_table"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "15247"
+      ],
+      "operation": "create_user"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "15247"
+      ],
+      "operation": "create_login"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "15151"
+      ],
+      "operation": "grant"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "15151"
+      ],
+      "operation": "server_role"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "262"
+      ],
+      "operation": "create_database"
+    },
+    {
+      "denied": true,
+      "errors": [
+        "2571"
+      ],
+      "operation": "admin_dbcc"
+    }
+  ],
+  "new_application_source_commit": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+  "new_image": "sha256:08b3ab8301d123f5b99e359bc7ec5bb4c94a28b678f38aef7706fffe6b62680f",
+  "note": "Restored copy stays on the authorized VPS. Local storage only. Final CI also tests stricter unexpected-index refusal guards.",
+  "optional_rename_and_unique_index": "passed_on_copy_only",
+  "original_snapshot_sha256": "8ceab8ae0f0cafc59196a08bfe0a05114aaad806323a64e92e87cc2d2e80cb52",
+  "phases": [
+    {
+      "checks": [
+        "startup_without_schema_changes",
+        "public_read_routes",
+        "synthetic_identity_login_with_restricted_sql",
+        "store_create",
+        "store_edit_read",
+        "brand_create",
+        "brand_edit_read",
+        "seller_create",
+        "seller_edit_read",
+        "vehicle_create",
+        "vehicle_edit_read",
+        "upload_reference_and_bytes",
+        "vehicle_public_queries",
+        "physical_media_row_delete",
+        "veiculo_logical_delete",
+        "vendedor_logical_delete",
+        "marca_logical_delete",
+        "loja_logical_delete",
+        "prior_binary_media_reference_compatibility"
+      ],
+      "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+      "passed": true,
+      "phase": "old_original",
+      "schema_widened": false
+    },
+    {
+      "checks": [
+        "startup_without_schema_changes",
+        "public_read_routes",
+        "synthetic_identity_login_with_restricted_sql",
+        "store_create",
+        "store_edit_read",
+        "brand_create",
+        "brand_edit_read",
+        "seller_create",
+        "seller_edit_read",
+        "vehicle_create",
+        "vehicle_edit_read",
+        "upload_reference_and_bytes",
+        "vehicle_public_queries",
+        "physical_media_row_delete",
+        "veiculo_logical_delete",
+        "vendedor_logical_delete",
+        "marca_logical_delete",
+        "loja_logical_delete",
+        "prior_binary_media_reference_compatibility"
+      ],
+      "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+      "passed": true,
+      "phase": "old_widened",
+      "schema_widened": true
+    },
+    {
+      "checks": [
+        "startup_without_schema_changes",
+        "public_read_routes",
+        "synthetic_identity_login_with_restricted_sql",
+        "store_create",
+        "store_edit_read",
+        "brand_create",
+        "brand_edit_read",
+        "seller_create",
+        "seller_edit_read",
+        "vehicle_create",
+        "vehicle_edit_read",
+        "upload_reference_and_bytes",
+        "vehicle_public_queries",
+        "physical_media_row_delete",
+        "new_binary_writes_expanded_column_limits",
+        "veiculo_logical_delete",
+        "vendedor_logical_delete",
+        "marca_logical_delete",
+        "loja_logical_delete",
+        "prior_binary_media_reference_compatibility"
+      ],
+      "image": "sha256:08b3ab8301d123f5b99e359bc7ec5bb4c94a28b678f38aef7706fffe6b62680f",
+      "passed": true,
+      "phase": "new_widened",
+      "schema_widened": true
+    },
+    {
+      "checks": [
+        "startup_without_schema_changes",
+        "public_read_routes",
+        "synthetic_identity_login_with_restricted_sql",
+        "old_binary_edits_new_maximum_length_values_without_truncation",
+        "store_create",
+        "store_edit_read",
+        "brand_create",
+        "brand_edit_read",
+        "seller_create",
+        "seller_edit_read",
+        "vehicle_create",
+        "vehicle_edit_read",
+        "upload_reference_and_bytes",
+        "vehicle_public_queries",
+        "physical_media_row_delete",
+        "veiculo_logical_delete",
+        "vendedor_logical_delete",
+        "marca_logical_delete",
+        "loja_logical_delete",
+        "prior_binary_media_reference_compatibility"
+      ],
+      "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+      "passed": true,
+      "phase": "old_binary_rollback",
+      "schema_widened": true
+    }
+  ],
+  "production_writes": 0,
+  "rename_undo_idempotent": true,
+  "run": "76c9228e388b",
+  "source_hashes": {
+    "AUDIT_MARCA_CONFLICTS.sql": "e552401dd8ce3a63193f94f528f31b73732cb54f053766c557b0cb7ac9b8bc6a",
+    "EXPAND_STORAGE_PROPOSAL.sql": "1fa8984cc3e5cbda2de0c4831f62c7675fb7a8ee5a62be236e2453a6bff53c6d",
+    "MARCA_NOME_UNIQUE_PROPOSAL.sql": "f97afe599cdb5a12f3adb4e6ceb82b76fcfe810cd39eb25106f1aaac4576fddf",
+    "RENAME_UNREFERENCED_MARCA_PROPOSAL.sql": "0d0c10f0b142b7d9eefabfb8f21c72bd509110a9974d19c9fc88f49c931da4fb",
+    "UNDO_MARCA_RENAME_TRIAL.sql": "7ff745f931a9ea1592911560a3230a22d0ee9785335b259d6e9f5e8730843bc3",
+    "rehearse.py": "19da53820c334c5fabb64cb87f41ce4bd4c504af93160c6363d9848b3bd210f2",
+    "runtime_permissions_trial.sql": "3b3efb13745ff6b13d5c288349bdac0f3f534af165fb6b77f74c515c372710e4"
+  },
+  "started_at": "2026-11-06T03:08:59.872564+00:00",
+  "status": "passed",
+  "unique_index_before_resolution": true,
+  "widening_idempotent": true,
+  "widening_preserves_counts": true
+}
