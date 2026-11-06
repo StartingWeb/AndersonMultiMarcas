@@ -69,7 +69,7 @@ A imagem legada foi exportada e verificada por SHA, blobs e docker load. Consult
 ## Verificação e limites
 
 - Build local .NET 10: zero erros/avisos; 184/184 testes locais passaram nesta revisão, incluindo SQL descartável, sem skips. O helper local foi corrigido para não contaminar os hosts de teste com migrations/bootstrap de Development.
-- **93 testes Python passaram nesta revisão**: 28 de CI/segurança, 40 de arquivo OCI/transações de deploy e 25 de operação. Os testes de operação foram incluídos na CI.
+- **95 testes Python passaram nesta revisão**: 28 de CI/segurança, 42 de arquivo OCI/transações de deploy e 25 de operação. Os testes de operação foram incluídos na CI.
 - Nove cenários Docker locais passaram com limpeza conferida: publicação, falhas de startup/health, pacote inválido/adulterado, configuração insegura, transferência interrompida, rollback por arquivo e retorno ao legado simulado.
 - O artefato .NET real foi carregado no VPS, ligado somente à cópia SQL interna e verificado sem credenciais produtivas, jobs externos ou migrations na cópia original. DP persistiu entre containers de teste.
 - HTTPS válido e `/health=200` foram confirmados nos três domínios. `/health/release=404` continua sendo a resposta do legado; a nova release deve responder com seu commit após um corte autorizado.
@@ -88,3 +88,5 @@ As simulações de CI aprovado/reprovado e branch são verificações das condi�
 Evidências finais de testes e CI desta revisão estão na PR #2 e em [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md). Não usar o CI antigo como aprovação de um commit novo.
 
 CI atualizado: [execuções desta branch](https://github.com/StartingWeb/AndersonMultiMarcas/actions/workflows/ci.yml?query=branch%3Ainfra%2Fproduction-preparation). O resultado do SHA final é registrado na PR #2; não executar CD produtivo para validar essa preparação.
+
+O runtime privado ainda herda login SQL `sa`; a nova validação recusa esse login e ausência de identidade explícita. Uma credencial dedicada com privilégios mínimos precisa ser autorizada/preparada antes da ativação. Essa validação não prova os grants de qualquer outro usuário: eles exigem revisão. Nenhum usuário/grant produtivo foi modificado.

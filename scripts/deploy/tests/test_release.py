@@ -140,7 +140,7 @@ class ReleaseTests(unittest.TestCase):
             "StorageMigration__Execute=false", "LegacyImageImport__RecoverPendingJobsOnStartup=false",
             "Storage__Provider=R2", "DataProtection__ApplicationName=AndersonMultiMarcas",
             "DataProtection__KeysPath=" + release.DP_PATH,
-            "ConnectionStrings__DefaultConnectionProd=Server=isolated.invalid;Password=" + SECRET,
+            "ConnectionStrings__DefaultConnectionProd=Server=isolated.invalid;User Id=amm_runtime;Password=" + SECRET,
         ]) + "\n", encoding="utf-8")
         self.env.chmod(0o600)
         self.enabled = self.root / "shared" / "deploy.enabled"
@@ -154,6 +154,20 @@ class ReleaseTests(unittest.TestCase):
         readiness = mock.patch.object(self.manager, "readiness")
         self.readiness = readiness.start()
         self.addCleanup(readiness.stop)
+
+    def test_dotted_dotnet_logging_key_is_a_valid_literal_docker_entry(self):
+        self.env.write_text(self.env.read_text() + 'Logging__LogLevel__Microsoft.AspNetCore=Warning\n')
+        self.assertEqual('Warning', release.validate_env(self.env)['Logging__LogLevel__Microsoft.AspNetCore'])
+
+    def test_administrative_sql_runtime_identity_is_rejected(self):
+        original = self.env.read_text()
+        for identity in ('sa', 'SA', '"sa"', "'sa'"):
+            self.env.write_text(original.replace('User Id=amm_runtime', 'User Id=' + identity))
+            with self.subTest(identity=identity), self.assertRaisesRegex(release.DeploymentError, 'non-sa'):
+                release.validate_env(self.env)
+        self.env.write_text(original.replace('User Id=amm_runtime;', ''))
+        with self.assertRaisesRegex(release.DeploymentError, 'non-sa'):
+            release.validate_env(self.env)
 
     def test_readiness_failure_prevents_any_docker_mutation(self):
         self.readiness.side_effect = release.DeploymentError("Backup/schema preflight refused")

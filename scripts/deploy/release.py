@@ -152,7 +152,7 @@ def validate_env(path):
         if not line or line.startswith("#"):
             continue
         key, separator, value = line.partition("=")
-        require(separator and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key), "Invalid Docker env-file entry")
+        require(separator and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", key), "Invalid Docker env-file entry")
         # .NET configuration keys are case-insensitive, even though Linux env
         # keys are not. A second spelling must not override a required guard.
         require(key.casefold() not in normalized_keys, "Duplicate env-file entry")
@@ -173,6 +173,10 @@ def validate_env(path):
     normalized_values = {key.casefold(): value for key, value in values.items()}
     require(normalized_values.get("dotnet_environment", "Production") == "Production", "DOTNET_ENVIRONMENT must be Production")
     require("deployment__commit" not in normalized_keys, "Deployment__Commit is supplied by the release manifest")
+    connection = normalized_values.get("connectionstrings__defaultconnectionprod", "")
+    users = re.findall(r"(?:^|;)\s*(?:user\s*id|userid|uid)\s*=\s*([^;]*)", connection, re.IGNORECASE)
+    require(len(users) == 1 and users[0].strip().strip("\"'").casefold() not in {"", "sa"},
+            "A dedicated non-sa SQL runtime login is required; review minimum database permissions")
     return values
 
 

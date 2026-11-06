@@ -36,6 +36,7 @@ Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **cort
 | Revisão das mudanças de infraestrutura | Rever e integrar manualmente a branch/PR. O artefato atual contém scripts anteriores ao ajuste SCP/OCI; o primeiro deploy via Actions precisa do CI e pacote do commit final. |
 | Paridade e gates | Revisão formal da matriz, SHA final e arquivo de aprovação. Não criar source-parity.approved.json nem deploy.enabled ou habilitar variáveis sem autorização explícita. |
 | Janela e corte | Definir operador, janela, observação e critérios; depois solicitar autorização do corte com evidências atualizadas. Workflow Release permanece ativo até essa janela. |
+| Login SQL de runtime | O arquivo privado preparado ainda herda `sa`. O executor agora recusa login ausente/sa. Criar e revisar credencial dedicada com privilégios mínimos exige autorização própria de banco; não houve criação de usuário ou alteração de permissões nesta etapa. |
 | Login administrativo produtivo | Validar com operador autorizado no aceite; nenhum login/senha real foi solicitado, exibido ou usado no ensaio. |
 
 ## Fora do escopo de mudança atual
@@ -48,7 +49,7 @@ Documentos operacionais: [backup](./BACKUP_ANDERSONMULTIMARCAS.md), [schema](./V
 
 ## Validação desta revisão
 
-Testes Python: **93 aprovados** (28 CI/segurança, 40 deploy/arquivos, 25 operação), incluindo CI reprovado/outra branch/commit, Environment, pacote/SHA, transferência, health, rollback/falha de recuperação, backup ausente/vencido/corrompido, schema e lock concorrente. Nove cenários Docker reais passaram com limpeza verificada. Build Release: zero erros/avisos. YAML/Actionlint/ShellCheck e Gitleaks passaram. Auditoria NuGet: zero vulnerabilidades. A primeira execução .NET local revelou contaminação pelo helper Development; migrations/bootstrap foram desabilitados no modo test e adicionada regressão. Repetição .NET: **184/184 aprovados, sem skips**, incluindo SQL isolado, e container descartável removido. O CI do SHA final deve ser conferido na PR #2 antes de integração.
+Testes Python: **95 aprovados** (28 CI/segurança, 42 deploy/arquivos, 25 operação), incluindo CI reprovado/outra branch/commit, Environment, pacote/SHA, transferência, health, rollback/falha de recuperação, backup ausente/vencido/corrompido, schema e lock concorrente. Nove cenários Docker reais passaram com limpeza verificada. Build Release: zero erros/avisos. YAML/Actionlint/ShellCheck e Gitleaks passaram. Auditoria NuGet: zero vulnerabilidades. A primeira execução .NET local revelou contaminação pelo helper Development; migrations/bootstrap foram desabilitados no modo test e adicionada regressão. Repetição .NET: **184/184 aprovados, sem skips**, incluindo SQL isolado, e container descartável removido. O CI do SHA final deve ser conferido na PR #2 antes de integração.
 
 A PR #3 foi revisada sem modificações: ampliação transacional/idempotente preserva dados e comprimentos maiores; unicidade recusa os duplicados existentes antes de remover o índice. Os ensaios anteriores continuam registrados e seu CI está aprovado. Não há aceite completo de gravações, testes de escrita do binário antigo após a proposta ou solução funcional para a duplicidade. Esse bloqueio permanece explícito.
 
