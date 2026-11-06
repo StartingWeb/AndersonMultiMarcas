@@ -67,7 +67,7 @@ A imagem legada foi exportada e verificada por SHA, blobs e docker load. Consult
 ## Verificação e limites
 
 - Build local .NET 10: zero erros/avisos; 164 testes locais passaram e 20 testes SQL não foram executados nessa rodada local sem conexão. O CI remoto de referência executou 184/184, sem skips.
-- **81 testes Python passaram**: 25 de CI/segurança, 37 de arquivo OCI/transações de deploy e 19 de operação. Os testes de operação foram incluídos na CI.
+- **82 testes Python passaram**: 25 de CI/segurança, 38 de arquivo OCI/transações de deploy e 19 de operação. Os testes de operação foram incluídos na CI.
 - Nove cenários Docker locais passaram com limpeza conferida: publicação, falhas de startup/health, pacote inválido/adulterado, configuração insegura, transferência interrompida, rollback por arquivo e retorno ao legado simulado.
 - O artefato .NET real foi carregado no VPS, ligado somente à cópia SQL interna e verificado sem credenciais produtivas, jobs externos ou migrations na cópia original. DP persistiu entre containers de teste.
 - HTTPS válido e `/health=200` foram confirmados nos três domínios. `/health/release=404` continua sendo a resposta do legado; a nova release deve responder com seu commit após um corte autorizado.

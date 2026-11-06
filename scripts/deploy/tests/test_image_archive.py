@@ -50,6 +50,15 @@ class ImageArchiveTests(unittest.TestCase):
                 self.assertEqual(image['Id'], engine.check_image(manifest, path))
             self.assertNotEqual(manifest['imageId'], image['Id'])
 
+    def test_identical_immutable_id_accepts_default_fields_added_by_classic_docker_api(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, manifest, configuration, image = self.fixture(directory)
+            image['Id'] = manifest['imageId']
+            image['Config'] = {**image['Config'], 'Cmd': [], 'AttachStdin': False, 'WorkingDir': ''}
+            engine = release.Docker()
+            with mock.patch.object(engine, 'run', side_effect=['loaded', json.dumps([image])]):
+                self.assertEqual(manifest['imageId'], engine.check_image(manifest, path))
+
     def test_changed_runtime_configuration_or_layers_cannot_pass_using_a_matching_label(self):
         for section in ['Config', 'RootFS']:
             with self.subTest(section=section), tempfile.TemporaryDirectory() as directory:

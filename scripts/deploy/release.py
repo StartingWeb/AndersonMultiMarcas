@@ -251,8 +251,12 @@ class Docker:
         require(image.get("Os") == "linux" and image.get("Architecture") == "amd64", "Image must target linux/amd64")
         require((image.get("Config", {}).get("Labels") or {}).get(REVISION_LABEL) == manifest["commit"], "Image commit label mismatch")
         expected, actual = configuration["config"], image["Config"]
-        require(all(expected.get(key) == actual.get(key) for key in set(expected) | set(actual)),
-                "Loaded image configuration differs from authenticated archive")
+        # An identical immutable ID already binds the complete configuration.
+        # Classic Docker APIs may add empty/default fields to its JSON view.
+        # Compare that view only when crossing stores changed the object ID.
+        if image["Id"] != manifest["imageId"]:
+            require(all(expected.get(key) == actual.get(key) for key in set(expected) | set(actual)),
+                    "Loaded image configuration differs from authenticated archive")
         require(configuration["rootfs"]["diff_ids"] == image["RootFS"]["Layers"],
                 "Loaded image filesystem differs from authenticated archive")
         return image["Id"]
