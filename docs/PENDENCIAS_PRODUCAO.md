@@ -11,7 +11,7 @@ Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **cort
 - Environment production main-only, bypass administrativo false, cinco secrets SSH, chave exclusiva restrita e host key conferida.
 - Ensaio real dos nove cenários de deploy/rollback e validação de configuração/rootfs OCI.
 - R2 configurado, endpoint/região/base pública avaliados e HEAD do bucket produtivo 200, sem requests a objetos.
-- Três gates GitHub false; gates locais ausentes; containers/SQL/NPM originais preservados.
+- Três gates GitHub false; gates locais ausentes; container Anderson, SQL compartilhado e NPM originais preservados. A substituição observada da API de outro projeto está registrada em [MIGRACAO_REPOSITORIOS.md](./MIGRACAO_REPOSITORIOS.md).
 
 ## Bloqueios e decisões externos
 

@@ -21,7 +21,9 @@ O container atual continua `andersonmultimarcas-web`, ID `9842fa7e0f745dc589ddc9
 
 O novo destino `/opt/startingweb/apps/anderson-multimarcas-unified` foi criado isoladamente. Contém configuração privada, executor revisado, locks, pacotes recebidos e snapshots. Não contém aprovação de paridade nem habilitação de deploy. O checkout Release, seus uploads, rede, volume DP e configurações NPM permanecem preservados.
 
-O inventário protegido registrou IDs, imagem/digest, rede, aliases, mounts, nomes de variáveis, revisão e proxy. A imagem atual foi exportada para arquivo offline e verificada, junto ao snapshot privado da configuração. Os 20 containers existentes mantiveram IDs/imagens/horários de início/RestartCount; hashes dos dois proxy hosts Anderson permaneceram iguais.
+O inventário protegido registrou IDs, imagem/digest, rede, aliases, mounts, nomes de variáveis, revisão e proxy. A imagem atual foi exportada para arquivo offline e verificada, junto ao snapshot privado da configuração. Anderson, SQL compartilhado e NPM mantiveram IDs, imagens, horários de início e RestartCount; hashes dos dois proxy hosts Anderson permaneceram iguais.
+
+As conferências iniciais preservaram o inventário dos 20 containers. Na conferência final, observou-se substituição de `tscomproouro-api` por outra imagem, com início em 06/11/2026 às 01:33 UTC e estado saudável. Esta sessão não executou publicação, restart ou alteração nesse container e não tentou reverter a mudança. O recibo final distingue essa alteração de outro projeto dos recursos críticos do Anderson, que permaneceram preservados.
 
 Existe limpeza automática de imagens não usadas e cache de builder no host. Sua política não foi alterada. A recuperação agora dispõe de arquivo fora do armazenamento de imagens Docker; não depende de latest nem de imagem não referenciada sobreviver ao prune.
 
