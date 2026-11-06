@@ -74,4 +74,10 @@ Manter aplicação ativa, pelo menos um baseline anterior e legado inicial duran
 
 O deploy novo exige backup íntegro/recente e schema conhecido compatível pelo checker fixo. Rollback não exige esse checker: uma falha de backup não deve impedir restaurar a aplicação anterior. Lock, gates locais, integridade do pacote, configurações e health continuam obrigatórios. Em falha de rollback o journal permanece; bloquear novas publicações e acionar recuperação manual. Não religar gates nem remover journal para forçar sucesso.
 
-A ampliação proposta na PR #3 preserva dados/larguras, mas ainda falta demonstrar operações de escrita da aplicação antiga depois dessas alterações. O índice único continua bloqueado por dados duplicados. Assim, rollback binário não é autorização para alterar/reverter schema e o primeiro corte segue bloqueado.
+A ampliação proposta na PR #3 preserva dados/larguras, mas o novo ensaio da PR #3 demonstrou operações representativas de escrita do binário antigo depois dessas alterações, inclusive editando os máximos gravados pela aplicação nova. O índice único continua bloqueado por dados duplicados. Assim, rollback binário não é autorização para alterar/reverter schema e o primeiro corte segue bloqueado.
+
+## Ensaio cruzado adicional
+
+Quatro fases em cópia restaurada passaram com 78 checkpoints: legado no original, legado após propostas, novo após propostas e retorno ao legado mantendo ampliação. Os máximos novos não foram truncados na edição pelo legado; upload, bytes, referência, remoção física de mídia, exclusão lógica e arquivos-sentinela passaram com SQL restrito. Esse resultado usa Local storage isolado; o rollback de arquivos no R2 real continua bloqueante.
+
+O undo de nomes/índice fornecido na PR #3 é uma ferramenta separada e restrita ao ensaio. Não faz parte do rollback binário e não pode ser usado para reduzir colunas ou restaurar banco automaticamente. Não revogar o login antigo nem remover o legado antes de autorização própria.

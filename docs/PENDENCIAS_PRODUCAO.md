@@ -1,56 +1,37 @@
-# Pendências antes da ativação
+# Estado de preparação e bloqueios de produção
 
-Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **corte de produção não autorizado nem executado**.
+Atualizado em 06/11/2026, America/Sao_Paulo. **Nenhum deploy, merge, migration produtiva ou restart autorizado/executado.**
 
-## Concluído e verificado
+## Resolvido
 
-- Backup nativo inicial com checksum, SHA-256, VERIFYONLY e cópia criptografada Restic restaurada/autenticada.
-- Restauração SQL isolada, DBCC CHECKDB, constraints, schema e contagens iguais à origem; aplicação .NET 10 sem migrations na cópia original.
-- Full diário às 03:00 America/Sao_Paulo, systemd habilitado/persistente e usuário com linger; monitor horário; retenção 7/4/3.
-- Destino unificado privado e configuração real fora do Git; legado vivo preservado, imagem exportada e testada com docker load.
-- Environment production main-only, bypass administrativo false, cinco secrets SSH, chave exclusiva restrita e host key conferida.
-- Ensaio real dos nove cenários de deploy/rollback e validação de configuração/rootfs OCI.
-- R2 configurado, endpoint/região/base pública avaliados e HEAD do bucket produtivo 200, sem requests a objetos.
-- Três gates GitHub false; gates locais ausentes; container Anderson, SQL compartilhado e NPM originais preservados. A substituição observada da API de outro projeto está registrada em [MIGRACAO_REPOSITORIOS.md](./MIGRACAO_REPOSITORIOS.md).
+- Backup diário às 03:00 America/Sao_Paulo, timers de backup/monitor enabled/active e persistentes, configuração 0600 e `startingwebltda@gmail.com`. Último backup controlado: 05/11/2026 23:22:54 Brasília, 30.007.296 bytes, SHA/VERIFYONLY/recuperação autenticada Restic aprovados. Último restore SQL completo inicial: 05/11/2026 22:14:57, DBCC aprovado. Próximo diário: 06/11/2026 03:00; não houve espera artificial nem novo e-mail nesta revisão. Retenção 7/4/3; monitor saudável.
+- Dois testes SMTP da etapa anterior foram aceitos pelo Gmail com DATA 250/TLS 1.3; isso não confirma entrega na caixa de entrada. Credenciais compartilhadas não duplicadas.
+- Environment production main-only, can_admins_bypass=false, sem required reviewers por publicação; cinco secrets SSH exclusivos presentes. Main com validate/strict/GitHub Actions, revisão de PR/último push, conversas resolvidas, admins incluídos e force push/exclusão bloqueados. Nenhuma proteção foi removida.
+- Preflight continua recusando backup ausente/vencido/corrompido, schema conhecido incompatível, runtime sem identidade ou com `sa`. Concorrência, lock, commit/proveniência/SHA, health e rollback cobertos pelos testes existentes.
+- Reauditoria SQL: 12 colunas nvarchar menores que o modelo, sem valores acima dos limites propostos. Um grupo duplicado de Marca.Nome, IDs técnicos 1/4 idênticos byte a byte, sem espaços nas extremidades. Uma referência de veículo no ID 1 e nenhuma no ID 4. Nenhum nome real foi publicado.
+- Ensaio na cópia da VPS: antigo/original → antigo/ampliado → novo/ampliado → rollback binário antigo, com 78 checkpoints e nove negativas de permissões, DBCC e limpeza conferidos. Inclui CRUD, exclusão física de mídia, arquivos locais compartilhados e escrita máxima pela nova aplicação editada pelo binário antigo sem truncamento. Evidências e propostas na [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3).
+- Perfil SQL restrito ensaiado: CRUD em 14 tabelas utilizadas, leitura nas demais tabelas Identity auxiliares/metadados/menus, sem sysadmin/db_owner/DDL/procedures de negócio. [Proposta e mecanismo de credencial](./USUARIO_SQL_RUNTIME.md). Fixtures de criação de banco usam admin só no SQL descartável; os fluxos de runtime usam o login dedicado.
+- R2: HEAD do bucket 200 novamente, zero operações em objetos produtivos. Oito testes S3 em memória adicionados, cobrindo integridade, overwrite, nomes especiais, limite, ausência, falhas e timeout. [Auditoria e limites](./VALIDACAO_R2.md).
+- Validação local da PR #2: restore locked, build Release sem erros/avisos, **193 testes .NET sem skips**, **98 Python** (28 CI, 42 deploy, 28 operação), nove cenários Docker/rollback e limpeza, YAML/Actionlint/ShellCheck, diff e Gitleaks; NuGet sem vulnerabilidades. A PR #3 acrescenta ensaio SQL automatizado e três testes Python; seus resultados finais ficam registrados na própria PR.
 
-## Resultado desta execução
+## Preparado, aguardando autorização
 
-- Destinatário exclusivo `startingwebltda@gmail.com` configurado em arquivo 0600, SMTP compartilhado sem duplicar credenciais. Dois testes reais aceitos pelo Gmail com DATA 250/TLS 1.3; entrega na caixa de entrada não comprovada.
-- Último backup controlado concluído em **05/11/2026 23:22:54 Brasília**, 30.007.296 bytes, SHA/VERIFYONLY/restore autenticado Restic aprovados. Último restore SQL completo: **05/11/2026 22:14:57 Brasília**, DBCC aprovado. Próximo diário: **06/11/2026 03:00 America/Sao_Paulo**. Retenção 7/4/3; timers habilitados/persistentes, monitor saudável.
-- Environment `production`: main-only, bypass administrativo false, sem aprovação humana por publicação. Cinco secrets SSH exclusivos presentes; seus valores não foram exibidos. Três Repository variables seguem false; arquivos locais de habilitação e paridade ausentes.
-- Proteção main aplicada pela API: CI `validate` obrigatório/strict/GitHub Actions, revisão de PR e do último push, code owner review, conversas resolvidas, admins incluídos, force push e exclusão bloqueados. CODEOWNERS proposto nesta PR para workflows/infra. Nenhuma alteração direta no código de main ou merge.
-- Preflight fixo de backup íntegro/recente e contrato conhecido de schema instalado; teste real **recusou** as incompatibilidades SQL. Deploy/rollback não executam migrations. Rollback mantém caminho de recuperação independente de falhas do backup.
-- Container legado/SQL/NPM preservados, com os mesmos IDs/imagens/StartedAt. Hashes dos proxy hosts 4 e 5 iguais ao snapshot anterior, upstream `andersonmultimarcas-web:8080` preservado; health HTTPS 200 nos três domínios auditados. Publicador antigo preservado. Nenhum deploy executado.
+- Ampliação idempotente/transacional preservando comprimentos maiores, nulabilidade existente e dados; alternativa opcional para diferenciar o ID 4 com ledger privado e undo sem reduzir colunas. A escolha do rótulo não foi feita pelo ensaio. A unicidade recusa duplicados/índice inesperado antes de remover qualquer índice. Scripts aceitam somente bases de ensaio.
+- Login/grants e proposta de conexão 0600 fora do checkout, sem senha no Git/log, sem conexão/instalação automática. Nada foi criado na instância produtiva; o runtime privado ainda herda `sa` e é recusado.
+- Contrato de [backup externo](./BACKUP_EXTERNO_PROPOSTA.md), desabilitado e sem destino/credenciais. A configuração de backup reutilizada continua local; nenhum destino externo autorizado foi identificado nela.
+- [Ativação](./ATIVACAO_PRODUCAO.md) e [rollback](./ROLLBACK_PRODUCAO.md) documentados. O fluxo futuro é push/merge main → CI aprovado → pacote imutável/proveniência → preflights → publicação/health/commit → sucesso ou rollback. Não há aprovação manual por release após a ativação inicial.
 
-## Bloqueios e decisões externos
+## Bloqueante
 
-| Pendência | Evidência e ação necessária |
-| --- | --- |
-| Destinatário dos relatórios | Resolvido: endereço autorizado configurado e SMTP aceito. Entrega efetiva na caixa de entrada não confirmada pelo mecanismo. |
-| Revisor independente no PR | Só StartingWeb apareceu como colaborador. Indicar e autorizar outro mantenedor para revisão de código antes da entrada em main. Não haverá required reviewers por execução no Environment. A proteção aplicada pode bloquear merges até existir esse revisor. |
-| Branch main | Proteção global aplicada e confirmada; não relaxar para contornar falta de revisor. CODEOWNERS entrará em vigor após merge autorizado da PR #2. |
-| Drift SQL para gravações | Produção tem colunas menores que o modelo e índice de marcas não único com duplicidade existente. Rever a branch separada infra/schema-compatibility-review e seu ensaio. Não se autoriza reduzir strings, eliminar/mesclar marcas ou mudar produção implicitamente. |
-| Aceitação do schema | Ler VALIDACAO_SCHEMA_PRODUCAO.md; aprovar diferenças retidas, comportamento de escrita e rollback. Duas migrations de histórico estão ausentes, mas a aplicação de leitura funcionou sem executá-las. |
-| R2 exclusivo de testes | Falta bucket/credenciais exclusivos. Preparar teste sintético upload/HEAD/read/hash/delete/limpeza. Não usar prefixo dentro do bucket produtivo. Permissões de escrita/exclusão e imagens reais não foram declaradas comprovadas. |
-| Cópia fora da VPS | Backup atual está no mesmo disco. Indicar destino protegido aprovado e gestão independente da chave; armazenamento local não atende perda total da VPS. |
-| Revisão das mudanças de infraestrutura | Rever e integrar manualmente a branch/PR. O artefato atual contém scripts anteriores ao ajuste SCP/OCI; o primeiro deploy via Actions precisa do CI e pacote do commit final. |
-| Paridade e gates | Revisão formal da matriz, SHA final e arquivo de aprovação. Não criar source-parity.approved.json nem deploy.enabled ou habilitar variáveis sem autorização explícita. |
-| Janela e corte | Definir operador, janela, observação e critérios; depois solicitar autorização do corte com evidências atualizadas. Workflow Release permanece ativo até essa janela. |
-| Login SQL de runtime | O arquivo privado preparado ainda herda `sa`. O executor agora recusa login ausente/sa. Criar e revisar credencial dedicada com privilégios mínimos exige autorização própria de banco; não houve criação de usuário ou alteração de permissões nesta etapa. |
-| Login administrativo produtivo | Validar com operador autorizado no aceite; nenhum login/senha real foi solicitado, exibido ou usado no ensaio. |
+1. **Decisão funcional e autorização SQL:** escolher solução para os nomes duplicados e revisar/autorizar a versão produtiva de ampliação/índice/dados. O schema e duplicados produtivos continuam originais e incompatíveis. Não remover os guards de ensaio nem executar migrations de startup.
+2. **Instalação SQL runtime:** autorizar criação de login/usuário/grants mínimos e atualização privada da conexão; validar permissões efetivas. `sa` produtivo preparado permanece recusado. Não ampliar os grants para fazer fixtures administrativas passarem.
+3. **R2 real de homologação:** fornecer bucket/endpoint/base pública/credenciais exclusivos autorizados e executar ciclo real com falhas/rollback. Local/mocks não comprovam recuperação de arquivos R2. Nenhum PUT/DELETE produtivo permitido.
+4. **Cópia externa:** destino/namespace/chave independente/credencial/responsável e transferência real expressamente autorizados, com recuperação e monitor externo. O backup no mesmo disco não cobre perda total da VPS.
+5. **Revisão independente:** só StartingWeb e nenhuma equipe elegível foram encontrados. **Merge bloqueado por falta de revisor independente autorizado.** Não convidar/conceder acesso nem reduzir proteção para contornar isso.
+6. **Aceitação e primeiro corte:** revisão/merge autorizados das PRs, paridade formal, CI/artefato do SHA final integrado, janela/operador/retorno e autorização separada explícita de ativação/primeiro corte. As pendências anteriores precisam ser resolvidas antes dessa decisão.
 
-## Fora do escopo de mudança atual
+## Produção preservada
 
-O SQL compartilhado continua com exposição de porta 1433 e configuração de conexão observada sem criptografia obrigatória; firewall e confiança TLS precisam de revisão própria, sem reiniciar o serviço ou afetar outros bancos. Configurações antigas de backup de outros projetos não foram alteradas. Não se revogaram credenciais legadas nem se arquivou o Release.
+Três Repository variables continuam false; `shared/deploy.enabled` e `shared/source-parity.approved.json` ausentes. Não há deployment production criado. Legado, SQL e NPM mantêm IDs/imagens/inícios; upstream legado e configurações dos proxy hosts preservados. Não houve alteração estrutural ou de dados pelo trabalho; auditorias produtivas são somente leitura. Publicador antigo preservado, sem DNS/NPM/restart/merge. Metadados/contagens e hashes do proxy são reconferidos ao encerramento.
 
-O estado do monitor Anderson é saudável após o envio aceito. Nenhuma pendência foi substituída por gate fictício, endereço inventado ou uso de objetos de clientes em testes.
-
-Documentos operacionais: [backup](./BACKUP_ANDERSONMULTIMARCAS.md), [schema](./VALIDACAO_SCHEMA_PRODUCAO.md), [R2](./VALIDACAO_R2.md), [ativação](./ATIVACAO_PRODUCAO.md) e [rollback](./ROLLBACK_PRODUCAO.md).
-
-## Validação desta revisão
-
-Testes Python: **95 aprovados** (28 CI/segurança, 42 deploy/arquivos, 25 operação), incluindo CI reprovado/outra branch/commit, Environment, pacote/SHA, transferência, health, rollback/falha de recuperação, backup ausente/vencido/corrompido, schema e lock concorrente. Nove cenários Docker reais passaram com limpeza verificada. Build Release: zero erros/avisos. YAML/Actionlint/ShellCheck e Gitleaks passaram. Auditoria NuGet: zero vulnerabilidades. A primeira execução .NET local revelou contaminação pelo helper Development; migrations/bootstrap foram desabilitados no modo test e adicionada regressão. Repetição .NET: **184/184 aprovados, sem skips**, incluindo SQL isolado, e container descartável removido. O CI do SHA final deve ser conferido na PR #2 antes de integração.
-
-A PR #3 foi revisada sem modificações: ampliação transacional/idempotente preserva dados e comprimentos maiores; unicidade recusa os duplicados existentes antes de remover o índice. Os ensaios anteriores continuam registrados e seu CI está aprovado. Não há aceite completo de gravações, testes de escrita do binário antigo após a proposta ou solução funcional para a duplicidade. Esse bloqueio permanece explícito.
-
-Nenhum destino externo de backup previamente autorizado nem bucket R2 exclusivo de homologação foi identificado na configuração auditada. Não houve cópia externa nova, PUT ou DELETE em produção. Essas etapas dependem de destino/credenciais e autorização próprios.
+O SQL compartilhado exposto na porta 1433 e a confiança TLS existente permanecem temas de revisão própria, sem alterar outros bancos/serviços nesta tarefa. Auditorias locais preexistentes seguem fora dos commits.

@@ -98,3 +98,9 @@ O comando de ensaio e os critérios de aceite estão em [VALIDACAO_SCHEMA_PRODUC
 `backup.py deployment-check` é uma operação de leitura sob o mesmo lock do backup: exige sucesso, idade entre zero e 27 horas, restauração SQL verificada/DBCC de até 35 dias, tamanho/SHA do nativo, snapshot verificado e leitura autenticada integral do Restic. Em seguida consulta somente metadados SQL para os 12 limites/nulabilidade de LogoUrl e índice único de Marca.Nome conhecidos pela auditoria. Recusa incompatibilidade; não executa DDL/DML/migrations. Esse contrato conhecido não substitui revisão de paridade ou novos testes após mudanças no modelo.
 
 O executor instalado chama esse helper fixo antes de qualquer ativação. Rollback de aplicação dispensa esse preflight para permitir recuperação durante incidentes de backup. O backup operacional reutiliza o acesso administrativo já existente no container SQL; a aplicação usa a configuração runtime privada, cujos privilégios devem ser revistos antes da ativação. Não se criaram novas credenciais de banco.
+
+## Revalidação de 06/11/2026
+
+Timers de backup e monitor enabled/active, configuração 0600, destinatário e fuso preservados. A execução diária de 06/11 às 03:00 ainda estava no futuro durante a preparação; não se esperou artificialmente nem se enviou outro teste SMTP. O ensaio cruzado usou a última cópia válida e restaurou somente instância/volumes novos, com DBCC e limpeza aprovados. A rotina agendada e seu recibo operacional não foram substituídos pelos relatórios de compatibilidade.
+
+A configuração TS Compro Ouro reutilizada foi reauditada sem copiar credenciais: repositório local, sem destino externo autorizado identificado. [Preparação da segunda cópia](./BACKUP_EXTERNO_PROPOSTA.md). Nenhum snapshot/dado real saiu da VPS e nenhuma cobrança/serviço novo foi criado. O contrato externo continua disabled e não foi instalado.

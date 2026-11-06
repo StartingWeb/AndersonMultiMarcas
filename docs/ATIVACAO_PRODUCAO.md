@@ -50,6 +50,12 @@ O primeiro corte pode produzir indisponibilidade durante troca do nome/upstream.
 
 ## Preparação de 05/11/2026
 
-SMTP aceito e timer/monitor saudáveis; proteção de main aplicada. O preflight de backup/schema foi instalado, mas o drift conhecido ainda recusa publicação. [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2) e [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3) permanecem sem merge. Antes de ativar: revisão independente, resolver schema/dados sem deduplicação implícita, demonstrar compatibilidade da aplicação antiga após a mudança e rollback, validar R2 em homologação e destino externo aprovado, substituir o login runtime administrativo herdado por credencial dedicada autorizada, revisar seus grants e produzir CI/pacote do SHA final. Não reduzir colunas no rollback.
+SMTP aceito e timer/monitor saudáveis; proteção de main aplicada. O preflight de backup/schema foi instalado, mas o drift conhecido ainda recusa publicação. [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2) e [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3) permanecem sem merge. Antes de ativar: revisão independente, resolver schema/dados sem deduplicação implícita, conferir o ensaio cruzado aprovado da aplicação antiga/nova e rollback na PR #3, validar R2 em homologação e destino externo aprovado, substituir o login runtime administrativo herdado por credencial dedicada autorizada, revisar seus grants e produzir CI/pacote do SHA final. Não reduzir colunas no rollback.
 
 A ativação futura é uma única decisão expressa, incluindo primeiro corte e suspensão do publicador antigo. Não há aprovação por execução após essa ativação. Nenhum gate ou container foi habilitado/alterado nesta preparação.
+
+## Resultado técnico adicional de 06/11/2026
+
+O ensaio completo em cópia passou com leitura/escrita/mídia e rollback binário, incluindo os limites novos preservados pelo antigo. Não há mais pendência de construir esse ensaio representativo. Permanecem: decisão funcional dos nomes, autorização/versão SQL produtiva, instalação autorizada do login restrito, R2 real, destino externo e revisor independente. Consultar [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md) antes de apresentar um primeiro corte concreto.
+
+Não criar login produtivo nem aplicar a proposta de nomes por causa deste resultado. Não habilitar gates. A futura ativação/corte requer autorização separada, e somente depois disso as próximas releases serão automáticas sem revisão por execução.
