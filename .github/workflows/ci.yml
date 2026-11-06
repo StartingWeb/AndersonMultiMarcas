@@ -52,6 +52,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
           python3 -m unittest discover -s scripts/deploy/tests -p 'test_*.py' -v
+          python3 -m unittest discover -s scripts/ops/tests -p 'test_*.py' -v
           bash -n scripts/deploy/release.sh scripts/deploy/rollback.sh
           shellcheck scripts/deploy/release.sh scripts/deploy/rollback.sh
       - name: Validate workflow YAML and embedded scripts

@@ -106,6 +106,15 @@ class FakeDocker(release.Docker):
         if commit is not None and current["Config"]["Labels"].get(release.REVISION_LABEL) != commit:
             raise release.DeploymentError("Simulated wrong release identity")
 
+    def check_image(self, manifest, archive):
+        # Transactional fixtures model Docker identity; archive parsing has its
+        # own real tar/OCI tests, and smoke_docker exercises the real engine.
+        self.run("load", "--input", str(archive))
+        image = json.loads(self.run("image", "inspect", manifest["imageId"]))[0]
+        release.require(image["Config"]["Labels"][release.REVISION_LABEL] == manifest["commit"],
+                        "Image commit label mismatch")
+        return image["Id"]
+
 
 class ReleaseTests(unittest.TestCase):
     def setUp(self):
@@ -162,6 +171,22 @@ class ReleaseTests(unittest.TestCase):
         bundle, expected_sha = self.bundle(commit)
         with contextlib.redirect_stdout(io.StringIO()):
             self.manager.deploy(bundle, expected_sha)
+
+    def test_oci_runtime_identity_is_used_for_start_state_and_rollback(self):
+        original = self.docker.check_image
+        def local_identity(manifest, archive):
+            original(manifest, archive)
+            return 'sha256:' + hashlib.sha256(('local-oci-' + manifest['commit']).encode()).hexdigest()
+        self.docker.check_image = local_identity
+        self.deploy(FIRST)
+        expected = 'sha256:' + hashlib.sha256(('local-oci-' + FIRST).encode()).hexdigest()
+        self.assertEqual(expected, self.docker.containers[release.NAME]['Image'])
+        self.assertEqual(expected, self.manager.state()['current']['imageId'])
+        self.deploy(SECOND)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.manager.rollback()
+        self.assertEqual(expected, self.docker.containers[release.NAME]['Image'])
+        self.assertEqual(expected, self.manager.state()['current']['imageId'])
 
     def test_activation_gate_prevents_all_docker_operations(self):
         self.enabled.write_text("disabled\n")

@@ -1,25 +1,38 @@
-# Pendências para futura ativação
+# Pendências antes da ativação
 
-Atualizado em 05/11/2026. O trabalho é local, na branch `feat/unified-cicd-deployment`. Não houve push, PR, merge, deploy, reinício, alteração de banco, R2 ou Nginx Proxy Manager. O mecanismo legado continua ativo.
+Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **corte de produção não autorizado nem executado**.
 
-## Estado observado sem escrita remota
+## Concluído e verificado
 
-Servidor `startingweb-server`: Ubuntu 24.04.4. Container `andersonmultimarcas-web`, imagem `startingweb/andersonmultimarcas-release:latest`, ID `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5`, iniciado em `2026-10-23T20:43:11.986710244Z`, saudável no início e nas conferências posteriores da atividade, com o mesmo horário de início, image ID e RestartCount=1. As consultas utilizaram somente `docker ps`, `docker inspect`, `uname` e identificação do sistema; nenhum segredo de ambiente foi impresso.
+- Backup nativo inicial com checksum, SHA-256, VERIFYONLY e cópia criptografada Restic restaurada/autenticada.
+- Restauração SQL isolada, DBCC CHECKDB, constraints, schema e contagens iguais à origem; aplicação .NET 10 sem migrations na cópia original.
+- Full diário às 03:00 America/Sao_Paulo, systemd habilitado/persistente e usuário com linger; monitor horário; retenção 7/4/3.
+- Destino unificado privado e configuração real fora do Git; legado vivo preservado, imagem exportada e testada com docker load.
+- Environment production main-only, bypass administrativo false, cinco secrets SSH, chave exclusiva restrita e host key conferida.
+- Ensaio real dos nove cenários de deploy/rollback e validação de configuração/rootfs OCI.
+- R2 configurado, endpoint/região/base pública avaliados e HEAD do bucket produtivo 200, sem requests a objetos.
+- Três gates GitHub false; gates locais ausentes; containers/SQL/NPM originais preservados.
 
-A referência Git do Release é `fb8a205768dce239c960ffb1cfb043b2680de7b3`. A comparação somente leitura por SHA-256 confirmou que **Project.dll, Core.dll, Data.dll e Domain.dll (4/4) e os 188 arquivos estáticos sem uploads (188/188)** no container produtivo são idênticos aos do Release Git usado na recuperação. Não se coletaram configurações, credenciais ou uploads reais. Isso identifica a versão do código publicada; equivalência de comportamento depende também do schema e da configuração, ainda não reproduzidos a partir de produção.
+## Bloqueios e decisões externos
 
-## Ações externas necessárias
+| Pendência | Evidência e ação necessária |
+| --- | --- |
+| Destinatário dos relatórios | Não havia endereço Anderson definido. Informar o endereço autorizado; configurar no arquivo privado e executar novo backup manual com notificação real. Não houve envio nem confirmação de entrega. |
+| Revisor independente | Só StartingWeb apareceu como colaborador. Informar usuário/equipe apropriado, conceder o acesso necessário por processo autorizado e configurar required_reviewers com prevent_self_review. Não há aprovação humana completa enquanto faltar isso. |
+| Branch main | Não havia proteção global. Decidir a política de revisão/checks para main. A regra main-only do Environment já está aplicada. |
+| Drift SQL para gravações | Produção tem colunas menores que o modelo e índice de marcas não único com duplicidade existente. Rever a branch separada infra/schema-compatibility-review e seu ensaio. Não se autoriza reduzir strings, eliminar/mesclar marcas ou mudar produção implicitamente. |
+| Aceitação do schema | Ler VALIDACAO_SCHEMA_PRODUCAO.md; aprovar diferenças retidas, comportamento de escrita e rollback. Duas migrations de histórico estão ausentes, mas a aplicação de leitura funcionou sem executá-las. |
+| R2 exclusivo de testes | Falta bucket/credenciais exclusivos. Preparar teste sintético upload/HEAD/read/hash/delete/limpeza. Não usar prefixo dentro do bucket produtivo. Permissões de escrita/exclusão e imagens reais não foram declaradas comprovadas. |
+| Cópia fora da VPS | Backup atual está no mesmo disco. Indicar destino protegido aprovado e gestão independente da chave; armazenamento local não atende perda total da VPS. |
+| Revisão das mudanças de infraestrutura | Rever e integrar manualmente a branch/PR. O artefato atual contém scripts anteriores ao ajuste SCP/OCI; o primeiro deploy via Actions precisa do CI e pacote do commit final. |
+| Paridade e gates | Revisão formal da matriz, SHA final e arquivo de aprovação. Não criar source-parity.approved.json nem deploy.enabled ou habilitar variáveis sem autorização explícita. |
+| Janela e corte | Definir operador, janela, observação e critérios; depois solicitar autorização do corte com evidências atualizadas. Workflow Release permanece ativo até essa janela. |
+| Login administrativo produtivo | Validar com operador autorizado no aceite; nenhum login/senha real foi solicitado, exibido ou usado no ensaio. |
 
-| Pendência | Evidência/impacto | Ação para desbloquear |
-|---|---|---|
-| Revisão da branch e autorização de envio | Tudo permanece local; CI/CD não foi disparado no GitHub. | Autorizar push/PR em etapa própria; revisar e executar CI remoto antes de aprovar integração. |
-| Aprovação formal de paridade | DLLs 4/4 e estáticos 188/188 coincidem com o Release investigado; matriz local documentada. | Revisar os testes e a matriz, aprovar o manifest de paridade para a futura ativação. |
-| Schema/dados exatos de produção | Migrations e SQL validados em SQL isolado/sintético; banco produtivo não foi alterado. | Fornecer backup sanitizado autorizado, validar restauração/constraints/histórico; revisar SQL e planejar backup/janela antes de qualquer aplicação. |
-| R2 de teste | Compatibilidade S3 e falhas/retry validadas com dublês; nenhuma escrita em bucket real. | Disponibilizar bucket exclusivo e credenciais de teste por segredo local; executar upload/HEAD/read/delete apenas nele. |
-| Environment GitHub | Workflow exige reviewers/main-only; configuração remota não foi alterada. | Criar/proteger `production`, revisar bypass administrativo, permissões e branch rules. |
-| SSH e servidor | Transporte, host key e gates estão implementados, sem provisionar destino real. | Configurar secrets SSH/known_hosts e diretório unificado em operação autorizada; revisar usuário e permissões. |
-| Configuração runtime | Exige SQL, R2 se utilizado, chaves persistentes, portas/volumes e health público. | Provisionar arquivos de ambiente e diretórios fora do Git; revisar redigido antes de ativar. |
-| Habilitação de publicação | Variáveis de habilitação e paridade continuam ausentes/falsas; segurança/integridade continuam obrigatórias. | Só após validações e aprovação específica, definir gates e realizar primeira publicação controlada com rollback preparado. |
-| Migração entre repositórios | Não se desativou legado nem arquivou repositório. | Fazer corte coordenado e observar nova publicação; arquivamento/desativação exigem autorização separada. |
+## Fora do escopo de mudança atual
 
-Nenhuma dessas pendências foi contornada com acesso ao iPhone, execução cloud substituta ou escrita remota. O código está preparado para revisão e ensaio controlado; a ativação produtiva depende das evidências e autorizações acima. Não afirmar migração de produção concluída.
+O SQL compartilhado continua com exposição de porta 1433 e configuração de conexão observada sem criptografia obrigatória; firewall e confiança TLS precisam de revisão própria, sem reiniciar o serviço ou afetar outros bancos. Configurações antigas de backup de outros projetos não foram alteradas. Não se revogaram credenciais legadas nem se arquivou o Release.
+
+O estado do monitor Anderson é alerta enquanto faltar notificação, embora a cópia válida exista. Nenhuma pendência foi substituída por gate fictício, endereço inventado ou uso de objetos de clientes em testes.
+
+Documentos operacionais: [backup](./BACKUP_ANDERSONMULTIMARCAS.md), [schema](./VALIDACAO_SCHEMA_PRODUCAO.md), [R2](./VALIDACAO_R2.md), [ativação](./ATIVACAO_PRODUCAO.md) e [rollback](./ROLLBACK_PRODUCAO.md).

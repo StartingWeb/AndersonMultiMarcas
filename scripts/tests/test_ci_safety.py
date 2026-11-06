@@ -35,6 +35,7 @@ class VulnerabilityGateTests(unittest.TestCase):
 class EnvironmentApprovalTests(unittest.TestCase):
     def setUp(self):
         self.environment = {"name": "production",
+            "can_admins_bypass": False,
             "protection_rules": [{"type": "required_reviewers", "prevent_self_review": True, "reviewers": [{"id": 1}]}],
             "deployment_branch_policy": {"protected_branches": False, "custom_branch_policies": True}}
         self.policy = {"total_count": 1, "branch_policies": [{"name": "main", "type": "branch"}]}
@@ -58,8 +59,13 @@ class EnvironmentApprovalTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 verify_environment.validate(self.environment, self.policy)
 
+    def test_administrator_bypass_enabled_or_unknown_is_rejected(self):
+        for value in (True, None):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                verify_environment.validate({**self.environment, "can_admins_bypass": value}, self.policy)
+
     @mock.patch.dict(verify_environment.os.environ, {}, clear=True)
-    def test_manual_bypass_review_is_required_without_claiming_an_api_field(self):
+    def test_explicit_bypass_review_authorization_remains_required(self):
         with self.assertRaises(ValueError):
             verify_environment.main()
 

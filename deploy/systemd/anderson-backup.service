@@ -1,0 +1,19 @@
+[Unit]
+Description=AndersonMultiMarcas verified encrypted SQL backup
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /opt/startingweb/backups/anderson-multimarcas/bin/backup.py backup
+TimeoutStartSec=90min
+TimeoutStopSec=90s
+Nice=19
+IOSchedulingClass=idle
+CPUQuota=35%
+MemoryMax=512M
+TasksMax=128
+NoNewPrivileges=true
+RestrictSUIDSGID=true
+LockPersonality=true
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,11 @@
+[Unit]
+Description=Check AndersonMultiMarcas backup freshness hourly
+
+[Timer]
+OnCalendar=*-*-* *:35:00 America/Sao_Paulo
+Persistent=true
+AccuracySec=1min
+Unit=anderson-backup-monitor.service
+
+[Install]
+WantedBy=timers.target

@@ -20,6 +20,7 @@ import signal
 import stat
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 import uuid
@@ -175,6 +176,58 @@ def validate_env(path):
     return values
 
 
+def archive_configuration(archive, manifest):
+    """Bind a portable image identity/tag to the saved configuration.
+
+    Classic Docker reports the config digest as Id. The containerd image store
+    reports an OCI manifest/index digest instead. Both are immutable, but their
+    strings cannot be compared as if they were the same object.
+    """
+    try:
+        with tarfile.open(archive, "r:gz") as saved:
+            def read(name):
+                member = saved.getmember(name)
+                require(member.isfile() and member.size <= 2 * 1024 * 1024,
+                        "Image archive metadata must be bounded regular files")
+                return saved.extractfile(member).read()
+            entries = json.loads(read("manifest.json"))
+            require(isinstance(entries, list) and len(entries) == 1, "Image archive must contain one runtime image")
+            entry = entries[0]
+            require(entry.get("RepoTags") == [manifest["imageTag"]], "Image archive tag differs from release")
+            config_bytes = read(entry["Config"])
+            config_digest = "sha256:" + hashlib.sha256(config_bytes).hexdigest()
+            identities = {config_digest}
+            if manifest["imageId"] != config_digest:
+                # OCI export: validate the requested root digest and ensure its
+                # descriptor tree reaches this exact runtime configuration.
+                index = json.loads(read("index.json"))
+                def contains_config(descriptor):
+                    identifier = descriptor["digest"]
+                    require(IMAGE.fullmatch(identifier), "Invalid OCI descriptor")
+                    raw = read("blobs/sha256/" + identifier[7:])
+                    require("sha256:" + hashlib.sha256(raw).hexdigest() == identifier,
+                            "OCI descriptor checksum mismatch")
+                    item = json.loads(raw)
+                    if item.get("config", {}).get("digest") == config_digest:
+                        return True
+                    for child in item.get("manifests", []):
+                        platform = child.get("platform", {})
+                        if platform and (platform.get("os"), platform.get("architecture")) != ("linux", "amd64"):
+                            continue
+                        if contains_config(child):
+                            return True
+                    return False
+                for descriptor in index.get("manifests", []):
+                    if descriptor.get("digest") == manifest["imageId"] and contains_config(descriptor):
+                        identities.add(descriptor["digest"])
+            require(manifest["imageId"] in identities, "Image archive identity differs from release")
+            value = json.loads(config_bytes)
+            require(value.get("os") == "linux" and value.get("architecture") == "amd64", "Image archive platform mismatch")
+            return value
+    except (tarfile.TarError, KeyError, ValueError, TypeError, RecursionError):
+        raise DeploymentError("Invalid image archive metadata") from None
+
+
 class Docker:
     def run(self, *args, missing=False):
         result = subprocess.run(["docker", *args], capture_output=True, text=True, check=False)
@@ -191,11 +244,18 @@ class Docker:
         return json.loads(output)[0] if output is not None else None
 
     def check_image(self, manifest, archive):
+        configuration = archive_configuration(archive, manifest)
         self.run("load", "--input", str(archive))
-        image = json.loads(self.run("image", "inspect", manifest["imageId"]))[0]
-        require(image["Id"] == manifest["imageId"], "Loaded image ID mismatch")
+        image = json.loads(self.run("image", "inspect", manifest["imageTag"]))[0]
+        require(isinstance(image.get("Id"), str) and IMAGE.fullmatch(image["Id"]), "Invalid loaded runtime image ID")
         require(image.get("Os") == "linux" and image.get("Architecture") == "amd64", "Image must target linux/amd64")
         require((image.get("Config", {}).get("Labels") or {}).get(REVISION_LABEL) == manifest["commit"], "Image commit label mismatch")
+        expected, actual = configuration["config"], image["Config"]
+        require(all(expected.get(key) == actual.get(key) for key in set(expected) | set(actual)),
+                "Loaded image configuration differs from authenticated archive")
+        require(configuration["rootfs"]["diff_ids"] == image["RootFS"]["Layers"],
+                "Loaded image filesystem differs from authenticated archive")
+        return image["Id"]
 
     def health(self, name, commit, timeout):
         deadline = time.monotonic() + timeout
@@ -399,7 +459,8 @@ class ReleaseManager:
             self.docker.health(NAME, manifest["commit"], self.timeout)
             self.history("already_current", commit=manifest["commit"])
             return
-        self.docker.check_image(manifest, release / "image.tar.gz")
+        runtime_image_id = self.docker.check_image(manifest, release / "image.tar.gz")
+        require(isinstance(runtime_image_id, str) and IMAGE.fullmatch(runtime_image_id), "Invalid verified runtime image ID")
         backup_name = server["legacyFallbackContainer"] if legacy else f"andersonmultimarcas-backup-{uuid.uuid4().hex}"
         journal = {"oldState": old_state, "oldContainerId": old_container["Id"], "backupName": backup_name,
                    "legacy": legacy, "newCommit": manifest["commit"]}
@@ -410,9 +471,12 @@ class ReleaseManager:
             if not legacy:
                 self.docker.run("stop", "--time", "30", NAME)
                 self.docker.run("rename", NAME, backup_name)
-            self.start(release, manifest)
+            self.start(release, {**manifest, "imageId": runtime_image_id})
             self.docker.health(NAME, manifest["commit"], self.timeout)
             reference = {key: manifest[key] for key in ("commit", "imageId", "ciRunId")}
+            # State identifies the local immutable runtime object. The release
+            # manifest retains the CI/export identity, which can be a config ID.
+            reference["imageId"] = runtime_image_id
             atomic_json(self.state_file, {"current": reference, "previous": old_state["current"] if old_state else None})
             self.history("release_succeeded", action=action, **reference)
             self.transaction_file.unlink()

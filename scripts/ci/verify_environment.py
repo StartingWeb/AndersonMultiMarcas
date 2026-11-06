@@ -6,6 +6,8 @@ import urllib.request
 
 
 def validate(environment, policies):
+    if environment.get("can_admins_bypass") is not False:
+        raise ValueError("Administrators must not bypass production protection rules")
     rules = environment.get("protection_rules", [])
     reviewers = [r for r in rules if r.get("type") == "required_reviewers"]
     if environment.get("name") != "production" or not reviewers:
@@ -22,8 +24,8 @@ def validate(environment, policies):
 
 
 def main():
-    # The REST environment schema does not expose the administrator-bypass UI
-    # setting. Require its separately reviewed attestation; do not invent an API field.
+    # Keep explicit authorization in addition to checking the actual API state.
+    # The audited GitHub response exposes can_admins_bypass; fail closed if absent.
     if os.environ.get("PRODUCTION_ADMIN_BYPASS_REVIEWED") != "true":
         raise ValueError("Administrator bypass setting must be manually reviewed before activation")
     repository = os.environ["GITHUB_REPOSITORY"]

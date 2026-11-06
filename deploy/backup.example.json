@@ -1,0 +1,11 @@
+{
+  "database": "AndersonMultiMarcas",
+  "sql_container": "sqlserver",
+  "retention": {"daily": 7, "weekly": 4, "monthly": 3},
+  "reserve_free_bytes": 2147483648,
+  "max_repository_bytes": 8589934592,
+  "storage_policy": "local_only",
+  "smtp_source": "/etc/tscomproouro-backup/config.json",
+  "recipient": null,
+  "repository_id": "SET_BY_EXPLICIT_INITIALIZATION"
+}
