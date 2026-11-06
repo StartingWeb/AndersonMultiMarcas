@@ -8,13 +8,13 @@ Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **cort
 | --- | --- |
 | Origem | `sqlserver`, SQL Server 2022 Express 16.0.4265.3, banco `AndersonMultiMarcas` ONLINE |
 | Recuperação | SIMPLE; compatibilidade 160; MDF 72 MiB e LDF 72 MiB; AUTO_CLOSE existente habilitado, não alterado |
-| Último backup controlado | `2026-11-05T23:22:25.723668-03:00` até `2026-11-05T23:22:54.024640-03:00` |
-| Duração / tamanho | 28,30 segundos / 30.007.296 bytes |
-| SHA-256 | `a566d73fa4526ea9a940c8c2ea0805422e2963cdd61df0a9ca96af2c2ab19ecf` |
+| Último backup agendado | `2026-11-06T03:00:00.722334-03:00` até `2026-11-06T03:00:44.006428-03:00` |
+| Duração / tamanho | 43,28 segundos / 29.941.760 bytes |
+| SHA-256 | `3b70dfbc209964d4c606499957c4f22b4facc24815375888a02a62d802396a32` |
 | Verificação | `RESTORE VERIFYONLY WITH CHECKSUM, STOP_ON_ERROR`: aprovado |
-| Restic | Snapshot `d1cb75d9bc24553cc0ccad91b3ab169be8e95c78ea9f6c1436a8b927fa264747`, restaurado com `--verify`, SHA reconferido e `check --read-data` aprovado |
+| Restic | Snapshot `e1eab760351046e4aadc2ea32a231c1c84be8a21de4ca4018a93d46ff2b9bfa2`, restaurado com `--verify`, SHA reconferido e `check --read-data` aprovado |
 | Restauração SQL real | `2026-11-05T22:14:57.850389-03:00`, execução `a2483165e38b`; DBCC CHECKDB/constraints e comparação aprovados na instância isolada |
-| Próximo backup | **06/11/2026 às 03:00 America/Sao_Paulo**, 06:00 UTC |
+| Próximo backup | **07/11/2026 às 03:00 America/Sao_Paulo**, 06:00 UTC |
 | E-mail | `startingwebltda@gmail.com`; Gmail aceitou em uma tentativa, resposta DATA 250, certificado validado e TLS 1.3 |
 | Entrega na caixa de entrada | Não comprovada; SMTP não fornece confirmação de entrega neste mecanismo |
 | Armazenamento | Disponível; 71.687.589.888 bytes livres; somente VPS, sem cópia externa autorizada |
@@ -28,7 +28,7 @@ O crontab root foi inspecionado por leitura restrita e continha somente a chamad
 
 O Anderson usa os mesmos componentes já instalados: systemd, Docker, SQL Server, Restic 0.16.4 e o provedor Gmail existente. Possui diretórios, chave de criptografia, repositório Restic, lock, status e timers próprios. Não usa o repositório de backup de outro projeto. Os scripts estão em [backup.py](../scripts/ops/backup.py) e [restore_check.py](../scripts/ops/restore_check.py).
 
-Diretório privado: `/opt/startingweb/backups/anderson-multimarcas`, proprietário `pedro`, modo 0700. Configuração e chave Restic são 0600 e permanecem no servidor. A última cópia nativa está em `/opt/startingweb/backups/anderson-multimarcas/native/20261106T022225Z-6bb31c59/database.bak`; cópias nativas antigas são rotacionadas conforme retenção. O repositório criptografado está em `/opt/startingweb/backups/anderson-multimarcas/repository`; recibos em `state/` e relatórios por execução em `logs/`.
+Diretório privado: `/opt/startingweb/backups/anderson-multimarcas`, proprietário `pedro`, modo 0700. Configuração e chave Restic são 0600 e permanecem no servidor. A última cópia nativa está em `/opt/startingweb/backups/anderson-multimarcas/native/20261106T060000Z-ae701b0b/database.bak`; cópias nativas antigas são rotacionadas conforme retenção. O repositório criptografado está em `/opt/startingweb/backups/anderson-multimarcas/repository`; recibos em `state/` e relatórios por execução em `logs/`.
 
 Os dois backups nativos mais recentes são mantidos com proteção de acesso; esses `.bak` não têm criptografia SQL nativa. As cópias históricas no Restic são criptografadas. Tanto os `.bak` quanto o Restic estão no disco da VPS: **não oferecem recuperação de perda total da VPS**. Nenhum destino externo já autorizado foi encontrado no mecanismo reutilizado. Cópia protegida fora da VPS continua pendente; não usar o bucket produtivo de mídias para isso.
 
@@ -97,10 +97,18 @@ O comando de ensaio e os critérios de aceite estão em [VALIDACAO_SCHEMA_PRODUC
 
 `backup.py deployment-check` é uma operação de leitura sob o mesmo lock do backup: exige sucesso, idade entre zero e 27 horas, restauração SQL verificada/DBCC de até 35 dias, tamanho/SHA do nativo, snapshot verificado e leitura autenticada integral do Restic. Em seguida consulta somente metadados SQL para os 12 limites/nulabilidade de LogoUrl e índice único de Marca.Nome conhecidos pela auditoria. Recusa incompatibilidade; não executa DDL/DML/migrations. Esse contrato conhecido não substitui revisão de paridade ou novos testes após mudanças no modelo.
 
-O executor instalado chama esse helper fixo antes de qualquer ativação. Rollback de aplicação dispensa esse preflight para permitir recuperação durante incidentes de backup. O backup operacional reutiliza o acesso administrativo já existente no container SQL; a aplicação usa a configuração runtime privada, cujos privilégios devem ser revistos antes da ativação. Não se criaram novas credenciais de banco.
+O executor instalado chama esse helper fixo antes de qualquer ativação. Rollback de aplicação dispensa esse preflight para permitir recuperação durante incidentes de backup. O backup operacional reutiliza o acesso administrativo já existente no container SQL; a aplicação usa a configuração runtime privada, cujos privilégios devem ser revistos antes da ativação. A preparação anterior não criou credenciais. Nesta rodada foi instalado o runtime dedicado conforme autorização, sem mudar a identidade do legado.
 
 ## Revalidação de 06/11/2026
 
 Timers de backup e monitor enabled/active, configuração 0600, destinatário e fuso preservados. A execução diária de 06/11 às 03:00 ainda estava no futuro durante a preparação; não se esperou artificialmente nem se enviou outro teste SMTP. O ensaio cruzado usou a última cópia válida e restaurou somente instância/volumes novos, com DBCC e limpeza aprovados. A rotina agendada e seu recibo operacional não foram substituídos pelos relatórios de compatibilidade.
 
 A configuração TS Compro Ouro reutilizada foi reauditada sem copiar credenciais: repositório local, sem destino externo autorizado identificado. [Preparação da segunda cópia](./BACKUP_EXTERNO_PROPOSTA.md). Nenhum snapshot/dado real saiu da VPS e nenhuma cobrança/serviço novo foi criado. O contrato externo continua disabled e não foi instalado.
+
+## Execução agendada comprovada em 06/11/2026
+
+O timer executou de fato às 03:00:00.722334, encerrando às 03:00:44.006428 (Brasília). Run `20261106T060000Z-ae701b0b`, 43,28 segundos, 29.941.760 bytes; SHA-256 `3b70dfbc209964d4c606499957c4f22b4facc24815375888a02a62d802396a32`, VERIFYONLY WITH CHECKSUM aprovado. Snapshot Restic `e1eab760351046e4aadc2ea32a231c1c84be8a21de4ca4018a93d46ff2b9bfa2`. Recibo de SMTP: aceito na primeira tentativa, DATA 250, TLS 1.3 e certificado validado, sem prova de entrega na caixa de entrada.
+
+Nesta rodada foi reconferido o hash do nativo, a presença/identidade do snapshot e o Restic check/read-data, sem criar backup duplicado, enviar outro e-mail ou excluir cópias. Retenção 7/4/3 e monitor saudável. Próximo timer: **07/11/2026 03:00 America/Sao_Paulo (06:00 UTC)**, com Persistent e linger preservados. Esta evidência substitui a indicação histórica de que a execução de hoje ainda estaria no futuro.
+
+Preparar um backup adicional **imediatamente antes do primeiro SQL/corte aprovado**, aguardar suas verificações e registrar o novo recibo antes de trocar containers. Não executá-lo agora como se o corte já estivesse liberado. Segunda cópia externa continua dependendo de destino autorizado; nenhum dado foi transferido para destino novo.

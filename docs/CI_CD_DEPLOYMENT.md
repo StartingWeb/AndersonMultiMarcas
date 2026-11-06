@@ -89,10 +89,16 @@ Evidências finais de testes e CI desta revisão estão na PR #2 e em [PENDENCIA
 
 CI atualizado: [execuções desta branch](https://github.com/StartingWeb/AndersonMultiMarcas/actions/workflows/ci.yml?query=branch%3Ainfra%2Fproduction-preparation). O resultado do SHA final é registrado na PR #2; não executar CD produtivo para validar essa preparação.
 
-O runtime privado ainda herda login SQL `sa`; a nova validação recusa esse login e ausência de identidade explícita. Uma credencial dedicada com privilégios mínimos precisa ser autorizada/preparada antes da ativação. Essa validação não prova os grants de qualquer outro usuário: eles exigem revisão. Nenhum usuário/grant produtivo foi modificado.
+Nesta rodada, o runtime privado foi atualizado sob autorização para `anderson_runtime` e os grants efetivos foram verificados. A validação continua recusando `sa` e identidade ausente; essa proteção não foi removida. Nenhuma identidade do legado/outro projeto foi alterada. A aplicação futura ainda não foi publicada.
 
 ## Revisão técnica de 06/11/2026
 
 Nenhuma lacuna nova de proveniência/Environment/concorrência/rollback foi encontrada na revalidação. Foram acrescentados testes SQL de permissões mínimas e S3 em memória; o renderer de credencial só cria uma proposta privada fora do Git, sem conectar/instalar. Perfil e limites em [USUARIO_SQL_RUNTIME.md](./USUARIO_SQL_RUNTIME.md). O ensaio cruzado de binários está na [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3), separado da infraestrutura. Seu sucesso não autoriza SQL produtivo nem substitui R2 real.
 
 Somente StartingWeb foi identificado como colaborador, sem equipes elegíveis. **Merge bloqueado por falta de revisor independente autorizado.** Os gates continuam false; nenhuma deployment production foi criada. R2 e destino externo permanecem bloqueios documentados antes da aceitação de paridade. A [lista de bloqueios](./PENDENCIAS_PRODUCAO.md) é a referência atual para ativação.
+
+## Continuação autorizada de 06/11/2026
+
+O CI acrescenta validação do instalador de runtime em SQL descartável rotulado, usando schema gerado sem acesso produtivo; não conecta ao VPS nem aplica A/B/C. O perfil SQL permanece o mesmo já ensaiado. O login e a conexão futura foram instalados sob autorização explícita, com credencial fora do Git em 0600, receipt privado e verificação efetiva sem privilégios administrativos. A aplicação legada continua usando sua própria configuração preservada.
+
+O usuário autorizou o primeiro deploy condicionalmente às decisões/demais bloqueios/checks/revisão legítimos. Gates continuam false e arquivos de habilitação ausentes. A integração deve começar pela PR #3 e depois atualizar/revalidar a #2 com a main resultante. A política exige um aprovador independente, último push aprovado por outro ator e code owner nas áreas aplicáveis; um mantenedor independente autorizado precisa ser definido também em CODEOWNERS. Não usar bypass.

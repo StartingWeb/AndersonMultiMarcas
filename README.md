@@ -2,7 +2,7 @@
 
 Sistema de catálogo e gestão de uma revenda de veículos: site público, filtros, detalhes, contato/WhatsApp e administração de veículos, lojas, marcas, vendedores, usuários, perfis e importação de imagens.
 
-Última atualização: **05/11/2026**. Trabalho local na branch `feat/unified-cicd-deployment`, preservando `bcabccd` e `cabe741`. A aplicação publicada e o mecanismo legado permanecem inalterados. Recuperação técnica referenciada no Release `fb8a205768dce239c960ffb1cfb043b2680de7b3`; código descompilado foi tratado como evidência, não como fonte original.
+Última atualização: **06/11/2026**. Preparação nas branches `infra/production-preparation` (PR #2) e `infra/schema-compatibility-review` (PR #3). A aplicação publicada e o mecanismo legado permanecem preservados; a identidade SQL dedicada foi instalada apenas na configuração do destino futuro. Recuperação técnica referenciada no Release `fb8a205768dce239c960ffb1cfb043b2680de7b3`; código descompilado foi tratado como evidência, não como fonte original.
 
 ## Tecnologias e requisitos
 
@@ -74,7 +74,7 @@ O teste aceita apenas loopback, usa credenciais locais e grava relatório e scre
 As migrations recuperadas mantêm os identificadores do Release. A correção de bootstrap Identity valida GUIDs antes de alterar constraints e preserva os vínculos; chaves inválidas interrompem a operação. Um snapshot atual alinha o modelo sem repetir alterações já presentes no Release. Consulte [auditoria do banco](docs/BANCO_DE_DADOS.md).
 
 ```sh
-dotnet ef migrations script --idempotent --project Data/Data.csproj --startup-project Data/Data.csproj --configuration Release --output artifacts/review-required.sql
+dotnet ef migrations script --idempotent --project Data/Data.csproj --startup-project Project/Project.csproj --configuration Release --output artifacts/review-required.sql
 ```
 
 **Não execute esse SQL em produção sem revisão, backup e autorização específicos.** A aplicação de produção, o deploy e o rollback não executam migrations. `Database__ApplyMigrationsOnStartup=true` é recusado em produção.
@@ -83,7 +83,7 @@ dotnet ef migrations script --idempotent --project Data/Data.csproj --startup-pr
 
 O [CI](.github/workflows/ci.yml) compila, testa .NET/Python/SQL, audita vulnerabilidades, gera SQL revisável e manifest, constrói a imagem Linux x64 e valida inicialização e mídia nativa. Os ensaios Docker verificam deploy/rollback e falhas de integridade, configuração e saúde.
 
-O [CD](.github/workflows/cd.yml) prepara um bundle imutável após CI aprovado na `main`; a publicação continua **desabilitada**. Uma futura ativação exige variáveis explícitas, paridade aprovada, Environment `production` protegido, revisão de bypass administrativo, SSH com host key fixada e configuração local no servidor. Não houve push, PR, merge ou deploy nesta recuperação.
+O [CD](.github/workflows/cd.yml) prepara um bundle imutável após CI aprovado na `main`; a publicação continua **desabilitada**. Uma futura ativação exige variáveis explícitas, paridade aprovada, Environment `production` protegido, revisão de bypass administrativo, SSH com host key fixada e configuração local no servidor. As PRs #2/#3 receberam commits publicados; não houve merge nem deploy.
 
 A entrega verifica checksums e identidade do commit, faz health check e retorna à imagem/container anterior se falhar. O rollback manual reutiliza o artefato aprovado; não reverte banco automaticamente.
 
@@ -94,3 +94,11 @@ A entrega verifica checksums e identidade do commit, faz health check e retorna 
 - [Arquitetura atual](docs/ARQUITETURA_ATUAL.md)
 - [Segurança e regressões](docs/SEGURANCA_E_REGRESSOES.md)
 - [Pendências para produção](docs/PENDENCIAS_PRODUCAO.md)
+
+## Estado operacional — 06/11/2026
+
+A aplicação pública ainda usa o container legado. O destino unificado está preparado, com deploy desabilitado e PRs de infraestrutura/schema em revisão. `anderson_runtime` foi instalado com permissões limitadas para o ambiente futuro, sem reiniciar o SQL compartilhado nem alterar a conexão do legado. As migrations comerciais A/B/C não foram executadas; a proposta de rótulo do ID 4 aguarda confirmação explícita.
+
+O backup diário de 06/11 às 03h foi concluído e verificado, com notificação aceita pelo SMTP; a próxima execução é 07/11 às 03h, America/Sao_Paulo. A primeira publicação já está autorizada **condicionalmente** pelo usuário: somente após confirmar o nome, resolver os demais bloqueios e satisfazer legitimamente checks/revisão. Não habilitar gates enquanto isso faltar. Depois da ativação, atualizações válidas da main publicarão automaticamente, sem aprovação por release.
+
+Referências: [pendências atuais](docs/PENDENCIAS_PRODUCAO.md), [identidade SQL](docs/USUARIO_SQL_RUNTIME.md), [primeiro corte](docs/ATIVACAO_PRODUCAO.md), [CI/CD](docs/CI_CD_DEPLOYMENT.md), [rollback](docs/ROLLBACK_PRODUCAO.md), [backup](docs/BACKUP_ANDERSONMULTIMARCAS.md) e [R2](docs/VALIDACAO_R2.md). As versões de migration e suas evidências permanecem na [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3); a infraestrutura/runtime na [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2).

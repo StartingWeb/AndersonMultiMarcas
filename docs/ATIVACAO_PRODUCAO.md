@@ -1,61 +1,36 @@
-# Primeira publicação controlada
+# Primeiro corte — autorização condicional e ponto de parada
 
-Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **corte de produção não autorizado nem executado**.
+Atualizado em 06/11/2026. O usuário autorizou o primeiro deploy **somente depois** de confirmar o novo nome da Marca 4, resolver dependências obrigatórias e satisfazer checks/política de revisão. Essa autorização não precisa ser solicitada novamente para o mesmo escopo quando todas as condições forem cumpridas. Não é autorização para contornar qualquer uma delas. Não haverá aprovação humana por release depois da ativação.
 
-## Identidade do ensaio e ponto de parada
+## Executado
 
-Commit de referência: `1e5612276e0809166a2ea33a21deabee0bf0f768`. CI [42135590822](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42135590822), CD [42136110621](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42136110621), artefato `release-1e5612276e0809166a2ea33a21deabee0bf0f768-42136110621-1`, não expirado na auditoria. Os hashes estão em [CI_CD_DEPLOYMENT.md](./CI_CD_DEPLOYMENT.md).
+Runtime `anderson_runtime` e conexão do destino futuro instalados, com senha privada 0600, permissões mínimas e acesso efetivo verificado. O SQL compartilhado não foi reiniciado; somente a segurança autorizada desse runtime foi acrescentada. Conexão/identidade do legado preservadas. Backup real de 06/11 às 03h concluído com SHA/VERIFYONLY/Restic e aceite SMTP; timers/monitor saudáveis. Nenhum deploy, merge, alteração comercial ou migration A/B/C foi executado.
 
-Esse artefato foi usado para o ensaio real de banco/aplicação. A branch de infraestrutura corrige SCP restrito, verificação OCI e proteções. **Antes da publicação por Actions, revisar e integrar as correções manualmente, obter CI/CD e novo artefato do SHA resultante e reapresentar esse SHA exato para aprovação.** A preparação não aprova merge nem corte.
+## Ponto de parada atual
 
-**PARADA ATUAL: faltam integração por PR com revisão independente, decisão de schema, R2 de teste, proteção fora da VPS e autorização explícita de ativação/corte. Não iniciar o corte com esta lista aberta.** O plano não presume uma janela nem inventa aprovadores.
+- Nome proposto **Jaguar (cadastro adicional)** para o ID 4; falta confirmação explícita. ID 1 permanece Jaguar; veículos 1/0; zero exclusões e zero relações alteradas.
+- A preserva nulabilidade por padrão. Falta decidir a exceção específica de LogoUrl, necessária ao contrato atual do modelo/preflight.
+- Falta destino R2 de homologação previamente autorizado com isolamento comprovado e ciclo sintético real. Não usar prefixo arbitrário ou mídias de clientes.
+- Falta destino externo protegido autorizado, ou decisão explícita sobre essa limitação antes do corte. Não transferir dados nem contratar serviço por inferência.
+- Falta revisor independente elegível. Main exige um aprovador, aprovação do último push por outro ator, code owner aplicável, conversas resolvidas e CI validate strict; admins não têm bypass. Definir o mantenedor autorizado também no CODEOWNERS da PR #2. Não convidar usuários nem alterar proteções sem autorização.
 
-## Checklist anterior à autorização
+Referência completa: [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md). Os três gates GitHub continuam false e os arquivos locais de habilitação/paridade estão ausentes.
 
-1. Confirmar backup do banco correto com idade adequada à janela, SHA/VERIFYONLY/snapshot existente. Registrar o último válido, sem imprimir configurações.
-2. Confirmar restauração recente com DBCC CHECKDB, constraints, comparação e aplicação sobre cópia sem migrations. Refazer após mudança relevante.
-3. Aprovar [VALIDACAO_SCHEMA_PRODUCAO.md](./VALIDACAO_SCHEMA_PRODUCAO.md) e a proposta da branch SQL separada. Resolver a decisão sobre duplicidade e limites antes de aceitar gravações. Qualquer SQL produtivo exige autorização própria; o deploy nunca o executa.
-4. Aprovar [VALIDACAO_R2.md](./VALIDACAO_R2.md), incluindo ciclo sintético em bucket exclusivo e avaliação das referências legadas. Não testar gravações em bucket produtivo.
-5. Conferir imagem legada, SHA do arquivo e snapshot privado recuperável; manter container, configurações, rede, aliases e volume DP.
-6. Conferir [ROLLBACK_PRODUCAO.md](./ROLLBACK_PRODUCAO.md), operador e critérios objetivos para voltar à versão antiga.
-7. Conferir Environment: sem required reviewers por execução, main-only, can_admins_bypass=false, cinco secrets, known hosts e proteção efetiva da main com revisão no PR. Não confundir variável de autorização com proteção GitHub real.
-8. Confirmar CI do commit final, todos os testes/segurança aprovados, SQL revisado e source parity formalmente aceita. Conferir que main ainda aponta ao SHA autorizado.
-9. Confirmar artefato, origem, ciRunId, arquitetura linux/amd64, configurações/rootfs, SHA do bundle e do executor instalado.
-10. Definir explicitamente janela de manutenção, responsáveis, testes sem criação indiscriminada de dados e período de observação/retenção. Apresentar ao usuário SHA, artefato, backup, ensaio, riscos e plano de retorno para autorização explícita.
+## Ordem de integração e preparação
 
-## SOMENTE DEPOIS DA AUTORIZAÇÃO DO CORTE
+1. Satisfazer legitimamente a revisão/checks da PR #3 e integrá-la; nenhuma integração foi feita nesta rodada. Ela contém A/B/C produtivos candidatos e os testes SQL, separados por responsabilidade.
+2. Atualizar PR #2 com a main resultante sem force push, conferir conflitos/semântica e CI do SHA combinado. Integrar somente após nova revisão/checks da política vigente. Nenhum merge direto ou bypass.
+3. Gerar CI aprovado e pacote imutável do SHA final em main; verificar proveniência, SHA, ciRunId, arquitetura e identidade da imagem. CD pode empacotar com gates false; production deve continuar ignorado até o corte.
+4. Conferir R2 real, nome/nulabilidade aprovados, permissões runtime, backup externo/limitação deliberada, paridade formal e [rollback](./ROLLBACK_PRODUCAO.md). Registrar janela, operador, monitoramento e critérios de retorno.
 
-Os itens seguintes **não foram executados**:
+## Janela do primeiro corte — somente com todas as condições satisfeitas
 
-11. Suspender de forma controlada o workflow `Deploy Production` do Release e outros gatilhos identificados; registrar estado anterior. Verificar ausência de execução antiga em andamento. Não excluir/arquivar o repositório.
-12. Reconfirmar backup/health e preservar o legado. Na janela, parar e renomear o mesmo container para `andersonmultimarcas-legacy-fb8a205768dc`, conferindo imagem/DP/rede. Preparar arquivos locais de aprovação e habilitação e as três Repository variables somente conforme autorização registrada. Publicar exclusivamente o pacote do SHA aprovado, com os gates aprovados na autorização inicial. Depois da ativação, cada push main com CI aprovado publica automaticamente, sem nova aprovação humana por release.
-13. Conferir `/health` e `/health/release` dentro do novo container; o commit precisa coincidir com o manifesto. Falha exige rollback, não migração improvisada.
-14. Conferir home/catálogo/filtros/detalhe e comportamento de dados legados. Evitar operações de escrita que não façam parte do roteiro aprovado.
-15. Conferir login administrativo com operador autorizado e permissões/menu; não expor credenciais em logs ou relatório.
-16. Conferir imagens/otimização e referências legadas no aceite operacional aprovado. Qualquer escrita R2 produtiva precisa respeitar o escopo autorizado desse aceite.
-17. Conferir HTTPS e encaminhamento nos três domínios, certificado e ausência de redirect inesperado em health. NPM deve continuar no mesmo upstream; não alterar proxy para esconder falha da release.
-18. Observar logs sanitizados, erros SQL/R2, reinícios, recursos e sessões/DP durante o período acordado.
-19. Se falhar health, commit, HTTPS, catálogo, autenticação ou persistência, suspender novas tentativas e voltar à aplicação anterior pelo executor/journal. Não reverter banco automaticamente. Confirmar retorno e preservar evidências.
-20. Registrar resultado, SHA/imagem/artefato, horários, aprovação, validações e eventual rollback. Só após estabilização planejar retirada do mecanismo antigo, com autorização separada.
+5. Executar um backup adicional pelo serviço Anderson e aguardar seu recibo completo: SHA, VERIFYONLY, Restic autenticado e status SMTP. Registrar o recibo imediatamente antes de qualquer SQL comercial/corte; não tratar timer como prova de execução.
+6. Revalidar identidade imutável do container SQL, nome da instância, GUID do banco, checksums dos SQLs e estado dos IDs 1/4. Aplicar somente as versões A → B → C revisadas/aprovadas, com os contextos específicos; sem migrations automáticas. Recusar nomes/referências/índices inesperados. Conferir journal, IDs/demais campos/FKs/dados, unicidade e preflight depois da execução.
+7. Revalidar pacote/configuração/volume DP/rede, imagem offline e snapshot do legado. Preservar o publicador antigo até a janela e confirmar que não há outra execução concorrente. Suspender seu gatilho conforme a autorização do corte, sem apagá-lo.
+8. Apenas então preparar o bootstrap do executor: preservar/parar/renomear o legado para o nome reservado, criar aprovação local de paridade e habilitação e habilitar as três variáveis conforme o SHA/escopo aceitos. Não alterar NPM/DNS para esconder falhas.
+9. Acionar o CD de um CI de push main aprovado e ainda atual (por exemplo, rerun do CD correspondente). Source/proveniência são reconferidos; não publicar de branch de preparação ou executar pacote local sem a mesma cadeia. O Environment é automático, sem aprovadores por execução.
+10. Conferir health interno, `/health/release` com commit exato, HTTPS público, catálogo/contato/admin/imagens e persistência DP. Falha interna/externa exige rollback automático e confirmação do retorno; falha de rollback preserva journal e exige recuperação do operador. Não restaurar banco, reduzir colunas ou desfazer nomes automaticamente.
+11. Registrar imagem/commit/pacote/recibos, resultado, horários e eventual retorno. Observar antes de retirar o legado/publicador; essa retirada definitiva não está autorizada por esta preparação.
 
-## Critérios de recusa
-
-Recusar o início com backup não restaurável, integridade incerta, proteção/revisão da main ausente, bypass habilitado/desconhecido, artefato obsoleto, diferença de imagem/configuração, schema de escrita não aprovado, R2 sem validação ou baseline de rollback não recuperável. Não resolver recusas habilitando migrations no startup, removendo o container antigo, desabilitando proteção GitHub ou aceitando apenas liveness.
-
-O primeiro corte pode produzir indisponibilidade durante troca do nome/upstream. Não se promete zero downtime. A parada do legado, suspensão de seu workflow e habilitação de gates fazem parte do corte autorizado, não desta preparação.
-
-## Estado que deve continuar até nova autorização
-
-`andersonmultimarcas-web` segue com a imagem legada `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5` e início `2026-10-23T20:43:11.986710244Z`. SQL compartilhado e NPM não foram reiniciados. Os três gates GitHub estão false; arquivos locais de ativação/aprovação estão ausentes. A nova aplicação só foi iniciada em containers isolados, sem acesso à origem produtiva.
-
-## Preparação de 05/11/2026
-
-SMTP aceito e timer/monitor saudáveis; proteção de main aplicada. O preflight de backup/schema foi instalado, mas o drift conhecido ainda recusa publicação. [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2) e [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3) permanecem sem merge. Antes de ativar: revisão independente, resolver schema/dados sem deduplicação implícita, conferir o ensaio cruzado aprovado da aplicação antiga/nova e rollback na PR #3, validar R2 em homologação e destino externo aprovado, substituir o login runtime administrativo herdado por credencial dedicada autorizada, revisar seus grants e produzir CI/pacote do SHA final. Não reduzir colunas no rollback.
-
-A ativação futura é uma única decisão expressa, incluindo primeiro corte e suspensão do publicador antigo. Não há aprovação por execução após essa ativação. Nenhum gate ou container foi habilitado/alterado nesta preparação.
-
-## Resultado técnico adicional de 06/11/2026
-
-O ensaio completo em cópia passou com leitura/escrita/mídia e rollback binário, incluindo os limites novos preservados pelo antigo. Não há mais pendência de construir esse ensaio representativo. Permanecem: decisão funcional dos nomes, autorização/versão SQL produtiva, instalação autorizada do login restrito, R2 real, destino externo e revisor independente. Consultar [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md) antes de apresentar um primeiro corte concreto.
-
-Não criar login produtivo nem aplicar a proposta de nomes por causa deste resultado. Não habilitar gates. A futura ativação/corte requer autorização separada, e somente depois disso as próximas releases serão automáticas sem revisão por execução.
+O bootstrap pode causar indisponibilidade enquanto o nome do container é trocado; não se promete zero downtime. O executor continua recusando o container legado vivo/não gerido, mesmo se alguém preparar gates indevidamente. Os deploys seguintes serão automáticos após atualizações válidas da main, serializados por concorrência e lock, sem aprovação manual por publicação.

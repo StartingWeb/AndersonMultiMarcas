@@ -37,7 +37,7 @@ jobs:
           ci_sql_password="A1!$(openssl rand -hex 24)"
           echo "::add-mask::$ci_sql_password"
           printf 'ANDERSON_TEST_SQL=Server=127.0.0.1,1433;User Id=sa;Password=%s;Encrypt=False;TrustServerCertificate=True\n' "$ci_sql_password" >> "$GITHUB_ENV"
-          docker run --detach --name amm-ci-sql --publish 127.0.0.1:1433:1433 --env ACCEPT_EULA=Y --env "MSSQL_SA_PASSWORD=$ci_sql_password" mcr.microsoft.com/mssql/server:2022-latest@sha256:cf8f0ab2ebe61feec2eed2629061a07d247f791c2a8ddda74a4ac9f06a291718
+          docker run --detach --name amm-ci-sql --label anderson.purpose=disposable-ci --publish 127.0.0.1:1433:1433 --env ACCEPT_EULA=Y --env "MSSQL_SA_PASSWORD=$ci_sql_password" mcr.microsoft.com/mssql/server:2022-latest@sha256:cf8f0ab2ebe61feec2eed2629061a07d247f791c2a8ddda74a4ac9f06a291718
           for _ in $(seq 1 45); do
             if docker exec --env "SQLCMDPASSWORD=$ci_sql_password" amm-ci-sql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -Q 'SELECT 1' > /dev/null 2>&1; then
               exit 0
@@ -67,6 +67,8 @@ jobs:
           dotnet tool restore
           mkdir -p artifacts/migrations
           dotnet ef migrations script --idempotent --project Data/Data.csproj --startup-project Project/Project.csproj --configuration Release --no-build --output artifacts/migrations/review-required.sql
+      - name: Validate dedicated runtime installer on disposable SQL
+        run: python3 scripts/ops/tests/smoke_runtime_provision.py --container amm-ci-sql --schema-sql artifacts/migrations/review-required.sql
       - name: Audit all NuGet dependencies
         run: |
           mkdir -p artifacts/security

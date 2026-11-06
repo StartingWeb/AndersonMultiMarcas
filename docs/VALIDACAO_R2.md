@@ -60,3 +60,9 @@ O arquivo de configuração de teste já está em [r2-test.env.example](../deplo
 ## Bloqueante
 
 O ciclo real R2 e a compatibilidade de mídia antiga/nova no provedor continuam bloqueantes da ativação. O ensaio de rollback validou upload e referências com storage **local isolado** e volume descartável compartilhado entre binários. Não transforma esse resultado em prova sobre objetos/R2 produtivos. Manter o aceite R2 pendente na revisão formal de paridade e os gates false.
+
+## Dados externos necessários nesta rodada
+
+Não foi encontrado bucket **ou prefixo de homologação previamente autorizado**; o GitHub só tem Environment production, e a configuração privada auditada não declara destino de teste. Não usar um prefixo arbitrário no bucket produtivo. Faltam: (1) referência explícita da autorização; (2) endpoint/região e bucket; (3) prefixo de homologação, se compartilhado, com política que impeça acesso/modificação fora dele; (4) credencial de teste em arquivo privado no servidor, nunca colada em chat/Git; (5) base pública ou rota de download de teste; (6) permissões Put/Get/Head/Delete e List apenas quando necessário; (7) prova do isolamento e responsável pela limpeza.
+
+Com esses dados, executar arquivos sintéticos com chave UUID, upload/download/hash/ausente/overwrite/delete e falhas controladas exclusivamente no destino autorizado. Os oito testes locais já aprovados não foram repetidos sem necessidade e não substituem esse ciclo real. Nenhum objeto produtivo foi modificado/excluído. A atualização da conexão SQL futura não alterou campos R2.

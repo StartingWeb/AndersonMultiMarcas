@@ -81,3 +81,9 @@ A ampliação proposta na PR #3 preserva dados/larguras, mas o novo ensaio da PR
 Quatro fases em cópia restaurada passaram com 78 checkpoints: legado no original, legado após propostas, novo após propostas e retorno ao legado mantendo ampliação. Os máximos novos não foram truncados na edição pelo legado; upload, bytes, referência, remoção física de mídia, exclusão lógica e arquivos-sentinela passaram com SQL restrito. Esse resultado usa Local storage isolado; o rollback de arquivos no R2 real continua bloqueante.
 
 O undo de nomes/índice fornecido na PR #3 é uma ferramenta separada e restrita ao ensaio. Não faz parte do rollback binário e não pode ser usado para reduzir colunas ou restaurar banco automaticamente. Não revogar o login antigo nem remover o legado antes de autorização própria.
+
+## Runtime e migrations comerciais preparados
+
+A conexão futura usa `anderson_runtime`; a conexão anterior foi preservada em arquivo privado 0600 e o login/configuração do legado não foi revogado. O instalador não iniciou a aplicação e não executou A/B/C. O retorno ao legado não depende de remover a nova identidade.
+
+A/B/C produtivos têm journal próprio, sem down automático: A não deve reduzir colunas, B requer rótulo aprovado e preserva demais campos, C exige A/B e dados sem duplicidade. O undo técnico de ensaio não é um rollback comercial autorizado. Se faltar confirmação do nome/nulabilidade, R2, revisão ou outro requisito, não iniciar o corte. A primeira publicação tem autorização condicional, não irrestrita.

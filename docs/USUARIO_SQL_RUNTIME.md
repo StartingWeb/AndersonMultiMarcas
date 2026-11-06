@@ -1,6 +1,6 @@
-# Proposta de identidade SQL de runtime
+# Identidade SQL de runtime — instalada no destino futuro
 
-Preparação apenas. Nenhum login, usuário ou grant foi criado/alterado na instância produtiva. O runtime preparado ainda herda `sa` e continua recusado pelo executor.
+Atualização de 06/11/2026: criação do login/usuário e instalação da conexão do ambiente futuro foram expressamente autorizadas nesta rodada. `anderson_runtime` foi instalado às 17:26:45 Brasília, com grants mínimos verificados. O arquivo privado futuro deixou de usar `sa`. Nenhum dado comercial ou migration A/B/C foi executado; a identidade/conexão do legado continua preservada.
 
 ## Resolvido em ambiente isolado
 
@@ -15,12 +15,20 @@ A proposta [runtime_permissions_trial.sql](../deploy/sql/runtime_permissions_tri
 
 Os testes verificam CRUD real via EF e HTTP, grants por objeto e recusa de CREATE/ALTER/DROP TABLE, CREATE USER/LOGIN/DATABASE, GRANT, alteração de role de servidor e DBCC administrativo. Operações de runtime são feitas com a identidade restrita, sem usar credenciais produtivas.
 
-## Preparado, aguardando autorização
+## Mecanismos seguros de credencial
 
 [render_runtime_connection.py](../scripts/ops/render_runtime_connection.py) recebe senha em arquivo privado 0600 pertencente ao operador e cria uma proposta de conexão 0600 **fora do checkout**, com O_EXCL, sem imprimir a senha, conectar a SQL ou instalar runtime. Escapa a senha como valor ADO.NET literal, não como código shell. Os testes cobrem delimitadores, newline/injeção, permissões e recusa de sobrescrita. TLS é solicitado; `TrustServerCertificate=True` permite o certificado autoassinado atual e não comprova identidade TLS do servidor.
 
-Para futura instalação: gerar segredo exclusivo fora do Git; revisar identidade da instância e os grants; autorizar separadamente CREATE LOGIN/USER na produção; aplicar por canal administrativo sem senha em argumentos/logs; validar permissões efetivas e fluxos; atualizar apenas o arquivo privado de runtime com escrita atômica e modo 0600. A versão produtiva dos scripts precisa de revisão própria: não remover o guard das bases de ensaio por conta própria. Preservar o usuário antigo do legado para o rollback, sem revogação implícita.
+O procedimento de instalação abaixo já foi executado sob a autorização desta rodada. Qualquer rotação, revogação ou ampliação futura exige escopo próprio. Preservar a identidade do legado para o rollback; não remover guards de ensaio nem substituir política produtiva por SQL sem revisão.
 
-## Bloqueante
+## Executado e verificado
 
-O login produtivo dedicado e a instalação da conexão **não foram autorizados nem executados**. A validação de nome não prova privilégios de outros logins: a instalação futura exige conferir roles, grants diretos/efetivos e propriedade do banco. `sa` e identidade ausente continuam sendo recusados pelo executor. Os três gates de ativação continuam false.
+[provision_runtime.py](../scripts/ops/provision_runtime.py) foi testado em SQL descartável e depois executado no destino autorizado, com ID imutável do container, identidade da instância e GUID do banco conferidos. [runtime_permissions.production.sql](../deploy/sql/runtime_permissions.production.sql) possui guards próprios de destino/escopo/autorização; o perfil de permissões continua idêntico ao ensaiado. Há lock, recusa de adoção de login preexistente sem recibo próprio, replay sem rotação, senha gerada no servidor por CSPRNG, arquivos 0600 em diretório 0700 e passagem por stdin, sem senha em argumentos/logs/Git.
+
+Recibo privado: `shared/runtime-provisioned.json`. O teste efetivo autenticado como runtime confirmou sysadmin=0, db_owner=0, CREATE TABLE/ALTER ANY USER/CREATE ANY DATABASE/ALTER ANY LOGIN=0 e quatro permissões CRUD em Marca. Os demais grants são os 14 objetos revisados; não há grant global/schema-wide. O arquivo anterior foi preservado protegido para recuperação. Somente a conexão DefaultConnectionProd do destino futuro foi substituída; os demais campos e o legado não foram alterados.
+
+O instalador não aplica as migrations comerciais, não inicia app e não reinicia SQL. A prova de CRUD/negativas foi executada apenas no SQL descartável; em produção a verificação do acesso foi somente leitura. O CI agora também ensaia o instalador em SQL descartável, após gerar o schema revisável.
+
+## Ainda bloqueante
+
+Schema comercial, rótulo do ID 4, decisão de nulabilidade LogoUrl, R2 real, revisão independente e demais gates de ativação continuam pendentes. A validação do executor continua recusando `sa`/identidade ausente, embora a conexão preparada já use a identidade dedicada. Os três gates continuam false.
