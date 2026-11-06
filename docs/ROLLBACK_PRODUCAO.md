@@ -68,4 +68,10 @@ Não escolher um commit apenas porque ele existe no Git: pacote e configuração
 
 Se o executor não conseguir recuperar, preservar journal e snapshots, identificar o baseline e planejar manualmente a liberação do nome do container novo e retorno do antigo. Manter NPM, rede e volume DP. Se faltar imagem, conferir SHA e carregar o arquivo offline; não reconstruir a partir da main corrente. Se houver incompatibilidade de banco, interromper e adotar o plano de banco aprovado, sem restore automático.
 
-Manter aplicação ativa, pelo menos um baseline anterior e legado inicial durante o período de observação a ser definido na autorização. Arquivos de configuração nos snapshots contêm segredos e exigem 0600/0700. Revalidar os gates/revisores e manter publicações suspensas durante incidentes. Ver [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md).
+Manter aplicação ativa, pelo menos um baseline anterior e legado inicial durante o período de observação a ser definido na autorização. Arquivos de configuração nos snapshots contêm segredos e exigem 0600/0700. Revalidar os gates, Environment automático e proteção/revisão da main e manter publicações suspensas durante incidentes. Ver [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md).
+
+## Preflight e recuperação
+
+O deploy novo exige backup íntegro/recente e schema conhecido compatível pelo checker fixo. Rollback não exige esse checker: uma falha de backup não deve impedir restaurar a aplicação anterior. Lock, gates locais, integridade do pacote, configurações e health continuam obrigatórios. Em falha de rollback o journal permanece; bloquear novas publicações e acionar recuperação manual. Não religar gates nem remover journal para forçar sucesso.
+
+A ampliação proposta na PR #3 preserva dados/larguras, mas ainda falta demonstrar operações de escrita da aplicação antiga depois dessas alterações. O índice único continua bloqueado por dados duplicados. Assim, rollback binário não é autorização para alterar/reverter schema e o primeiro corte segue bloqueado.

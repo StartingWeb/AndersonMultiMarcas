@@ -26,9 +26,11 @@ Imagem/config do CI: `sha256:cb6efb50078385a03a905c312cdfee30cb4c8f7ad355dc2a0c1
 
 ## Environment e gates
 
-`production` foi criado pela API GitHub com uma única deployment branch policy: `main`, tipo branch. `can_admins_bypass=false` foi gravado e confirmado por GET. A API real expõe esse campo; [verify_environment.py](../scripts/ci/verify_environment.py) agora recusa true ou campo ausente, além de exigir a declaração de autorização humana.
+`production` foi consultado novamente: única branch policy `main`, tipo branch; `can_admins_bypass=false`; sem required reviewers e sem aprovação por publicação. A política futura é automática depois de uma ativação expressamente autorizada. [verify_environment.py](../scripts/ci/verify_environment.py) exige esse estado, recusa revisores por execução, bypass true/ausente, tags e outras branches e consulta se `main` está protegida.
 
-Somente `StartingWeb` apareceu como colaborador. Ainda falta indicar um revisor independente. Não se configurou o próprio iniciador como aprovação fictícia. GitHub recusou `prevent_self_review` sem ao menos um reviewer; ambos devem ser configurados juntos quando a identidade autorizada for informada. `main` não tinha proteção global de branch; sua política de PR/revisão também deve ser decidida antes da ativação.
+A proteção clássica da `main` foi aplicada e confirmada pela API: `validate` obrigatório, associado ao GitHub Actions (app 15368), branch atualizada, uma revisão de PR, descarte de aprovações antigas, aprovação do último push, code owner review e conversas resolvidas. Force push/exclusão estão proibidos e admins seguem as regras. Não foram encontradas rulesets adicionais. [CODEOWNERS](../.github/CODEOWNERS) propõe revisão de workflows e scripts/infra por `StartingWeb`; só passa a valer após merge autorizado. Só esse colaborador foi identificado: integrar mudanças feitas por ele exige um segundo revisor autorizado. Não se concedeu acesso a ninguém.
+
+Push direto na main é bloqueado pela política aplicada. Qualquer relaxamento futuro dessa política pode permitir que um push direto publique automaticamente após a ativação; deve ser tratado como mudança de segurança.
 
 | Tipo | Nome/estado |
 | --- | --- |
@@ -66,11 +68,23 @@ A imagem legada foi exportada e verificada por SHA, blobs e docker load. Consult
 
 ## Verificação e limites
 
-- Build local .NET 10: zero erros/avisos; 164 testes locais passaram e 20 testes SQL não foram executados nessa rodada local sem conexão. O CI remoto de referência executou 184/184, sem skips.
-- **82 testes Python passaram**: 25 de CI/segurança, 38 de arquivo OCI/transações de deploy e 19 de operação. Os testes de operação foram incluídos na CI.
+- Build local .NET 10: zero erros/avisos; 184/184 testes locais passaram nesta revisão, incluindo SQL descartável, sem skips. O helper local foi corrigido para não contaminar os hosts de teste com migrations/bootstrap de Development.
+- **93 testes Python passaram nesta revisão**: 28 de CI/segurança, 40 de arquivo OCI/transações de deploy e 25 de operação. Os testes de operação foram incluídos na CI.
 - Nove cenários Docker locais passaram com limpeza conferida: publicação, falhas de startup/health, pacote inválido/adulterado, configuração insegura, transferência interrompida, rollback por arquivo e retorno ao legado simulado.
 - O artefato .NET real foi carregado no VPS, ligado somente à cópia SQL interna e verificado sem credenciais produtivas, jobs externos ou migrations na cópia original. DP persistiu entre containers de teste.
 - HTTPS válido e `/health=200` foram confirmados nos três domínios. `/health/release=404` continua sendo a resposta do legado; a nova release deve responder com seu commit após um corte autorizado.
-- O banco tem drift de limites/índice em relação ao schema novo, apesar dos testes de leitura aprovados. Correção foi preparada em branch separada. R2 de escrita, destinatário SMTP e revisores continuam pendentes.
+- O banco tem drift de limites/índice em relação ao schema novo, apesar dos testes de leitura aprovados. Correção foi preparada em branch separada. R2 de escrita e decisão de schema seguem pendentes. SMTP foi aceito; a revisão independente é exigida no PR, não a cada publicação.
 
 Operação completa: [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md). Backup: [BACKUP_ANDERSONMULTIMARCAS.md](./BACKUP_ANDERSONMULTIMARCAS.md). Diferenças SQL: [VALIDACAO_SCHEMA_PRODUCAO.md](./VALIDACAO_SCHEMA_PRODUCAO.md). Pendências: [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md).
+
+## Preparação automática desta execução
+
+Fluxo: push main → CI (restore, Release, .NET/SQL isolado, Python, YAML/Actionlint/ShellCheck e vulnerabilidades) → artefato do CI aprovado → pacote imutável com SHA/commit/ciRunId → gates GitHub e Environment → transferência SSH restrita → gates locais → backup recente/íntegro e schema → ativação → health interno/commit e HTTPS público → histórico ou rollback automático. Concorrência é serializada no CD e recusada pelo lock no servidor. Não há migrations automáticas. CI reprovado, evento de PR, outro repositório/branch ou SHA obsoleto não habilitam o pacote produtivo.
+
+[release.py](../scripts/deploy/release.py) chama o checker fixo instalado de backup/schema antes da ativação. A nova cópia do executor e do backup foi instalada com modo 0700; hashes conferidos, sem executar o executor produtivo. O bloqueio SQL real foi verificado por consulta de metadados e a incompatibilidade continua presente. Três variáveis false e dois gates locais ausentes mantêm publicação desabilitada.
+
+As simulações de CI aprovado/reprovado e branch são verificações das condições de workflow; Environment incorreto, proveniência/commit/SHA, backup ausente/vencido/corrompido, schema incompatível, rollback com falha e concorrência são testes Python isolados. Nove cenários usam Docker real local (sucesso, startup/health, pacote inválido, adulteração, configuração insegura, transferência, rollback por arquivo e retorno ao legado). As fixtures descartáveis substituem explicitamente o checker produtivo; testes específicos verificam o checker. Nenhum cenário de falha toca produção.
+
+Evidências finais de testes e CI desta revisão estão na PR #2 e em [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md). Não usar o CI antigo como aprovação de um commit novo.
+
+CI atualizado: [execuções desta branch](https://github.com/StartingWeb/AndersonMultiMarcas/actions/workflows/ci.yml?query=branch%3Ainfra%2Fproduction-preparation). O resultado do SHA final é registrado na PR #2; não executar CD produtivo para validar essa preparação.

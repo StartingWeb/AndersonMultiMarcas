@@ -8,7 +8,7 @@ Commit de referência: `1e5612276e0809166a2ea33a21deabee0bf0f768`. CI [421355908
 
 Esse artefato foi usado para o ensaio real de banco/aplicação. A branch de infraestrutura corrige SCP restrito, verificação OCI e proteções. **Antes da publicação por Actions, revisar e integrar as correções manualmente, obter CI/CD e novo artefato do SHA resultante e reapresentar esse SHA exato para aprovação.** A preparação não aprova merge nem corte.
 
-**PARADA ATUAL: faltam destinatário/teste SMTP, revisor independente, decisão de schema, R2 de teste, proteção fora da VPS e autorização explícita. Não iniciar o corte com esta lista aberta.** O plano não presume uma janela nem inventa aprovadores.
+**PARADA ATUAL: faltam integração por PR com revisão independente, decisão de schema, R2 de teste, proteção fora da VPS e autorização explícita de ativação/corte. Não iniciar o corte com esta lista aberta.** O plano não presume uma janela nem inventa aprovadores.
 
 ## Checklist anterior à autorização
 
@@ -18,7 +18,7 @@ Esse artefato foi usado para o ensaio real de banco/aplicação. A branch de inf
 4. Aprovar [VALIDACAO_R2.md](./VALIDACAO_R2.md), incluindo ciclo sintético em bucket exclusivo e avaliação das referências legadas. Não testar gravações em bucket produtivo.
 5. Conferir imagem legada, SHA do arquivo e snapshot privado recuperável; manter container, configurações, rede, aliases e volume DP.
 6. Conferir [ROLLBACK_PRODUCAO.md](./ROLLBACK_PRODUCAO.md), operador e critérios objetivos para voltar à versão antiga.
-7. Conferir Environment: reviewer independente, prevent_self_review, main-only, can_admins_bypass=false, cinco secrets, known hosts e política main. Não confundir variável de autorização com proteção GitHub real.
+7. Conferir Environment: sem required reviewers por execução, main-only, can_admins_bypass=false, cinco secrets, known hosts e proteção efetiva da main com revisão no PR. Não confundir variável de autorização com proteção GitHub real.
 8. Confirmar CI do commit final, todos os testes/segurança aprovados, SQL revisado e source parity formalmente aceita. Conferir que main ainda aponta ao SHA autorizado.
 9. Confirmar artefato, origem, ciRunId, arquitetura linux/amd64, configurações/rootfs, SHA do bundle e do executor instalado.
 10. Definir explicitamente janela de manutenção, responsáveis, testes sem criação indiscriminada de dados e período de observação/retenção. Apresentar ao usuário SHA, artefato, backup, ensaio, riscos e plano de retorno para autorização explícita.
@@ -28,7 +28,7 @@ Esse artefato foi usado para o ensaio real de banco/aplicação. A branch de inf
 Os itens seguintes **não foram executados**:
 
 11. Suspender de forma controlada o workflow `Deploy Production` do Release e outros gatilhos identificados; registrar estado anterior. Verificar ausência de execução antiga em andamento. Não excluir/arquivar o repositório.
-12. Reconfirmar backup/health e preservar o legado. Na janela, parar e renomear o mesmo container para `andersonmultimarcas-legacy-fb8a205768dc`, conferindo imagem/DP/rede. Preparar arquivos locais de aprovação e habilitação e as três Repository variables somente conforme autorização registrada. Publicar exclusivamente o pacote do SHA aprovado, com aprovação real do Environment.
+12. Reconfirmar backup/health e preservar o legado. Na janela, parar e renomear o mesmo container para `andersonmultimarcas-legacy-fb8a205768dc`, conferindo imagem/DP/rede. Preparar arquivos locais de aprovação e habilitação e as três Repository variables somente conforme autorização registrada. Publicar exclusivamente o pacote do SHA aprovado, com os gates aprovados na autorização inicial. Depois da ativação, cada push main com CI aprovado publica automaticamente, sem nova aprovação humana por release.
 13. Conferir `/health` e `/health/release` dentro do novo container; o commit precisa coincidir com o manifesto. Falha exige rollback, não migração improvisada.
 14. Conferir home/catálogo/filtros/detalhe e comportamento de dados legados. Evitar operações de escrita que não façam parte do roteiro aprovado.
 15. Conferir login administrativo com operador autorizado e permissões/menu; não expor credenciais em logs ou relatório.
@@ -40,10 +40,16 @@ Os itens seguintes **não foram executados**:
 
 ## Critérios de recusa
 
-Recusar o início com backup não restaurável, integridade incerta, reviewer ausente, bypass habilitado/desconhecido, artefato obsoleto, diferença de imagem/configuração, schema de escrita não aprovado, R2 sem validação ou baseline de rollback não recuperável. Não resolver recusas habilitando migrations no startup, removendo o container antigo, desabilitando proteção GitHub ou aceitando apenas liveness.
+Recusar o início com backup não restaurável, integridade incerta, proteção/revisão da main ausente, bypass habilitado/desconhecido, artefato obsoleto, diferença de imagem/configuração, schema de escrita não aprovado, R2 sem validação ou baseline de rollback não recuperável. Não resolver recusas habilitando migrations no startup, removendo o container antigo, desabilitando proteção GitHub ou aceitando apenas liveness.
 
 O primeiro corte pode produzir indisponibilidade durante troca do nome/upstream. Não se promete zero downtime. A parada do legado, suspensão de seu workflow e habilitação de gates fazem parte do corte autorizado, não desta preparação.
 
 ## Estado que deve continuar até nova autorização
 
 `andersonmultimarcas-web` segue com a imagem legada `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5` e início `2026-10-23T20:43:11.986710244Z`. SQL compartilhado e NPM não foram reiniciados. Os três gates GitHub estão false; arquivos locais de ativação/aprovação estão ausentes. A nova aplicação só foi iniciada em containers isolados, sem acesso à origem produtiva.
+
+## Preparação de 05/11/2026
+
+SMTP aceito e timer/monitor saudáveis; proteção de main aplicada. O preflight de backup/schema foi instalado, mas o drift conhecido ainda recusa publicação. [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2) e [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3) permanecem sem merge. Antes de ativar: revisão independente, resolver schema/dados sem deduplicação implícita, demonstrar compatibilidade da aplicação antiga após a mudança e rollback, validar R2 em homologação e destino externo aprovado, revisar privilégios runtime e produzir CI/pacote do SHA final. Não reduzir colunas no rollback.
+
+A ativação futura é uma única decisão expressa, incluindo primeiro corte e suspensão do publicador antigo. Não há aprovação por execução após essa ativação. Nenhum gate ou container foi habilitado/alterado nesta preparação.
