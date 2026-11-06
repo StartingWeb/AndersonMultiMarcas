@@ -81,6 +81,10 @@ def main():
         env['ANDERSON_E2E_PASSWORD'] = config['bootstrapPassword']
         run(str(ROOT / '.cache/browser-venv/bin/python'), 'scripts/functional/browser_smoke.py', env=env, cwd=ROOT)
     elif args.action == 'test':
+        # Tests create their own host environments and databases. Do not leak
+        # Development-only startup migrations/bootstrap into Production factories.
+        env['Database__ApplyMigrationsOnStartup'] = 'false'
+        env['DevelopmentBootstrap__Enabled'] = 'false'
         run('dotnet','test','Project.Tests/Project.Tests.csproj','-c','Release',env=env,cwd=ROOT)
     else:
         print('Local login: local.developer. Generated password is in .cache/local-sql/config.json (never commit).')

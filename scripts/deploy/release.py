@@ -526,10 +526,23 @@ class ReleaseManager:
                 raise DeploymentError("Legacy rollback failed and managed recovery failed; retained transaction requires operator recovery") from None
             raise DeploymentError("Legacy rollback failed; managed application was restored and checked") from None
 
+    def readiness(self):
+        # Fixed, locally installed checker. Never execute a helper supplied by a bundle.
+        result = subprocess.run(
+            ["python3", "-I", "-B", "/opt/startingweb/backups/anderson-multimarcas/bin/backup.py", "deployment-check"],
+            capture_output=True, text=True, timeout=1200)
+        require(result.returncode == 0, "Backup/schema preflight refused; production was not changed")
+        try:
+            report = json.loads(result.stdout)
+        except (ValueError, TypeError):
+            raise DeploymentError("Invalid backup/schema preflight result") from None
+        require(report.get("status") == "ready", "Backup/schema readiness was not confirmed")
+
     def deploy(self, bundle, expected_sha):
         with self.locked():
             server = self.gates()
             require(not self.transaction_file.exists(), "Pending transaction exists; invoke rollback without --release to recover")
+            self.readiness()
             release, manifest = self.snapshot(Path(bundle), expected_sha)
             self.activate(release, manifest, server, "deploy")
             print(f"Release verified: {manifest['commit']}")

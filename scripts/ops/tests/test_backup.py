@@ -15,6 +15,69 @@ spec.loader.exec_module(backup)
 
 
 class BackupSafetyTests(unittest.TestCase):
+    def readiness_fixture(self, directory):
+        root = Path(directory).resolve()
+        (root / 'state').mkdir()
+        run = '20261106T021839Z-6285a775'
+        native = root / 'native' / run
+        native.mkdir(parents=True)
+        file = native / 'database.bak'
+        file.write_bytes(b'synthetic disposable backup')
+        file.chmod(0o600)
+        current = backup.now().isoformat()
+        last = {'run_id': run, 'verified_at': current, 'size_bytes': file.stat().st_size,
+                'sha256': backup.digest(file), 'snapshot': 'verified-snapshot'}
+        for name, data in [('last-valid.json', last), ('status.json', {'backup_status':'success'}),
+                           ('last-restore.json', {'status':'verified','dbcc_checkdb':'passed','completed_at':current})]:
+            backup.atomic_json(root / 'state' / name, data)
+        return root, last
+
+    def test_backup_and_schema_readiness_accepts_only_complete_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, last = self.readiness_fixture(directory)
+            with mock.patch.object(backup, 'ROOT', root), mock.patch.object(backup, 'Repository') as repository, \
+                    mock.patch.object(backup, 'sql', return_value='1'):
+                repository.return_value.snapshots.return_value = [{'id':last['snapshot'],'tags':['verified']}]
+                self.assertEqual('ready', backup.deployment_check({})['status'])
+                repository.return_value.command.assert_called_with('check','--read-data')
+
+    def test_expired_missing_and_corrupt_backup_never_reaches_schema(self):
+        for fault in ('expired','missing','corrupt'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
+                root, last = self.readiness_fixture(directory)
+                if fault == 'expired':
+                    last['verified_at'] = '2000-01-01T00:00:00+00:00'
+                    backup.atomic_json(root / 'state' / 'last-valid.json', last)
+                elif fault == 'missing':
+                    (root / 'state' / 'last-valid.json').unlink()
+                else:
+                    (root / 'native' / last['run_id'] / 'database.bak').write_bytes(b'corrupt')
+                with mock.patch.object(backup, 'ROOT', root), mock.patch.object(backup, 'sql') as sql:
+                    with self.assertRaises(backup.BackupError):
+                        backup.deployment_check({})
+                    sql.assert_not_called()
+
+    def test_incompatible_schema_blocks_deployment_after_backup_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, last = self.readiness_fixture(directory)
+            with mock.patch.object(backup, 'ROOT', root), mock.patch.object(backup, 'Repository') as repository, \
+                    mock.patch.object(backup, 'sql', return_value='0'):
+                repository.return_value.snapshots.return_value = [{'id':last['snapshot'],'tags':['verified']}]
+                with self.assertRaisesRegex(backup.BackupError, 'incompatibility'):
+                    backup.deployment_check({})
+
+    def test_monitor_suppresses_duplicate_incident_alert(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, last = self.readiness_fixture(directory)
+            backup.atomic_json(root / 'state' / 'status.json',
+                               {'run_id': last['run_id'], 'backup_status':'failed'})
+            backup.atomic_json(root / 'state' / 'monitor-alert.json',
+                               {'incident': last['run_id'], 'sent_at':'2000-01-01T00:00:00+00:00'})
+            with mock.patch.object(backup, 'ROOT', root), mock.patch.object(backup, 'Repository'), \
+                    mock.patch.object(backup, 'send_email') as send:
+                self.assertEqual('alert', backup.monitor({'reserve_free_bytes':0})['status'])
+                send.assert_not_called()
+
     def test_failed_configured_notification_is_not_a_successful_service_exit(self):
         with mock.patch.object(backup, 'load_config', return_value={'recipient': 'owner@example.com'}), \
                 mock.patch.object(backup, 'lock', return_value=nullcontext()), \
@@ -116,6 +179,33 @@ class BackupSafetyTests(unittest.TestCase):
                                        {'backup_status': 'success', 'started_at': 'fixture'})
         self.assertEqual('accepted_by_smtp', result['status'])
         self.assertEqual(1, connection.send_message.call_count)
+
+    def test_disconnect_during_data_is_not_retried(self):
+        settings = {'provider':'gmail','host':'smtp.gmail.com','port':587,'tls':'starttls',
+                    'credential_kind':'google_app_password','from':'sender@example.com',
+                    'username':'sender@example.com','password_file':'/etc/tscomproouro-backup/test-password'}
+        connection = mock.Mock()
+        connection.send_message.side_effect = backup.smtplib.SMTPServerDisconnected('synthetic disconnect')
+        with mock.patch.object(backup, 'read_smtp_source', side_effect=[json.dumps({'email':settings}), 'a'*16]), \
+                mock.patch.object(backup.smtplib, 'SMTP', return_value=connection):
+            result = backup.send_email({'recipient':'owner@example.com'},
+                                       {'backup_status':'success','started_at':'fixture'})
+        self.assertEqual('delivery_unknown', result['status'])
+        self.assertEqual(1, connection.send_message.call_count)
+
+    def test_permanent_authentication_failure_is_not_retried(self):
+        settings = {'provider':'gmail','host':'smtp.gmail.com','port':587,'tls':'starttls',
+                    'credential_kind':'google_app_password','from':'sender@example.com',
+                    'username':'sender@example.com','password_file':'/etc/tscomproouro-backup/test-password'}
+        connection = mock.Mock()
+        connection.login.side_effect = backup.smtplib.SMTPAuthenticationError(535, b'synthetic refusal')
+        with mock.patch.object(backup, 'read_smtp_source', side_effect=[json.dumps({'email':settings}), 'a'*16]), \
+                mock.patch.object(backup.smtplib, 'SMTP', return_value=connection):
+            result = backup.send_email({'recipient':'owner@example.com'},
+                                       {'backup_status':'success','started_at':'fixture'})
+        self.assertEqual('authentication_failed', result['status'])
+        self.assertEqual(1, connection.login.call_count)
+        connection.send_message.assert_not_called()
 
     def test_smtp_socket_inspection_after_acceptance_cannot_trigger_a_retry(self):
         settings = {'provider': 'gmail', 'host': 'smtp.gmail.com', 'port': 587,

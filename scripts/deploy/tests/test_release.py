@@ -150,6 +150,23 @@ class ReleaseTests(unittest.TestCase):
         self.legacy = self.docker.container(LEGACY_IMAGE)
         self.docker.containers[self.server["legacyFallbackContainer"]] = self.legacy
         self.manager = release.ReleaseManager(self.root, docker=self.docker, health_timeout=1)
+        # Only synthetic, disposable fixture: real readiness is tested separately.
+        readiness = mock.patch.object(self.manager, "readiness")
+        self.readiness = readiness.start()
+        self.addCleanup(readiness.stop)
+
+    def test_readiness_failure_prevents_any_docker_mutation(self):
+        self.readiness.side_effect = release.DeploymentError("Backup/schema preflight refused")
+        with self.assertRaises(release.DeploymentError):
+            self.deploy()
+        self.assertEqual([], self.docker.calls)
+
+    def test_real_readiness_rejects_failed_or_malformed_checker(self):
+        manager = release.ReleaseManager(self.root, docker=self.docker)
+        for code, output in ((1, ''), (0, '{}'), (0, 'invalid')):
+            with mock.patch.object(release.subprocess, 'run', return_value=subprocess.CompletedProcess([], code, output)):
+                with self.assertRaises(release.DeploymentError):
+                    manager.readiness()
 
     def bundle(self, commit=FIRST):
         path = self.base / ("bundle-" + commit)

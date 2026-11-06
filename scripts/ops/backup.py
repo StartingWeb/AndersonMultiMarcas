@@ -211,6 +211,8 @@ def message_for(report, sender, recipient):
         'Verificação SQL': report.get('sql_verify', 'não concluída'),
         'SHA-256': 'registrado no manifesto protegido',
         'Armazenamento': 'VPS StartingWeb; repositório Restic criptografado',
+        'Estado do armazenamento': report.get('storage_status', 'consultar monitor'),
+        'Espaço livre': f"{report.get('storage_free_bytes', 0) / 1073741824:.2f} GiB",
         'Último backup válido': last.get('verified_at', 'não confirmado'),
         'Restauração de teste': restored.get('completed_at', 'pendente'),
         'Resultado da restauração': restored.get('status', 'pendente'),
@@ -235,8 +237,10 @@ def send_email(config, report, *, sleep=time.sleep):
         message = message_for(report, settings['from'], config['recipient'])
     except Exception:
         return {'status': 'configuration_failed', 'attempts': 0}
+    history = []
     for attempt in range(1, 4):
         connection = None
+        submitting = False
         try:
             context = ssl.create_default_context()
             context.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -245,9 +249,11 @@ def send_email(config, report, *, sleep=time.sleep):
             connection.starttls(context=context)
             connection.ehlo()
             connection.login(settings['username'], password)
+            submitting = True
             if connection.send_message(message):
                 raise ValueError('Recipient rejected')
-            result = {'status': 'accepted_by_smtp', 'attempts': attempt,
+            history.append({'attempt': attempt, 'result': 'accepted_by_smtp'})
+            result = {'status': 'accepted_by_smtp', 'attempts': attempt, 'attempt_history': history,
                       'data_response': 250, 'certificate_verified': True}
             # DATA acceptance is final even if subsequent socket inspection or
             # QUIT fails. Never duplicate an already accepted notification.
@@ -257,10 +263,18 @@ def send_email(config, report, *, sleep=time.sleep):
                 pass
             return result
         except smtplib.SMTPAuthenticationError as error:
+            history.append({'attempt': attempt, 'result': 'authentication_failed'})
             if 500 <= error.smtp_code < 600:
-                return {'status': 'authentication_failed', 'attempts': attempt}
+                return {'status': 'authentication_failed', 'attempts': attempt, 'attempt_history': history}
+        except (smtplib.SMTPServerDisconnected, OSError):
+            # A connection lost during DATA has an ambiguous outcome. Retrying
+            # could duplicate mail; record uncertainty for operator inspection.
+            if submitting:
+                history.append({'attempt': attempt, 'result': 'delivery_unknown'})
+                return {'status': 'delivery_unknown', 'attempts': attempt, 'attempt_history': history}
+            history.append({'attempt': attempt, 'result': 'connection_failed'})
         except Exception:
-            pass
+            history.append({'attempt': attempt, 'result': 'rejected_or_failed'})
         finally:
             if connection:
                 # An error in QUIT must never duplicate an accepted message.
@@ -274,7 +288,7 @@ def send_email(config, report, *, sleep=time.sleep):
                     pass
         if attempt < 3:
             sleep(2 ** attempt)
-    return {'status': 'failed', 'attempts': 3}
+    return {'status': 'failed', 'attempts': 3, 'attempt_history': history}
 
 
 def saved(name):
@@ -385,7 +399,13 @@ def run_backup(config, *, initial=False):
         report.update(completed_at=now().astimezone(ZONE).isoformat(),
                       duration_seconds=round((now() - start).total_seconds(), 2),
                       last_valid=saved('last-valid.json'), last_restore=saved('last-restore.json'))
+        free = shutil.disk_usage(ROOT).free
+        report.update(storage_free_bytes=free,
+                      storage_status='disponível' if free >= config.get('reserve_free_bytes', 0) else 'reserva insuficiente')
         report['notification'] = send_email(config, report)
+        if report['backup_status'] == 'failed' and report['notification']['status'] == 'accepted_by_smtp':
+            atomic_json(ROOT / 'state' / 'monitor-alert.json',
+                        {'incident': run_id, 'sent_at': report['completed_at']})
         atomic_json(ROOT / 'state' / 'status.json', report)
         atomic_json(ROOT / 'logs' / (run_id + '.json'), report)
     return report
@@ -412,17 +432,73 @@ def monitor(config):
               'last_valid': last, 'last_valid_snapshot_present': repository_present,
               'notification': status.get('notification', {})}
     alert = saved('monitor-alert.json')
-    if problem and (not alert or (current - datetime.fromisoformat(alert['sent_at'])).total_seconds() > 24 * 3600):
+    incident = status.get('run_id', 'missing-backup')
+    if problem and alert.get('incident') != incident:
         notice = {**status, 'backup_status': 'failed', 'stage': 'freshness_or_notification_monitor',
                   'started_at': current.astimezone(ZONE).isoformat(),
                   'completed_at': current.astimezone(ZONE).isoformat(), 'last_valid': last}
         report['alert_notification'] = send_email(config, notice)
         if report['alert_notification']['status'] == 'accepted_by_smtp':
-            atomic_json(ROOT / 'state' / 'monitor-alert.json', {'sent_at': current.isoformat()})
+            atomic_json(ROOT / 'state' / 'monitor-alert.json', {'incident': incident, 'sent_at': current.isoformat()})
     if not problem and alert:
         (ROOT / 'state' / 'monitor-alert.json').unlink()
     atomic_json(ROOT / 'state' / 'monitor-status.json', report)
     return report
+
+
+def deployment_check(config):
+    """Read-only check of backup integrity and the audited schema write contract.
+
+    No SQL DDL/DML, no restore to the source, and no migrations are performed.
+    This guard covers known drift; formal parity review remains a separate gate.
+    """
+    last = saved('last-valid.json')
+    status = saved('status.json')
+    restored = saved('last-restore.json')
+    if not last or status.get('backup_status') != 'success':
+        raise BackupError('A successful backup is required before deployment.')
+    age = (now() - datetime.fromisoformat(last['verified_at'])).total_seconds()
+    if not 0 <= age <= 27 * 3600:
+        raise BackupError('Backup is expired or its clock is invalid.')
+    if (restored.get('status') != 'verified' or restored.get('dbcc_checkdb') != 'passed'
+            or not 0 <= (now() - datetime.fromisoformat(restored['completed_at'])).total_seconds() <= 35 * 86400):
+        raise BackupError('A recent verified SQL restoration is required.')
+    if not re.fullmatch(r'[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}', last.get('run_id', '')):
+        raise BackupError('Invalid backup identity.')
+    native = private(ROOT / 'native' / last['run_id'] / 'database.bak')
+    if native.stat().st_size != last['size_bytes'] or digest(native) != last['sha256']:
+        raise BackupError('Native backup integrity failed.')
+    repository = Repository(config)
+    repository.identity()
+    if last['snapshot'] not in {s['id'] for s in repository.snapshots() if 'verified' in s.get('tags', [])}:
+        raise BackupError('Verified encrypted backup is missing.')
+    repository.command('check', '--read-data')
+    targets = [('Loja','Email',180), ('Marca','LogoUrl',400), ('Veiculo','Cor',60),
+               ('Veiculo','Descricao',4000), ('Veiculo','Modelo',150),
+               ('Veiculo','ObservacoesInternas',2000), ('Veiculo','Titulo',180),
+               ('Veiculo','UrlVideo',400), ('Veiculo','Versao',150),
+               ('Vendedor','Cargo',120), ('Vendedor','Email',180), ('Vendedor','FotoUrl',400)]
+    rows = ','.join(f"(N'{table}',N'{column}',{length})" for table,column,length in targets)
+    query = "USE [AndersonMultiMarcas]; SELECT CASE WHEN EXISTS (SELECT 1 FROM (VALUES " + rows + """
+      ) t(tbl,col,characters) LEFT JOIN sys.columns c
+      ON c.object_id=OBJECT_ID(N'dbo.'+QUOTENAME(t.tbl)) AND c.name=t.col
+      WHERE c.column_id IS NULL OR TYPE_NAME(c.user_type_id)<>N'nvarchar'
+        OR c.is_computed=1 OR (c.max_length<>-1 AND c.max_length<t.characters*2)
+        OR (t.tbl=N'Marca' AND t.col=N'LogoUrl' AND c.is_nullable=0))
+      OR NOT EXISTS (SELECT 1 FROM sys.indexes i
+        WHERE i.object_id=OBJECT_ID(N'dbo.Marca') AND i.is_unique=1
+          AND i.is_disabled=0 AND i.has_filter=0
+          AND (SELECT COUNT(*) FROM sys.index_columns ic WHERE ic.object_id=i.object_id
+               AND ic.index_id=i.index_id AND ic.key_ordinal>0)=1
+          AND EXISTS (SELECT 1 FROM sys.index_columns ic JOIN sys.columns c
+               ON c.object_id=ic.object_id AND c.column_id=ic.column_id
+               WHERE ic.object_id=i.object_id AND ic.index_id=i.index_id
+                 AND ic.key_ordinal=1 AND c.name=N'Nome'))
+      THEN 0 ELSE 1 END;
+    """
+    if sql(query).strip() != '1':
+        raise BackupError('Known SQL write-schema incompatibility blocks deployment.')
+    return {'status': 'ready', 'backup_integrity': 'verified', 'schema_contract': 'compatible'}
 
 
 def initialize(config):
@@ -445,7 +521,7 @@ def main():
         raise BackupError('Backup operation interrupted.')
     signal.signal(signal.SIGTERM, interrupted)
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('backup', 'monitor', 'status'))
+    parser.add_argument('operation', choices=('backup', 'monitor', 'status', 'deployment-check'))
     parser.add_argument('--initial', action='store_true')
     args = parser.parse_args()
     config = load_config()
@@ -453,7 +529,9 @@ def main():
         print(json.dumps(saved('status.json'), ensure_ascii=False))
         return 0
     with lock(ROOT / 'state' / 'backup.lock'):
-        if args.operation == 'monitor':
+        if args.operation == 'deployment-check':
+            report = deployment_check(config)
+        elif args.operation == 'monitor':
             report = monitor(config)
         else:
             report = run_backup(config, initial=args.initial)
