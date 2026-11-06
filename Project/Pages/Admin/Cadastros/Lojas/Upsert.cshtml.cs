@@ -47,7 +47,7 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
             Id = loja.Id,
             Nome = loja.Nome,
             RazaoSocial = loja.RazaoSocial,
-            Cnpj = loja.Cnpj.Valor,
+            Cnpj = loja.Cnpj?.Valor,
             Email = loja.Email.Valor,
             Telefone = loja.Telefone.Valor,
             Logradouro = loja.Endereco.Logradouro,
@@ -67,9 +67,18 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         LoadUfs();
+        NormalizeCnpjModelState();
 
         if (!ModelState.IsValid)
         {
+            if (Loja.Id > 0) ApplyEditTexts();
+            return Page();
+        }
+
+        var cnpj = string.IsNullOrWhiteSpace(Loja.Cnpj) ? (Documento?)null : new Documento(Loja.Cnpj);
+        if (cnpj.HasValue && await db.Lojas.AsNoTracking().AnyAsync(x => x.Id != Loja.Id && x.Cnpj == cnpj, ct))
+        {
+            ModelState.AddModelError("Loja.Cnpj", "Ja existe uma loja com este CNPJ.");
             if (Loja.Id > 0) ApplyEditTexts();
             return Page();
         }
@@ -94,22 +103,20 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
                     return RedirectToPage("/Admin/Cadastros/Lojas/Index");
                 }
 
-                loja.Update(Loja.Nome, Loja.RazaoSocial, new Email(Loja.Email), new Telefone(Loja.Telefone), endereco);
-                db.Entry(loja).Property(x => x.Cnpj).CurrentValue = new Documento(Loja.Cnpj);
-                TempData["SuccessMessage"] = "Loja atualizada com sucesso.";
+                loja.Update(Loja.Nome, Loja.RazaoSocial, cnpj, new Email(Loja.Email), new Telefone(Loja.Telefone), endereco);
             }
             else
             {
-                db.Lojas.Add(new Loja(Loja.Nome, Loja.RazaoSocial, new Documento(Loja.Cnpj), new Email(Loja.Email), new Telefone(Loja.Telefone), endereco));
-                TempData["SuccessMessage"] = "Loja cadastrada com sucesso.";
+                db.Lojas.Add(new Loja(Loja.Nome, Loja.RazaoSocial, cnpj, new Email(Loja.Email), new Telefone(Loja.Telefone), endereco));
             }
 
             await db.SaveChangesAsync(ct);
+            TempData["SuccessMessage"] = Loja.Id > 0 ? "Loja atualizada com sucesso." : "Loja cadastrada com sucesso.";
             return RedirectToPage("/Admin/Cadastros/Lojas/Index");
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex) when (LojaDatabaseErrors.IsCnpjDuplicate(ex))
         {
-            ModelState.AddModelError(string.Empty, "Nao foi possivel salvar. Verifique se ja existe uma loja com este CNPJ.");
+            ModelState.AddModelError("Loja.Cnpj", "Ja existe uma loja com este CNPJ.");
             if (Loja.Id > 0) ApplyEditTexts();
             return Page();
         }
@@ -118,6 +125,19 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
             ModelState.AddModelError(string.Empty, ex.Message);
             if (Loja.Id > 0) ApplyEditTexts();
             return Page();
+        }
+    }
+
+    private void NormalizeCnpjModelState()
+    {
+        if (LojaCnpj.TryNormalizeOptional(Loja.Cnpj, out var normalized, out var error))
+        {
+            Loja.Cnpj = normalized;
+            if (normalized is null) ModelState.Remove("Loja.Cnpj");
+        }
+        else
+        {
+            ModelState.AddModelError("Loja.Cnpj", error ?? LojaCnpj.InvalidMessage);
         }
     }
 
@@ -147,10 +167,9 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
         [Display(Name = "Razao social")]
         public string RazaoSocial { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Informe o CNPJ.")]
         [StringLength(18)]
         [Display(Name = "CNPJ")]
-        public string Cnpj { get; set; } = string.Empty;
+        public string? Cnpj { get; set; }
 
         [Required(ErrorMessage = "Informe o e-mail.")]
         [EmailAddress(ErrorMessage = "Informe um e-mail valido.")]

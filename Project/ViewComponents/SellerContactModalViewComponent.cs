@@ -28,7 +28,7 @@ public sealed class SellerContactModalViewComponent(
     {
         var grupos = await db.Vendedores
             .AsNoTracking()
-            .Where(x => x.Ativo)
+            .Where(x => x.Ativo && x.Loja.Ativo)
             .Select(x => new
             {
                 LojaNome = x.Loja.Nome,

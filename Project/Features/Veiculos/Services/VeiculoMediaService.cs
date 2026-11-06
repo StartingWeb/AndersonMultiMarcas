@@ -1,14 +1,14 @@
 using Core.Storage;
 using Microsoft.Extensions.Options;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using ImageMagick;
+using Project.Infrastructure.Images;
 
 namespace Project.Features.Veiculos.Services;
 
 public sealed class VeiculoMediaService(
     IStorageService storage,
-    IOptions<StorageOptions> storageOptions) : IVeiculoMediaService
+    IOptions<StorageOptions> storageOptions,
+    ILogger<VeiculoMediaService>? logger = null) : IVeiculoMediaService
 {
     private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
     private const string OutputContentType = "image/webp";
@@ -18,43 +18,52 @@ public sealed class VeiculoMediaService(
         IReadOnlyCollection<IFormFile> arquivos,
         CancellationToken ct)
     {
-        var resultado = new List<VeiculoMediaUploadResult>();
-
+        // Validate and encode the whole batch before the first storage write.
+        // Keep only bounded WebP output; release each decoded image immediately.
+        var prepared = new List<(string Key, string FileName, byte[] Bytes)>();
         foreach (var arquivo in arquivos)
         {
             var ext = Path.GetExtension(arquivo.FileName).ToLowerInvariant();
-            if (!AllowedExtensions.Contains(ext)) continue;
+            if (!AllowedExtensions.Contains(ext)) throw new InvalidDataException("Formato de imagem nao suportado.");
+            if (arquivo.Length <= 0 || arquivo.Length > 10 * 1024 * 1024)
+                throw new InvalidDataException("Arquivo invalido ou muito grande (maximo 10 MB).");
 
             await using var readStream = arquivo.OpenReadStream();
-            using var image = await Image.LoadAsync(readStream, ct);
-
-            image.Mutate(x => x.AutoOrient());
-            if (image.Width > 1920)
-            {
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(1920, 1920)
-                }));
-            }
-
-            var nomeArquivo = $"{Guid.NewGuid():N}.webp";
-            var key = StoragePath.Combine("uploads", "veiculos", veiculoId.ToString(), nomeArquivo);
+            using var image = await SafeRasterImage.ReadAsync(readStream, ct);
+            if (image.Width > 1920 || image.Height > 1920) image.Resize(new MagickGeometry(1920, 1920));
+            var fileName = $"{Guid.NewGuid():N}.webp";
+            var key = StoragePath.Combine("uploads", "veiculos", veiculoId.ToString(), fileName);
             await using var output = new MemoryStream();
-            await image.SaveAsync(output, new WebpEncoder { Quality = 75 }, ct);
-            output.Position = 0;
-
-            var stored = await storage.SaveAsync(key, output, OutputContentType, ct);
-            resultado.Add(new VeiculoMediaUploadResult(
-                stored.Url,
-                nomeArquivo,
-                stored.Key,
-                stored.Container,
-                stored.ContentType,
-                stored.SizeBytes));
+            image.Quality = 75;
+            await image.WriteAsync(output, MagickFormat.WebP, ct);
+            prepared.Add((key, fileName, output.ToArray()));
         }
 
-        return resultado;
+        var resultado = new List<VeiculoMediaUploadResult>();
+        var attemptedKeys = new List<string>();
+        try
+        {
+            foreach (var image in prepared)
+            {
+                attemptedKeys.Add(image.Key);
+                await using var content = new MemoryStream(image.Bytes, writable: false);
+                var stored = await storage.SaveAsync(image.Key, content, OutputContentType, ct);
+                resultado.Add(new VeiculoMediaUploadResult(stored.Url, image.FileName, stored.Key,
+                    stored.Container, stored.ContentType, stored.SizeBytes));
+            }
+            return resultado;
+        }
+        catch
+        {
+            // All keys were generated above, so none can represent an existing upload.
+            // Include the failing attempt because a backend may accept a write before a timeout.
+            foreach (var key in attemptedKeys)
+            {
+                try { await storage.DeleteAsync(key, CancellationToken.None); }
+                catch (Exception error) { logger?.LogWarning(error, "Upload incompleto requer revisao de limpeza: {StorageKey}.", key); }
+            }
+            throw;
+        }
     }
 
     public Task RemoverArquivoAsync(string? caminhoRelativo, CancellationToken ct)

@@ -16,6 +16,7 @@ public sealed class VeiculoListItemDto
     public Cambio Cambio { get; init; }
     public decimal PrecoVenda { get; init; }
     public bool Destaque { get; init; }
+    public bool Seminovo { get; init; }
     public bool EstaDisponivel { get; init; }
     public string? MidiaCapaUrl { get; init; }
     public string MarcaNome { get; init; } = string.Empty;

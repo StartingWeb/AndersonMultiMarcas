@@ -39,6 +39,22 @@ public sealed class SellerContactModalViewComponentTests
         Assert.Equal("Ana", secondModel.SelectMany(x => x.Vendedores).Single().Nome);
     }
 
+    [Fact]
+    public async Task InvokeAsync_HidesActiveSellerWhoseStoreIsInactive()
+    {
+        await using var db = CreateDbContext();
+        var active = await SeedLojaAsync(db);
+        var hidden = await SeedLojaAsync(db);
+        hidden.Desativar();
+        AddVendedor(db, active.Id, "Visible seller", "16999990000", "");
+        AddVendedor(db, hidden.Id, "Hidden seller", "16999990001", "");
+        await db.SaveChangesAsync();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var component = new SellerContactModalViewComponent(db, CreateResolver(), cache);
+        var model = GetModel(await component.InvokeAsync());
+        Assert.Equal("Visible seller", Assert.Single(model.SelectMany(x => x.Vendedores)).Nome);
+    }
+
     private static IReadOnlyCollection<SellerContactModalStoreGroupViewModel> GetModel(IViewComponentResult result)
     {
         var view = Assert.IsType<ViewViewComponentResult>(result);

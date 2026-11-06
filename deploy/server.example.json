@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "containerName": "andersonmultimarcas-web",
+  "network": "startingweb_network",
+  "dataProtectionVolume": "andersonmultimarcas-dataprotection-keys",
+  "uploads": {
+    "type": "none",
+    "reason": "Audited production uses R2; preserve legacy host uploads separately before cutover."
+  },
+  "legacyFallbackContainer": "REPLACE_WITH_RETAINED_LEGACY_CONTAINER_AFTER_AUTHORIZATION"
+}

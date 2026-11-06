@@ -21,21 +21,11 @@ public class EmpresaModel(ApplicationDbContext db, IStorageImageResolver imageRe
             .AsNoTracking()
             .CountAsync(x => x.Ativo && !x.Vendido, ct);
 
-        Lojas = await db.Lojas
-            .AsNoTracking()
-            .OrderBy(x => x.Id)
-            .Select(x => new HomeStoreViewModel
-            {
-                Nome = x.Nome,
-                EnderecoCompleto = $"{x.Endereco.Logradouro}, {x.Endereco.Numero}, {x.Endereco.Bairro}, {x.Endereco.Cidade} - {x.Endereco.Uf}, {x.Endereco.Cep}",
-                MapsQuery = Uri.EscapeDataString($"{x.Endereco.Logradouro}, {x.Endereco.Numero}, {x.Endereco.Bairro}, {x.Endereco.Cidade} - {x.Endereco.Uf}, {x.Endereco.Cep}")
-            })
-            .Take(3)
-            .ToListAsync(ct);
+        Lojas = await PublicStoreQueries.GetHomeStoresAsync(db, 3, ct);
 
         var vendedores = await db.Vendedores
             .AsNoTracking()
-            .Where(x => x.Ativo)
+            .Where(x => x.Ativo && x.Loja.Ativo)
             .OrderBy(x => x.Nome)
             .Select(x => new SellerProjection
             {

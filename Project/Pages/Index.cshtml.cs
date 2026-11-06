@@ -37,6 +37,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
                 Cambio = x.Cambio.ToString(),
                 Combustivel = x.Combustivel.ToString(),
                 Destaque = x.Destaque,
+                Seminovo = x.Seminovo,
                 Disponivel = !x.Vendido,
                 Preco = x.PrecoVenda.Valor,
                 Midias = x.Midias
@@ -59,7 +60,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
         HeroDestaques = ToHomeVehicleCards(
             await query.Where(x => x.Destaque).OrderByDescending(x => x.Id).Take(12).ToListAsync(ct));
         PremiumZeroKm = ToHomeVehicleCards(
-            await query.Where(x => x.AnoModelo >= DateTime.UtcNow.Year).OrderByDescending(x => x.Id).Take(4).ToListAsync(ct));
+            await query.Where(x => !x.Seminovo).OrderByDescending(x => x.Id).Take(4).ToListAsync(ct));
         Eletrificados = ToHomeVehicleCards(
             await db.Veiculos.AsNoTracking()
             .Where(x => x.Ativo && !x.Vendido && (x.Combustivel == Combustivel.Eletrico || x.Combustivel == Combustivel.Hibrido))
@@ -75,6 +76,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
                 Cambio = x.Cambio.ToString(),
                 Combustivel = x.Combustivel.ToString(),
                 Destaque = x.Destaque,
+                Seminovo = x.Seminovo,
                 Disponivel = !x.Vendido,
                 Preco = x.PrecoVenda.Valor,
                 Midias = x.Midias
@@ -111,6 +113,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
                 Cambio = x.Cambio.ToString(),
                 Combustivel = x.Combustivel.ToString(),
                 Destaque = x.Destaque,
+                Seminovo = x.Seminovo,
                 Disponivel = !x.Vendido,
                 Preco = x.PrecoVenda.Valor,
                 Midias = x.Midias
@@ -133,12 +136,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
             .Take(4)
             .ToListAsync(ct));
 
-        Lojas = await db.Lojas.AsNoTracking().OrderBy(x => x.Id).Select(x => new HomeStoreViewModel
-        {
-            Nome = x.Nome,
-            EnderecoCompleto = $"{x.Endereco.Logradouro}, {x.Endereco.Numero}, {x.Endereco.Bairro}, {x.Endereco.Cidade} - {x.Endereco.Uf}, {x.Endereco.Cep}",
-            MapsQuery = Uri.EscapeDataString($"{x.Endereco.Logradouro}, {x.Endereco.Numero}, {x.Endereco.Bairro}, {x.Endereco.Cidade} - {x.Endereco.Uf}, {x.Endereco.Cep}")
-        }).Take(3).ToListAsync(ct);
+        Lojas = await PublicStoreQueries.GetHomeStoresAsync(db, 3, ct);
 
         ViewData["SeoTitle"] = "Carros seminovos e 0 km em Taquaritinga/SP | Anderson Multimarcas";
         ViewData["MetaDescription"] = "Compre carros seminovos, 0 km, híbridos, elétricos e motos elétricas em Taquaritinga/SP com atendimento consultivo, troca e financiamento.";
@@ -228,6 +226,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
                 Cambio = vehicle.Cambio,
                 Combustivel = vehicle.Combustivel,
                 Destaque = vehicle.Destaque,
+                Seminovo = vehicle.Seminovo,
                 Disponivel = vehicle.Disponivel,
                 Preco = vehicle.Preco,
                 MidiaUrl = imageResolver.SelectVehicleCover(vehicle.Midias.Select(ToStorageReference))
@@ -260,6 +259,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
         public string Cambio { get; init; } = string.Empty;
         public string Combustivel { get; init; } = string.Empty;
         public bool Destaque { get; init; }
+        public bool Seminovo { get; init; }
         public bool Disponivel { get; init; }
         public decimal Preco { get; init; }
         public IReadOnlyList<MediaProjection> Midias { get; init; } = [];

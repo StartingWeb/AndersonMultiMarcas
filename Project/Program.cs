@@ -15,7 +15,9 @@ using Project.Features.Storage.R2Sync;
 using Project.Features.Storage.Validation;
 using Project.Features.Veiculos.Services;
 using Project.Infrastructure.Storage;
+using Project.Infrastructure.Deployment;
 using Project.Shared;
+using Project.Infrastructure.Security;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -25,6 +27,10 @@ CultureInfo.DefaultThreadCurrentCulture = brCulture;
 CultureInfo.DefaultThreadCurrentUICulture = brCulture;
 
 var builder = WebApplication.CreateBuilder(args);
+var applyStartupMigrations = StartupDatabasePolicy.ShouldApplyMigrations(
+    builder.Environment.IsDevelopment(),
+    builder.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup"));
+var releaseCommit = DeploymentRelease.ReadCommit(builder.Configuration["Deployment:Commit"]);
 
 // ==============================
 // BANCO DE DADOS
@@ -38,8 +44,7 @@ var connectionString = GetRequiredConnectionString(
     builder.Environment.IsProduction());
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString)
-        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
+    options.UseSqlServer(connectionString));
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -47,7 +52,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         | ForwardedHeaders.XForwardedProto
         | ForwardedHeaders.XForwardedHost;
     options.ForwardLimit = null;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -73,9 +78,11 @@ builder.Services
     {
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequiredLength = 6;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequiredLength = 12;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
@@ -83,7 +90,21 @@ builder.Services
 // ==============================
 // RAZOR PAGES
 // ==============================
-builder.Services.AddRazorPages();
+builder.Services.AddAuthorization(AdminAuthorization.Configure);
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(1));
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Admin", AdminAuthorization.AccessPolicy);
+    foreach (var item in AdminMenuCatalog.AllItems)
+    {
+        var policy = AdminAuthorization.MenuPolicyPrefix + item.Id;
+        if (item.ExactMatch) options.Conventions.AuthorizePage(item.Url == "/Admin" ? "/Admin/Index" : item.Url, policy);
+        else if (item.Id.StartsWith("storage-", StringComparison.Ordinal) || item.Id.StartsWith("ferramentas-", StringComparison.Ordinal))
+            options.Conventions.AuthorizePage(item.Url, policy);
+        else options.Conventions.AuthorizeFolder(item.Url, policy);
+    }
+});
 builder.Services.AddControllers();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -155,6 +176,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api")) context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        else context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api")) context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        else context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 var app = builder.Build();
@@ -178,8 +211,9 @@ else
 // ==============================
 // MIGRATIONS AUTOMATICAS
 // ==============================
-using (var scope = app.Services.CreateScope())
+if (applyStartupMigrations)
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
 
@@ -226,6 +260,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok("OK")).AllowAnonymous();
+app.MapGet("/health/release", () => Results.Ok(new { commit = releaseCommit })).AllowAnonymous();
 
 app.MapGet("/Admin/Login", (HttpContext context) =>
 {
@@ -350,3 +385,5 @@ static bool IsLocalOrWindowsSqlServer(string connectionString)
         || dataSource.Equals("localhost", StringComparison.OrdinalIgnoreCase)
         || dataSource.StartsWith("127.", StringComparison.Ordinal);
 }
+
+public partial class Program { }

@@ -1,127 +1,50 @@
 using Domain.Application;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Data;
 
 public static class IdentitySeed
 {
+    // Called only by the Development bootstrap. No existing identity is changed.
     public static async Task EnsureDeveloperUserAsync(IServiceProvider services)
     {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var configuration = services.GetRequiredService<IConfiguration>();
+        if (!string.Equals(configuration["DevelopmentBootstrap:Enabled"], "true", StringComparison.OrdinalIgnoreCase)) return;
+
+        var email = Required(configuration, "Email");
+        var userName = Required(configuration, "UserName");
+        var password = Required(configuration, "Password");
         var userManager = services.GetRequiredService<UserManager<AspNetCoreUser>>();
-
-        await EnsureRoleAsync(roleManager, "Desenvolvedor");
-        await EnsureRoleAsync(roleManager, "Administrador");
-        await EnsureRoleAsync(roleManager, "AdminConcessionaria");
-
-        await EnsureUserAsync(
-            userManager,
-            roleName: "Desenvolvedor",
-            userName: "desenvolvedor",
-            email: "dev@stw.com",
-            password: "123456@Senha",
-            nomeCompleto: "Desenvolvedor");
-
-        await EnsureUserAsync(
-            userManager,
-            roleName: "Administrador",
-            userName: "admin.master",
-            email: "admin@andersonmultimarcas.com.br",
-            password: "123456@Admin",
-            nomeCompleto: "Admin Master");
-    }
-
-    private static async Task EnsureRoleAsync(RoleManager<IdentityRole<Guid>> roleManager, string roleName)
-    {
-        if (await roleManager.RoleExistsAsync(roleName))
+        if (await userManager.FindByEmailAsync(email) is not null || await userManager.FindByNameAsync(userName) is not null)
             return;
 
-        var role = new IdentityRole<Guid>
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        foreach (var role in new[] { "Desenvolvedor", "Administrador", "AdminConcessionaria" })
         {
-            Id = Guid.NewGuid(),
-            Name = roleName,
-            NormalizedName = roleName.ToUpperInvariant()
+            if (!await roleManager.RoleExistsAsync(role))
+                EnsureSuccess(await roleManager.CreateAsync(new IdentityRole<Guid>(role) { Id = Guid.NewGuid() }), "criar perfil");
+        }
+
+        var user = new AspNetCoreUser
+        {
+            Id = Guid.NewGuid(), UserName = userName, Email = email,
+            EmailConfirmed = true, LockoutEnabled = true,
+            NomeCompleto = configuration["DevelopmentBootstrap:NomeCompleto"] ?? "Desenvolvedor local"
         };
-
-        var result = await roleManager.CreateAsync(role);
-        if (!result.Succeeded)
-        {
-            throw new Exception(
-                $"Erro ao criar perfil {roleName}: " +
-                string.Join(", ", result.Errors.Select(e => e.Description))
-            );
-        }
+        EnsureSuccess(await userManager.CreateAsync(user, password), "criar usuario local");
+        EnsureSuccess(await userManager.AddToRoleAsync(user, "Desenvolvedor"), "vincular perfil local");
     }
 
-    private static async Task EnsureUserAsync(
-        UserManager<AspNetCoreUser> userManager,
-        string roleName,
-        string userName,
-        string email,
-        string password,
-        string nomeCompleto)
+    private static string Required(IConfiguration configuration, string key)
+        => !string.IsNullOrWhiteSpace(configuration[$"DevelopmentBootstrap:{key}"])
+            ? configuration[$"DevelopmentBootstrap:{key}"]!
+            : throw new InvalidOperationException($"Configure DevelopmentBootstrap:{key} externamente para o bootstrap local.");
+
+    private static void EnsureSuccess(IdentityResult result, string operation)
     {
-        var user = await userManager.FindByEmailAsync(email) ?? await userManager.FindByNameAsync(userName);
-        if (user is null)
-        {
-            user = new AspNetCoreUser
-            {
-                Id = Guid.NewGuid(),
-                UserName = userName,
-                Email = email,
-                EmailConfirmed = true,
-                NomeCompleto = nomeCompleto
-            };
-
-            var result = await userManager.CreateAsync(user, password);
-            if (!result.Succeeded)
-            {
-                throw new Exception(
-                    $"Erro ao criar usuario {nomeCompleto}: " +
-                    string.Join(", ", result.Errors.Select(e => e.Description))
-                );
-            }
-        }
-        else
-        {
-            var changed = false;
-
-            if (!user.EmailConfirmed)
-            {
-                user.EmailConfirmed = true;
-                changed = true;
-            }
-
-            if (string.IsNullOrWhiteSpace(user.NomeCompleto))
-            {
-                user.NomeCompleto = nomeCompleto;
-                changed = true;
-            }
-
-            if (changed)
-            {
-                var updateResult = await userManager.UpdateAsync(user);
-                if (!updateResult.Succeeded)
-                {
-                    throw new Exception(
-                        $"Erro ao atualizar usuario {nomeCompleto}: " +
-                        string.Join(", ", updateResult.Errors.Select(e => e.Description))
-                    );
-                }
-            }
-        }
-
-        if (await userManager.IsInRoleAsync(user, roleName))
-            return;
-
-        var roleResult = await userManager.AddToRoleAsync(user, roleName);
-        if (!roleResult.Succeeded)
-        {
-            throw new Exception(
-                $"Erro ao vincular usuario {nomeCompleto} ao perfil {roleName}: " +
-                string.Join(", ", roleResult.Errors.Select(e => e.Description))
-            );
-        }
+        if (!result.Succeeded)
+            throw new InvalidOperationException($"Erro ao {operation}: {string.Join(", ", result.Errors.Select(x => x.Description))}");
     }
 }

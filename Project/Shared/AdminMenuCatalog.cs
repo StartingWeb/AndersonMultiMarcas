@@ -25,6 +25,9 @@ public static class AdminMenuCatalog
         ]),
         new("Ferramentas",
         [
+            new("ferramentas-revisar-capas-veiculos", "Revisar Capas dos Veiculos",
+                "/Admin/Ferramentas/RevisarCapasVeiculos", "bi bi-images",
+                RequiredRoles: ["Administrador", "AdminConcessionaria", "Desenvolvedor"]),
             new(
                 "ferramentas-sincronizar-imagens-r2",
                 "Sincronizar Imagens R2",

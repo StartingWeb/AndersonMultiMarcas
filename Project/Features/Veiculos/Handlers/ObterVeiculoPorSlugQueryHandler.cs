@@ -1,4 +1,3 @@
-using System.Text;
 using Core.Storage;
 using Data;
 using MediatR;
@@ -61,7 +60,7 @@ public sealed class ObterVeiculoPorSlugQueryHandler(
         if (veiculo is null) return Result<VeiculoDetalheDto>.Failure("Veiculo nao encontrado.");
 
         var slug = slugService.CriarSlug(veiculo.Titulo, veiculo.Modelo, veiculo.Versao, veiculo.Id);
-        var canonical = $"{request.BaseUrl.TrimEnd('/')}/api/veiculos/{slug}";
+        var canonical = $"{request.BaseUrl.TrimEnd('/')}/veiculo/{veiculo.Id}/";
         var vehicleMidias = imageResolver.ResolveVehicleGallery(
             veiculo.Midias.Select(ToStorageReference),
             includeDefault: false);
@@ -70,16 +69,11 @@ public sealed class ObterVeiculoPorSlugQueryHandler(
         var tituloSeo = $"{veiculo.Titulo} {veiculo.Modelo} {veiculo.Versao}".Trim();
         var descricaoSeo = $"{veiculo.MarcaNome} {veiculo.Modelo} {veiculo.AnoModelo} por {veiculo.PrecoVenda:C}.";
 
-        var breadcrumb = $"{{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Home\",\"item\":\"{request.BaseUrl}\"}},{{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Veiculos\",\"item\":\"{request.BaseUrl}/api/veiculos\"}},{{\"@type\":\"ListItem\",\"position\":3,\"name\":\"{tituloSeo}\",\"item\":\"{canonical}\"}}]}}";
-        var vehicleJson = new StringBuilder();
-        vehicleJson.Append("{\"@context\":\"https://schema.org\",\"@type\":\"Vehicle\",");
-        vehicleJson.Append($"\"name\":\"{tituloSeo}\",");
-        vehicleJson.Append($"\"brand\":\"{veiculo.MarcaNome}\",");
-        vehicleJson.Append($"\"vehicleModelDate\":\"{veiculo.AnoModelo}\",");
-        vehicleJson.Append($"\"color\":\"{veiculo.Cor}\",");
-        vehicleJson.Append($"\"fuelType\":\"{veiculo.Combustivel}\",");
-        vehicleJson.Append($"\"url\":\"{canonical}\"");
-        vehicleJson.Append("}");
+        var breadcrumb = SeoJsonLd.Breadcrumb(request.BaseUrl.TrimEnd('/'),
+            ("Inicio", "/"), ("Veiculos", "/veiculos"), (tituloSeo, canonical));
+        var vehicleJson = SeoJsonLd.Vehicle(tituloSeo, veiculo.MarcaNome, veiculo.AnoModelo, veiculo.Cor,
+            veiculo.Combustivel.ToString(), veiculo.Cambio.ToString(), vehicleMidias,
+            veiculo.PrecoVenda, canonical);
 
         var caracteristicas = await db.VeiculoCaracteristicas.AsNoTracking()
             .FirstOrDefaultAsync(x => x.VeiculoId == veiculo.Id, cancellationToken);
@@ -110,7 +104,7 @@ public sealed class ObterVeiculoPorSlugQueryHandler(
             CanonicalUrl = canonical,
             OpenGraphImage = image,
             BreadcrumbJsonLd = breadcrumb,
-            VehicleJsonLd = vehicleJson.ToString()
+            VehicleJsonLd = vehicleJson
         };
 
         return Result<VeiculoDetalheDto>.Success(dto);

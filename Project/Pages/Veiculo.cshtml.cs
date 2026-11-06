@@ -313,26 +313,11 @@ public sealed class VeiculoModel(
             ("Estoque", "/veiculos"),
             (Vehicle.NomeCompleto, canonicalUrl));
 
-        ViewData["VehicleSchema"] = SeoJsonLd.Serialize(new
-        {
-            @context = "https://schema.org",
-            @type = "Vehicle",
-            name = Vehicle.NomeCompleto,
-            brand = new { @type = "Brand", name = Vehicle.Marca },
-            vehicleModelDate = Vehicle.AnoModelo.ToString(),
-            color = Vehicle.Cor,
-            fuelType = Vehicle.Combustivel,
-            vehicleTransmission = Vehicle.Cambio,
-            image = medias.Select(x => x.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? x.Url : $"{baseUrl}{x.Url}").ToArray(),
-            offers = new
-            {
-                @type = "Offer",
-                priceCurrency = "BRL",
-                price = Vehicle.PrecoVenda > 0 ? (decimal?)Vehicle.PrecoVenda : null,
-                availability = "https://schema.org/InStock",
-                url = canonicalUrl
-            }
-        });
+        ViewData["VehicleSchema"] = SeoJsonLd.Vehicle(
+            Vehicle.NomeCompleto, Vehicle.Marca, Vehicle.AnoModelo, Vehicle.Cor,
+            Vehicle.Combustivel, Vehicle.Cambio,
+            medias.Select(x => x.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? x.Url : $"{baseUrl}{x.Url}"),
+            Vehicle.PrecoVenda, canonicalUrl);
 
         return Page();
     }

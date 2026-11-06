@@ -23,7 +23,8 @@ public sealed class UpsertModel(
     ApplicationDbContext db,
     ISender sender,
     IVeiculoMediaService mediaService,
-    IStorageImageResolver imageResolver) : PageModel
+    IStorageImageResolver imageResolver,
+    ILogger<UpsertModel>? logger = null) : PageModel
 {
     private static readonly CultureInfo BrCulture = new("pt-BR");
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -263,11 +264,58 @@ public sealed class UpsertModel(
             return RedirectToPage("/Admin/Veiculo/Index");
         }
 
-        await RemoveSelectedMediaAsync(Veiculo.Id, ct);
-        await UploadNewMediaAsync(Veiculo.Id, ct);
-        await ApplyMediaOrderAsync(Veiculo.Id, ct);
-        await db.SaveChangesAsync(ct);
+        IReadOnlyCollection<VeiculoMediaUploadResult> uploaded = [];
+        List<StorageImageReference> obsolete = [];
+        var committed = false;
+        try
+        {
+            // Decode every submitted image before changing the existing records or deleting any blob.
+            uploaded = await mediaService.ProcessarUploadAsync(Veiculo.Id, NovasMidias, ct);
+            await using var transaction = db.Database.IsRelational() ? await db.Database.BeginTransactionAsync(ct) : null;
+            var removed = await db.VeiculoMidias
+                .Where(x => x.VeiculoId == Veiculo.Id && RemoverMidiaIds.Contains(x.Id)).ToListAsync(ct);
+            obsolete = removed.Select(ToStorageReference).ToList();
+            db.VeiculoMidias.RemoveRange(removed);
+            await AddUploadedMediaAsync(Veiculo.Id, uploaded, ct);
+            await db.SaveChangesAsync(ct);
+            await ApplyMediaOrderAsync(Veiculo.Id, ct);
+            await db.SaveChangesAsync(ct);
+            if (transaction is not null) await transaction.CommitAsync(ct);
+            committed = true;
+        }
+        catch (Exception ex)
+        {
+            if (!committed)
+            {
+                db.ChangeTracker.Clear();
+                foreach (var item in uploaded)
+                {
+                    try
+                    {
+                        var referenced = await db.VeiculoMidias.AsNoTracking().AnyAsync(x => x.Url == item.Url || x.BlobName == item.BlobName, CancellationToken.None);
+                        if (!referenced) await mediaService.RemoverArquivoAsync(new StorageImageReference(item.Url, item.BlobName, item.Container), CancellationToken.None);
+                    }
+                    catch (Exception cleanup) { logger?.LogWarning(cleanup, "Falha ao compensar nova midia do veiculo {VeiculoId}", Veiculo.Id); }
+                }
+            }
+            if (ex is OperationCanceledException) throw;
+            logger?.LogError(ex, "Falha ao salvar midias do veiculo {VeiculoId}", Veiculo.Id);
+            TempData["ErrorMessage"] = ex is InvalidDataException or ImageMagick.MagickException or ArgumentException
+                ? "Nao foi possivel salvar as fotos. Envie imagens JPG, PNG ou WebP validas dentro dos limites permitidos."
+                : "Nao foi possivel salvar as fotos. Tente novamente ou contate o administrador.";
+            return RedirectToPage("/Admin/Veiculo/Upsert", new { id = Veiculo.Id, step = "midias" });
+        }
 
+        // Blob deletion is deferred until the database commit; failures leave only an orphan, never a missing live image.
+        foreach (var item in obsolete)
+        {
+            try
+            {
+                var referenced = await db.VeiculoMidias.AsNoTracking().AnyAsync(x => x.Url == item.Url || (item.BlobName != null && x.BlobName == item.BlobName), CancellationToken.None);
+                if (!referenced) await mediaService.RemoverArquivoAsync(item, CancellationToken.None);
+            }
+            catch (Exception ex) { logger?.LogWarning(ex, "Fotos salvas, mas uma midia antiga do veiculo {VeiculoId} nao foi removida", Veiculo.Id); }
+        }
         TempData["SuccessMessage"] = "Fotos do veículo salvas com sucesso.";
         return RedirectToPage("/Admin/Veiculo/Upsert", new { id = Veiculo.Id, step = "midias" });
     }
@@ -364,40 +412,16 @@ public sealed class UpsertModel(
         await db.SaveChangesAsync(ct);
     }
 
-    private async Task RemoveSelectedMediaAsync(int veiculoId, CancellationToken ct)
+    private async Task AddUploadedMediaAsync(int veiculoId, IReadOnlyCollection<VeiculoMediaUploadResult> processed, CancellationToken ct)
     {
-        if (RemoverMidiaIds.Count == 0) return;
-
-        var midias = await db.VeiculoMidias
-            .Where(x => x.VeiculoId == veiculoId && RemoverMidiaIds.Contains(x.Id))
-            .ToListAsync(ct);
-
-        foreach (var midia in midias)
-        {
-            await mediaService.RemoverArquivoAsync(ToStorageReference(midia), ct);
-            db.VeiculoMidias.Remove(midia);
-        }
-    }
-
-    private async Task UploadNewMediaAsync(int veiculoId, CancellationToken ct)
-    {
-        if (NovasMidias.Count == 0) return;
-
-        var processed = await mediaService.ProcessarUploadAsync(veiculoId, NovasMidias, ct);
-        var nextOrder = await db.VeiculoMidias
-            .Where(x => x.VeiculoId == veiculoId)
-            .Select(x => (int?)x.Ordem)
-            .MaxAsync(ct) ?? -1;
-
+        var nextOrder = await db.VeiculoMidias.Where(x => x.VeiculoId == veiculoId)
+            .Select(x => (int?)x.Ordem).MaxAsync(ct) ?? -1;
         foreach (var item in processed)
         {
-            nextOrder++;
-            var midia = new VeiculoMidia(veiculoId, item.NomeArquivo, item.Url, TipoMidia.Imagem, nextOrder);
+            var midia = new VeiculoMidia(veiculoId, item.NomeArquivo, item.Url, TipoMidia.Imagem, ++nextOrder);
             midia.UpdateStorage(item.BlobName, item.Container, item.ContentType, item.TamanhoBytes);
             db.VeiculoMidias.Add(midia);
         }
-
-        await db.SaveChangesAsync(ct);
     }
 
     private async Task ApplyMediaOrderAsync(int veiculoId, CancellationToken ct)
@@ -442,7 +466,10 @@ public sealed class UpsertModel(
         }
 
         var selectedCover = CapaItemKey;
-        var coverMedia = ResolveCoverMedia(final, newMidias, selectedCover) ?? final.FirstOrDefault();
+        var coverMedia = ResolveCoverMedia(final, newMidias, selectedCover);
+        if (coverMedia is not { Ativo: true }) coverMedia = final.FirstOrDefault(x => x.Ativo);
+        foreach (var image in midias.Where(x => x.Capa)) db.Entry(image).Property(x => x.Capa).CurrentValue = false;
+        await db.SaveChangesAsync(ct);
 
         for (var index = 0; index < final.Count; index++)
         {

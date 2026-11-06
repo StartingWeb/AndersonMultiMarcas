@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Project.Infrastructure.Security;
 using Project.Features.Veiculos.Commands;
 using Project.Features.Veiculos.DTOs;
 using Project.Features.Veiculos.Queries;
@@ -28,6 +30,8 @@ public sealed class VeiculosController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AdminAuthorization.MenuPolicyPrefix + "veiculos")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar([FromBody] VeiculoCreateDto dto, CancellationToken ct)
     {
         var result = await sender.Send(new CriarVeiculoCommand(dto), ct);
@@ -35,6 +39,8 @@ public sealed class VeiculosController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = AdminAuthorization.MenuPolicyPrefix + "veiculos")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Atualizar(int id, [FromBody] VeiculoUpdateDto dto, CancellationToken ct)
     {
         if (id != dto.Id) return BadRequest("Id divergente.");
@@ -43,6 +49,8 @@ public sealed class VeiculosController(ISender sender) : ControllerBase
     }
 
     [HttpPatch("{id:int}/vender")]
+    [Authorize(Policy = AdminAuthorization.MenuPolicyPrefix + "vendas-veiculos")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarcarVendido(int id, CancellationToken ct)
     {
         var result = await sender.Send(new MarcarVeiculoComoVendidoCommand(id, DateTime.UtcNow), ct);
@@ -50,6 +58,8 @@ public sealed class VeiculosController(ISender sender) : ControllerBase
     }
 
     [HttpPost("{veiculoId:int}/midias")]
+    [Authorize(Policy = AdminAuthorization.MenuPolicyPrefix + "veiculos")]
+    [ValidateAntiForgeryToken]
     [RequestSizeLimit(50_000_000)]
     public async Task<IActionResult> UploadMidias(int veiculoId, [FromForm] List<IFormFile> arquivos, [FromQuery] bool primeiraComoCapa = true, CancellationToken ct = default)
     {

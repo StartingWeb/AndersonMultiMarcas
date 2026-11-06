@@ -1,4 +1,6 @@
 using Data;
+using System.Data;
+using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,7 +58,8 @@ public sealed class IndexModel(ApplicationDbContext db) : PageModel
             """;
 
         var connection = db.Database.GetDbConnection();
-        await connection.OpenAsync(ct);
+        var close = connection.State != ConnectionState.Open;
+        if (close) await connection.OpenAsync(ct);
         try
         {
             await using var command = connection.CreateCommand();
@@ -73,20 +76,20 @@ public sealed class IndexModel(ApplicationDbContext db) : PageModel
             {
                 lojas.Add(new LojaListItem(
                     reader.GetInt32(0),
-                    reader.GetString(1),
-                    reader.GetString(2),
-                    reader.GetString(3),
-                    reader.GetString(4),
-                    reader.GetString(5),
-                    reader.GetString(6),
-                    reader.GetString(7)));
+                    SafeString(reader, 1),
+                    SafeString(reader, 2),
+                    SafeString(reader, 3),
+                    SafeString(reader, 4),
+                    SafeString(reader, 5),
+                    SafeString(reader, 6),
+                    SafeString(reader, 7)));
             }
 
             Lojas = lojas;
         }
         finally
         {
-            await connection.CloseAsync();
+            if (close) await connection.CloseAsync();
         }
     }
 
@@ -105,6 +108,12 @@ public sealed class IndexModel(ApplicationDbContext db) : PageModel
 
         TempData["SuccessMessage"] = "Loja excluida com sucesso.";
         return RedirectToPage(new { Filtro = filtro });
+    }
+
+    private static string SafeString(DbDataReader reader, int ordinal)
+    {
+        var value = reader.IsDBNull(ordinal) ? null : Convert.ToString(reader.GetValue(ordinal));
+        return string.IsNullOrWhiteSpace(value) ? "-" : value;
     }
 
     public sealed record LojaListItem(

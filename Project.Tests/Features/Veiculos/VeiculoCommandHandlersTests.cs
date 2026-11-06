@@ -140,6 +140,48 @@ public sealed class VeiculoCommandHandlersTests
         Assert.True(salvo.Caracteristicas.Bluetooth);
     }
 
+    [Fact]
+    public async Task AtualizarVeiculo_DevePreservarCamposComerciaisOmitidosEVenda()
+    {
+        await using var db = CreateDbContext();
+        var (lojaId, marcaId) = await SeedLojaMarcaAsync(db);
+        var vehicle = new Veiculo(lojaId, marcaId, "Teste", "Modelo", 2026, new Dinheiro(10000));
+        vehicle.AtualizarComercial(true, true, false, true, "https://example.test/video", "Anotacao privada", 42);
+        var soldAt = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        vehicle.MarcarComoVendido(soldAt);
+        db.Add(vehicle);
+        await db.SaveChangesAsync();
+        var result = await new AtualizarVeiculoCommandHandler(db).Handle(new AtualizarVeiculoCommand(new VeiculoUpdateDto
+        {
+            Id = vehicle.Id, LojaId = lojaId, MarcaId = marcaId, Titulo = "Editado", Modelo = "Modelo", AnoModelo = 2026, PrecoVenda = 12000,
+            AceitaTroca = true, Financiavel = true, Seminovo = true
+        }), CancellationToken.None);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("https://example.test/video", vehicle.UrlVideo);
+        Assert.Equal("Anotacao privada", vehicle.ObservacoesInternas);
+        Assert.Equal(42, vehicle.VendedorId);
+        Assert.Equal(soldAt, vehicle.DataVenda);
+        Assert.True(vehicle.Vendido);
+    }
+
+    [Fact]
+    public async Task AtualizarVeiculo_DevePermitirLimparCamposExplicitamente()
+    {
+        await using var db = CreateDbContext();
+        var (lojaId, marcaId) = await SeedLojaMarcaAsync(db);
+        var vehicle = new Veiculo(lojaId, marcaId, "Teste", "Modelo", 2026, new Dinheiro(10000));
+        vehicle.AtualizarComercial(true, true, false, true, "https://example.test/video", "Anotacao", 42);
+        db.Add(vehicle);
+        await db.SaveChangesAsync();
+        var dto = System.Text.Json.JsonSerializer.Deserialize<VeiculoUpdateDto>(
+            $$"""{"Id":{{vehicle.Id}},"LojaId":{{lojaId}},"MarcaId":{{marcaId}},"Titulo":"Editado","Modelo":"Modelo","AnoModelo":2026,"PrecoVenda":12000,"UrlVideo":null,"ObservacoesInternas":null,"VendedorId":null}""")!;
+        var result = await new AtualizarVeiculoCommandHandler(db).Handle(new AtualizarVeiculoCommand(dto), CancellationToken.None);
+        Assert.True(result.IsSuccess);
+        Assert.Null(vehicle.UrlVideo);
+        Assert.Null(vehicle.ObservacoesInternas);
+        Assert.Null(vehicle.VendedorId);
+    }
+
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
