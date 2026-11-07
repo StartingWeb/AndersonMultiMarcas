@@ -35,10 +35,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Refuse stale or unexpected source
-        run: |
-          test "$GITHUB_REPOSITORY" = StartingWeb/AndersonMultiMarcas
-          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
-          test "$(git rev-parse origin/main)" = "$SOURCE_COMMIT"
+        run: python3 scripts/ci/verify_ci_source.py
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: app-${{ github.event.workflow_run.head_sha }}-${{ github.event.workflow_run.run_attempt }}
@@ -49,8 +46,10 @@ jobs:
         run: python3 scripts/ci/application_manifest.py verify --application artifacts/application --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID"
       - name: Build runtime image on runner, never on production server
         run: docker build --platform linux/amd64 --file deploy/Dockerfile --build-arg COMMIT_SHA="$SOURCE_COMMIT" --tag "andersonmultimarcas-unified:$SOURCE_COMMIT" artifacts/application
+      - name: Test the final delivery image without network or production services
+        run: python3 scripts/ci/test_runtime_image.py --image "andersonmultimarcas-unified:$SOURCE_COMMIT" --commit "$SOURCE_COMMIT" --report artifacts/test-results/delivery-runtime-image.json
       - name: Prepare versioned delivery bundle
-        run: python3 scripts/ci/package_release.py --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID" --output artifacts/bundle
+        run: python3 scripts/ci/package_release.py --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID" --runtime-report artifacts/test-results/delivery-runtime-image.json --output artifacts/bundle
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         id: release-artifact
         with:
@@ -59,6 +58,14 @@ jobs:
           if-no-files-found: error
           retention-days: 90
           overwrite: false
+      - name: Preserve final image test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cd-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/test-results/
+          if-no-files-found: warn
+          retention-days: 90
       - name: Deployment remains disabled until explicitly authorized
         run: echo 'Bundle ready. Production additionally requires enablement, source parity, protected Environment and server gates.' >> "$GITHUB_STEP_SUMMARY"
 
@@ -78,7 +85,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Enforce Environment reviewers and main-only deployment
+      - name: Enforce automatic Environment and protected main
         env:
           GH_TOKEN: ${{ github.token }}
           PRODUCTION_ADMIN_BYPASS_REVIEWED: ${{ vars.PRODUCTION_ADMIN_BYPASS_REVIEWED }}

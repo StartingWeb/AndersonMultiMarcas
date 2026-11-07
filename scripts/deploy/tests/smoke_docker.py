@@ -59,6 +59,9 @@ class IsolatedDocker(release.Docker):
             self.loaded.append(json.loads((Path(args[2]).parent / "release.json").read_text())["commit"])
         return super().run(*mapped, missing=missing)
 
+    def check_image(self, manifest, archive):
+        return super().check_image({**manifest, "imageTag": self.map(manifest["imageTag"])}, archive)
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -105,7 +108,7 @@ def main():
             (context / "Dockerfile").write_text(
                 f"FROM {args.base_image}\nRUN apk add --no-cache curl\nCOPY nginx.conf /smoke-nginx.conf\n"
                 f"LABEL {release.REVISION_LABEL}={commit}\n" + entrypoint)
-            tag = prefix + ":" + commit
+            tag = prefix + "-unified:" + commit
             tags.append(tag)
             docker("build", "--platform", "linux/amd64", "--quiet", "--tag", tag, str(context))
             image_id = docker("image", "inspect", "--format", "{{.Id}}", tag).strip()
@@ -159,7 +162,7 @@ def main():
         try:
             fixture.manager.deploy(invalid, invalid_sha)
         except release.DeploymentError as error:
-            if "load" not in str(error):
+            if "load" not in str(error) and "archive" not in str(error):
                 raise
         else:
             raise AssertionError("Invalid image archive unexpectedly succeeded")

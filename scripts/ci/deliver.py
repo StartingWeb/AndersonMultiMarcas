@@ -125,7 +125,9 @@ def main():
         def ssh(command):
             subprocess.run(["ssh", *options, "-p", port, peer, command], check=True)
         ssh(f"umask 077; test -d {shlex.quote(root + '/incoming')} && mkdir {shlex.quote(destination)}")
-        subprocess.run(["scp", *options, "-P", port, str(args.bundle / "image.tar.gz"),
+        # Receive-only SCP is deliberately paired with the server forced-command
+        # allowlist. General SFTP would expose the shared account's filesystem.
+        subprocess.run(["scp", "-O", *options, "-P", port, str(args.bundle / "image.tar.gz"),
                         str(args.bundle / "release.json"), str(args.bundle / "SHA256SUMS"), str(args.deployer),
                         peer + ":" + destination + "/"], check=True)
         def operation(name, extra=()):

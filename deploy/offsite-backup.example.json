@@ -1,0 +1,12 @@
+{
+  "enabled": false,
+  "authorization_reference": null,
+  "destination_repository": null,
+  "expected_destination_repository_id": null,
+  "destination_password_file": null,
+  "separate_project_namespace": "anderson-multimarcas",
+  "retention": {"daily": 7, "weekly": 4, "monthly": 3},
+  "require_authenticated_restore_and_sha256": true,
+  "never_delete_local_copy_after_transfer_failure": true,
+  "notification_recipient": "startingwebltda@gmail.com"
+}

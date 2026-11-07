@@ -1,0 +1,169 @@
+{
+  "audited_at_utc": "2026-11-07T16:07:43.951170+00:00",
+  "scope": "Local preparation and read-only production verification. No merge/deploy/protection change/production SQL writes/R2 writes.",
+  "main_sha": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+  "preparation_branch": "infra/production-preparation",
+  "initial_pr2_sha": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+  "pr3_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+  "combined_tree_simulation": {
+    "conflicts": false,
+    "tree": "1088e7251b3d337b1e5de401acebd6a361115639",
+    "combined_ci_executed": false,
+    "refs_modified": false
+  },
+  "local_tests": {
+    "python_ci_security": 32,
+    "python_deployment_rollback": 42,
+    "python_operations": 37,
+    "python_failures": 0,
+    "dotnet_passed": 172,
+    "dotnet_skipped_sql_without_disposable_connection": 21,
+    "dotnet_failed": 0,
+    "workflow_actionlint": "passed",
+    "shellcheck": "passed",
+    "nuget_unique_advisories": 0
+  },
+  "technical_fix": {
+    "final_cd_image_smoke_required": true,
+    "packager_requires_exact_runtime_report": true,
+    "packager_requires_nonroot": true,
+    "runtime_failure_evidence_preserved": true,
+    "production_executor_changed": false
+  },
+  "real_local_runtime_and_package_test": {
+    "fixture_source_commit": "3feb08bb6faa5d38c4bfbfc0b7d589d24359a9fd",
+    "release_ci_run_id": "1 (local synthetic fixture, not GitHub CI)",
+    "runtime_report": {
+      "commit": "3feb08bb6faa5d38c4bfbfc0b7d589d24359a9fd",
+      "imageId": "sha256:66a433eedaccac9fae02fb97f7a6e71217dee46f4c56964e0290ef5327967576",
+      "network": "none",
+      "remainingContainers": [],
+      "run": "amm-runtime-6683e67994fd",
+      "scenarios": [
+        {
+          "scenario": "production_startup_and_health_without_database_or_network",
+          "status": "passed"
+        },
+        {
+          "scenario": "release_health_matches_source",
+          "status": "passed"
+        },
+        {
+          "scenario": "published_static_image",
+          "status": "passed"
+        },
+        {
+          "scenario": "native_magick_webp_conversion",
+          "status": "passed"
+        },
+        {
+          "scenario": "production_refuses_automatic_migrations",
+          "status": "passed"
+        }
+      ],
+      "staticImageSha256": "acbb4d3b114428b60dc2c0a11784ca61841958a379f56197424c54a281cea080",
+      "status": "passed",
+      "webpBytes": 4886,
+      "webpSha256": "551612586874a20bcfbf72d996b756f46fb9df549bf52def51606981cbe288c5"
+    },
+    "bundle_export": "passed",
+    "limitation": "Existing local application image verifies new packaging flow, not a final merged production release."
+  },
+  "production": {
+    "observed_at_utc": "2026-11-07T16:07:43.975400+00:00",
+    "gates": {
+      "deploy.enabled": false,
+      "source-parity.approved.json": false
+    },
+    "containers": [
+      {
+        "name": "andersonmultimarcas-web",
+        "id": "9842fa7e0f745dc589ddc9ee230813840524ff65c8aecb3d54cf6eaf7f0c2a78",
+        "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+        "started_at": "2026-10-23T20:43:11.986710244Z",
+        "running": true,
+        "restart_count": 1
+      },
+      {
+        "name": "sqlserver",
+        "id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+        "image": "sha256:ba4c8329f48fb8f02e1416be6a930ebfd71268caee78aa985f3af4315e457c89",
+        "started_at": "2026-10-23T20:42:42.696047444Z",
+        "running": true,
+        "restart_count": 0
+      },
+      {
+        "name": "nginx-proxy-manager",
+        "id": "620dc318761112b396079fdfd064c892a74a4a16f62ff17a658605bd5bc3c73b",
+        "image": "sha256:52b2c59994f3d36acfcf70a1626f29734df0ed8c71bacc0269f78b6f939858bb",
+        "started_at": "2026-10-23T20:42:42.756316196Z",
+        "running": true,
+        "restart_count": 0
+      }
+    ],
+    "executor_sha256": {
+      "bin/release.py": "f6b25ee9514d57840277dff57b58a815145d16ec7a4946cc9adc18b2982faa76",
+      "bin/ssh_gate.py": "2517cbda45f26caaa169ccf448c0fdb05eb25b0f20adecec2b0b764d6171b35b"
+    },
+    "state_files": {
+      "current.json": {
+        "exists": false,
+        "size": null
+      },
+      "transaction.json": {
+        "exists": false,
+        "size": null
+      },
+      "history.jsonl": {
+        "exists": true,
+        "size": 0
+      }
+    },
+    "http": [
+      {
+        "url": "https://www.andersonmultimarcas.com.br/",
+        "status": 200,
+        "final_url": "https://www.andersonmultimarcas.com.br/"
+      },
+      {
+        "url": "https://andersonmultimarcas.com.br/",
+        "status": 200,
+        "final_url": "https://andersonmultimarcas.com.br/"
+      },
+      {
+        "url": "https://anderson.startingweb.com.br/",
+        "status": 200,
+        "final_url": "https://anderson.startingweb.com.br/"
+      },
+      {
+        "url": "https://www.andersonmultimarcas.com.br/Login",
+        "status": 200,
+        "final_url": "https://www.andersonmultimarcas.com.br/Login"
+      },
+      {
+        "url": "https://www.andersonmultimarcas.com.br/health",
+        "status": 200,
+        "final_url": "https://www.andersonmultimarcas.com.br/health"
+      },
+      {
+        "url": "https://www.andersonmultimarcas.com.br/health/release",
+        "status": 404
+      }
+    ]
+  },
+  "containers_identical_to_backup_audit": true,
+  "new_commit_ci": "Must pass on next published branch tip; initial remote tips already green in GITHUB_AUDIT_2026-11-07.json.",
+  "secrets_scan": {
+    "tool": "gitleaks",
+    "scope": "staged changes including new documentation/evidence",
+    "result": "passed",
+    "findings": 0,
+    "redacted": true
+  },
+  "limitations": [
+    "No R2 write cycle without isolated authorized destination.",
+    "No new SQL restore or migrations in this round.",
+    "No database content lock; legitimate application traffic continues.",
+    "No external Sigstore attestation added; workflow run, SHA and artifact checksums provide internal provenance."
+  ]
+}

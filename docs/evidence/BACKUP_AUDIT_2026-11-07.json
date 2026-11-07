@@ -1,0 +1,307 @@
+{
+  "audit_date": "2026-11-07",
+  "audited_at_utc": "2026-11-07T15:57:35.247177+00:00",
+  "verified_at_utc": "2026-11-07T15:58:08.255620+00:00",
+  "host_alias": "startingweb-server",
+  "scope": "Read-only Anderson operational audit. No backup, restore, SQL DDL/DML, email send, service/config change, retention operation or snapshot cleanup.",
+  "authorization": {
+    "local_only_accepted_on": "2026-11-07",
+    "decision": "Temporary local-only VPS backup accepted by owner; total VPS loss may lose all local copies.",
+    "review_date": null,
+    "offsite_transfer_authorized": false
+  },
+  "clock": {
+    "exit_code": 0,
+    "output": "2026-11-07T15:57:35+00:00"
+  },
+  "timezone": {
+    "exit_code": 0,
+    "output": "Timezone=Etc/UTC\nNTPSynchronized=yes"
+  },
+  "timer": {
+    "exit_code": 0,
+    "output": "TimersCalendar={ OnCalendar=*-*-* 03:00:00 America/Sao_Paulo ; next_elapse=Sun 2026-11-08 06:00:00 UTC }\nNextElapseUSecRealtime=Sun 2026-11-08 06:00:00 UTC\nLastTriggerUSec=Sat 2026-11-07 06:00:00 UTC\nPersistent=yes\nActiveState=active\nSubState=waiting\nUnitFileState=enabled"
+  },
+  "backup_service": {
+    "exit_code": 0,
+    "output": "Result=success\nExecMainStartTimestamp=Sat 2026-11-07 06:00:00 UTC\nExecMainExitTimestamp=Sat 2026-11-07 06:00:45 UTC\nExecMainStatus=0\nActiveState=inactive"
+  },
+  "monitor_timer": {
+    "exit_code": 0,
+    "output": "TimersCalendar={ OnCalendar=*-*-* *:35:00 America/Sao_Paulo ; next_elapse=Sat 2026-11-07 16:35:00 UTC }\nNextElapseUSecRealtime=Sat 2026-11-07 16:35:00 UTC\nLastTriggerUSec=Sat 2026-11-07 15:35:35 UTC\nPersistent=yes\nActiveState=active\nSubState=waiting\nUnitFileState=enabled"
+  },
+  "monitor_service": {
+    "exit_code": 0,
+    "output": "Result=success\nExecMainStartTimestamp=Sat 2026-11-07 15:35:35 UTC\nExecMainExitTimestamp=Sat 2026-11-07 15:35:47 UTC\nExecMainStatus=0\nActiveState=inactive"
+  },
+  "linger": {
+    "exit_code": 0,
+    "output": "Linger=yes"
+  },
+  "config": {
+    "database": "AndersonMultiMarcas",
+    "sql_container": "sqlserver",
+    "retention": {
+      "daily": 7,
+      "monthly": 3,
+      "weekly": 4
+    },
+    "reserve_free_bytes": 2147483648,
+    "max_repository_bytes": 8589934592,
+    "storage_policy": "local_only",
+    "recipient": "startingwebltda@gmail.com",
+    "repository_id": "2685c0b2f2d92e6eb7b5f8dc89fd14faafea40de0f03f348ee44b43312a4d6b6"
+  },
+  "protected_modes": {
+    ".": {
+      "mode": "0o700",
+      "uid": 1000
+    },
+    "config.json": {
+      "mode": "0o600",
+      "uid": 1000
+    },
+    "repository.password": {
+      "mode": "0o600",
+      "uid": 1000
+    },
+    "repository": {
+      "mode": "0o700",
+      "uid": 1000
+    },
+    "native": {
+      "mode": "0o700",
+      "uid": 1000
+    },
+    "state": {
+      "mode": "0o700",
+      "uid": 1000
+    }
+  },
+  "latest_daily": {
+    "run_id": "20261107T060000Z-ab4e6a7b",
+    "started_at": "2026-11-07T03:00:00.766526-03:00",
+    "completed_at": "2026-11-07T03:00:38.601179-03:00",
+    "backup_status": "success",
+    "stage": "completed",
+    "sql_verify": "aprovado (VERIFYONLY WITH CHECKSUM)",
+    "size_bytes": 30072832,
+    "sha256": "9e269b9b8f698334a092a49218f8cb11b7c67b445e3a7cda67e405f794bac400",
+    "snapshot": "10a4ec974d9abfa99684d940d58c86f94ec41c4affecb1eb646086df0552e4c2",
+    "notification": {
+      "attempt_history": [
+        {
+          "attempt": 1,
+          "result": "accepted_by_smtp"
+        }
+      ],
+      "attempts": 1,
+      "certificate_verified": true,
+      "data_response": 250,
+      "status": "accepted_by_smtp",
+      "tls_version": "TLSv1.3"
+    }
+  },
+  "last_valid": {
+    "run_id": "20261107T150452Z-c36eef7e",
+    "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+    "size_bytes": 30334976,
+    "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+    "verified_at": "2026-11-07T12:04:59.333085-03:00"
+  },
+  "last_success": {
+    "run_id": "20261107T150452Z-c36eef7e",
+    "started_at": "2026-11-07T12:04:52.486245-03:00",
+    "completed_at": "2026-11-07T12:05:00.292716-03:00",
+    "sql_verify": "aprovado (VERIFYONLY WITH CHECKSUM)",
+    "copy_only": true,
+    "retention_deferred": "explicit pre-migration preservation",
+    "notification": {
+      "attempt_history": [
+        {
+          "attempt": 1,
+          "result": "accepted_by_smtp"
+        }
+      ],
+      "attempts": 1,
+      "certificate_verified": true,
+      "data_response": 250,
+      "status": "accepted_by_smtp",
+      "tls_version": "TLSv1.3"
+    }
+  },
+  "last_restore": {
+    "completed_at": "2026-11-07T12:07:28.792647-03:00",
+    "dbcc_checkdb": "passed",
+    "native_restore": "passed",
+    "run_id": "46fe30bdb760",
+    "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+    "status": "verified"
+  },
+  "restore_report": {
+    "run_id": "46fe30bdb760",
+    "started_at": "2026-11-07T15:05:44.744933+00:00",
+    "completed_at": "2026-11-07T12:07:28.792647-03:00",
+    "status": "verified",
+    "dbcc_checkdb": "passed",
+    "native_restore": "passed",
+    "cleanup": [
+      "amm-restore-46fe30bdb760-web-migrated",
+      "amm-restore-46fe30bdb760-web-original",
+      "amm-restore-46fe30bdb760-sql"
+    ]
+  },
+  "restore_detail": {
+    "schema_and_counts_match_source": true,
+    "schema_compatibility_status": "review_required",
+    "referential_integrity": "passed",
+    "constraint_violation_count": 0,
+    "untrusted_or_disabled_foreign_keys": 0,
+    "original_schema_counts_unchanged_by_application": true,
+    "migration_counts_unchanged": true,
+    "migration_replay_unchanged": true
+  },
+  "restore_limitation": "Latest real restore is the existing pre-migration restore receipt; review_required compares that backup with the future expected schema. Current read-only deployment-check validates the known applied write-schema contract. No new restore was run.",
+  "monitor_status": {
+    "checked_at": "2026-11-07T15:35:36.720334+00:00",
+    "last_valid": {
+      "run_id": "20261107T150452Z-c36eef7e",
+      "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+      "size_bytes": 30334976,
+      "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "verified_at": "2026-11-07T12:04:59.333085-03:00"
+    },
+    "last_valid_snapshot_present": true,
+    "notification": {
+      "attempt_history": [
+        {
+          "attempt": 1,
+          "result": "accepted_by_smtp"
+        }
+      ],
+      "attempts": 1,
+      "certificate_verified": true,
+      "data_response": 250,
+      "status": "accepted_by_smtp",
+      "tls_version": "TLSv1.3"
+    },
+    "status": "healthy"
+  },
+  "monitor_alert_present": false,
+  "disk": {
+    "total": 102888095744,
+    "used": 37534846976,
+    "free": 65336471552
+  },
+  "native_runs": [
+    "20261106T060000Z-ae701b0b",
+    "20261107T060000Z-ab4e6a7b",
+    "20261107T150452Z-c36eef7e"
+  ],
+  "authenticated_integrity_check": {
+    "status": "ready",
+    "backup_integrity": "verified",
+    "schema_contract": "compatible"
+  },
+  "snapshot_inventory": [
+    {
+      "id": "0b8519e7243b7b4a86b110e3e80ceb1c5841640634a9902ec2a6ebebcf34b782",
+      "time": "2026-11-05T21:38:29.118971275-03:00",
+      "hostname": "startingweb-anderson",
+      "tags": [
+        "andersonmultimarcas",
+        "verified",
+        "run:20261106T003824Z-51435d6a"
+      ]
+    },
+    {
+      "id": "d1cb75d9bc24553cc0ccad91b3ab169be8e95c78ea9f6c1436a8b927fa264747",
+      "time": "2026-11-05T23:22:28.345787769-03:00",
+      "hostname": "startingweb-anderson",
+      "tags": [
+        "andersonmultimarcas",
+        "verified",
+        "run:20261106T022225Z-6bb31c59"
+      ]
+    },
+    {
+      "id": "e1eab760351046e4aadc2ea32a231c1c84be8a21de4ca4018a93d46ff2b9bfa2",
+      "time": "2026-11-06T03:00:16.609152569-03:00",
+      "hostname": "startingweb-anderson",
+      "tags": [
+        "andersonmultimarcas",
+        "verified",
+        "run:20261106T060000Z-ae701b0b"
+      ]
+    },
+    {
+      "id": "10a4ec974d9abfa99684d940d58c86f94ec41c4affecb1eb646086df0552e4c2",
+      "time": "2026-11-07T03:00:11.67345295-03:00",
+      "hostname": "startingweb-anderson",
+      "tags": [
+        "andersonmultimarcas",
+        "verified",
+        "run:20261107T060000Z-ab4e6a7b"
+      ]
+    },
+    {
+      "id": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "time": "2026-11-07T12:04:54.31171163-03:00",
+      "hostname": "startingweb-anderson",
+      "tags": [
+        "andersonmultimarcas",
+        "verified",
+        "run:20261107T150452Z-c36eef7e"
+      ]
+    }
+  ],
+  "snapshot_ids_unchanged": true,
+  "native_runs_unchanged": true,
+  "container_baseline": [
+    {
+      "name": "andersonmultimarcas-web",
+      "id": "9842fa7e0f745dc589ddc9ee230813840524ff65c8aecb3d54cf6eaf7f0c2a78",
+      "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+      "started_at": "2026-10-23T20:43:11.986710244Z",
+      "running": true,
+      "restart_count": 1
+    },
+    {
+      "name": "sqlserver",
+      "id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+      "image": "sha256:ba4c8329f48fb8f02e1416be6a930ebfd71268caee78aa985f3af4315e457c89",
+      "started_at": "2026-10-23T20:42:42.696047444Z",
+      "running": true,
+      "restart_count": 0
+    },
+    {
+      "name": "nginx-proxy-manager",
+      "id": "620dc318761112b396079fdfd064c892a74a4a16f62ff17a658605bd5bc3c73b",
+      "image": "sha256:52b2c59994f3d36acfcf70a1626f29734df0ed8c71bacc0269f78b6f939858bb",
+      "started_at": "2026-10-23T20:42:42.756316196Z",
+      "running": true,
+      "restart_count": 0
+    }
+  ],
+  "sql_metadata": {
+    "database_state": "ONLINE",
+    "runtime_login_enabled_count": 1,
+    "runtime_database_user_count": 1,
+    "ef_history_count": 23,
+    "runtime_login_last_modified": "2026-11-06T20:26:44.723"
+  },
+  "runtime_provision_receipt": {
+    "status": "verified_and_prepared",
+    "completed_at": "2026-11-06T20:26:45.401676+00:00",
+    "login": "anderson_runtime",
+    "production_business_writes": 0
+  },
+  "credential_handling": "No SMTP configuration, key contents, connection string or credential values were read/exported. Existing backup helper uses its installed private Restic password file and existing SQL helper.",
+  "limitations": [
+    "SMTP accepted_by_smtp / DATA 250 proves provider acceptance only, not inbox delivery.",
+    "No failure was injected to retest alerts; latest saved monitor status is healthy and no outstanding incident file exists.",
+    "No sudo session was available (sudo -n requested a password); audited owner-accessible files, systemd user units and permitted Docker metadata suffice for this scope.",
+    "Snapshots and native copies remain on the same VPS; this does not provide offsite disaster recovery.",
+    "A new restorable backup remains required immediately before the future first deployment."
+  ]
+}

@@ -14,6 +14,7 @@ import application_manifest
 import check_vulnerabilities
 import deliver
 import verify_environment
+import verify_ci_source
 
 
 class VulnerabilityGateTests(unittest.TestCase):
@@ -35,20 +36,16 @@ class VulnerabilityGateTests(unittest.TestCase):
 class EnvironmentApprovalTests(unittest.TestCase):
     def setUp(self):
         self.environment = {"name": "production",
-            "protection_rules": [{"type": "required_reviewers", "prevent_self_review": True, "reviewers": [{"id": 1}]}],
+            "can_admins_bypass": False,
+            "protection_rules": [],
             "deployment_branch_policy": {"protected_branches": False, "custom_branch_policies": True}}
         self.policy = {"total_count": 1, "branch_policies": [{"name": "main", "type": "branch"}]}
 
     def test_reviewed_main_only_environment_passes(self):
         verify_environment.validate(self.environment, self.policy)
 
-    def test_missing_reviewers_and_self_review_are_rejected(self):
-        for field, value in (("protection_rules", []),):
-            invalid = copy.deepcopy(self.environment)
-            invalid[field] = value
-            with self.assertRaises(ValueError):
-                verify_environment.validate(invalid, self.policy)
-        self.environment["protection_rules"][0]["prevent_self_review"] = False
+    def test_per_release_reviewers_are_incompatible_with_automatic_policy(self):
+        self.environment["protection_rules"] = [{"type": "required_reviewers", "reviewers": [{"id": 1}]}]
         with self.assertRaises(ValueError):
             verify_environment.validate(self.environment, self.policy)
 
@@ -58,10 +55,40 @@ class EnvironmentApprovalTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 verify_environment.validate(self.environment, self.policy)
 
+    def test_administrator_bypass_enabled_or_unknown_is_rejected(self):
+        for value in (True, None):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                verify_environment.validate({**self.environment, "can_admins_bypass": value}, self.policy)
+
     @mock.patch.dict(verify_environment.os.environ, {}, clear=True)
-    def test_manual_bypass_review_is_required_without_claiming_an_api_field(self):
+    def test_explicit_bypass_review_authorization_remains_required(self):
         with self.assertRaises(ValueError):
             verify_environment.main()
+
+
+class CiSourceTests(unittest.TestCase):
+    def setUp(self):
+        self.sha = 'a' * 40
+        self.event = {'repository': {'full_name':verify_ci_source.REPOSITORY,'id':1},
+                      'workflow_run': {'head_repository':{'id':1},'conclusion':'success',
+                                       'event':'push','head_branch':'main','head_sha':self.sha}}
+
+    def test_successful_main_ci_can_package(self):
+        verify_ci_source.validate(self.event, self.sha, self.sha, self.sha)
+
+    def test_failed_ci_pr_other_branch_or_repository_cannot_package(self):
+        for key,value in [('conclusion','failure'),('conclusion','cancelled'),('event','pull_request'),
+                          ('head_branch','feature'),('head_repository',{'id':2})]:
+            event = copy.deepcopy(self.event)
+            event['workflow_run'][key] = value
+            with self.subTest(key=key,value=value), self.assertRaises(ValueError):
+                verify_ci_source.validate(event,self.sha,self.sha,self.sha)
+
+    def test_wrong_or_stale_commit_cannot_package(self):
+        for identities in [('b'*40,self.sha,self.sha),(self.sha,'b'*40,self.sha),
+                           (self.sha,self.sha,'b'*40)]:
+            with self.assertRaises(ValueError):
+                verify_ci_source.validate(self.event,*identities)
 
 
 class ProvenanceTests(unittest.TestCase):

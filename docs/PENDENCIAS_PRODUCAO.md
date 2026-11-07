@@ -1,25 +1,38 @@
-# Pendências para futura ativação
+# Estado de produção — 07/11/2026
 
-Atualizado em 05/11/2026. O trabalho é local, na branch `feat/unified-cicd-deployment`. Não houve push, PR, merge, deploy, reinício, alteração de banco, R2 ou Nginx Proxy Manager. O mecanismo legado continua ativo.
+**Política individual do GitHub aplicada e R2 isolado homologado sob autorização expressa. Nenhum merge, deploy ou alteração de objetos produtivos.** Gates GitHub false; arquivos locais de habilitação/paridade ausentes. A aplicação permanece no legado.
 
-## Estado observado sem escrita remota
+## Decisões confirmadas e estado preservado
 
-Servidor `startingweb-server`: Ubuntu 24.04.4. Container `andersonmultimarcas-web`, imagem `startingweb/andersonmultimarcas-release:latest`, ID `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5`, iniciado em `2026-10-23T20:43:11.986710244Z`, saudável no início e nas conferências posteriores da atividade, com o mesmo horário de início, image ID e RestartCount=1. As consultas utilizaram somente `docker ps`, `docker inspect`, `uname` e identificação do sistema; nenhum segredo de ambiente foi impresso.
+- A/B/C já foram aplicadas: 12 ampliações, LogoUrl NULL, Marca 4 `Jaguar (cadastro adicional)` e índice único. Histórico EF preservado, DBCC e ensaio com 78 checkpoints/nove negativas aprovados. Não repetir migrations, recriar runtime, rotacionar credenciais ou modificar dados comerciais. [Recibo SQL](./evidence/PRODUCTION_SQL_2026-11-07.json).
+- [Backup exclusivamente local aceito temporariamente](./ACEITE_RISCO_BACKUP_LOCAL.md), inclusive risco de perda dos backups com a VPS. Não é mais uma decisão pendente nem equivale a disaster recovery externo. Sem contratação, transferência, redução de retenção ou limpeza de snapshots.
+- Diário de 07/11 às 03h concluído; próximo 08/11 às 03h America/Sao_Paulo. Timers/monitor ativos, retenção 7/4/3, integridade verificada e aceite SMTP comprovado. [Auditoria de backup](./BACKUP_ANDERSONMULTIMARCAS.md).
+- Legado e SQL permanecem ativos; runtime existente preservado. Não houve troca de upstream, container, DNS ou gate. [Auditoria de pipeline](./evidence/PIPELINE_AUDIT_2026-11-07.json).
 
-A referência Git do Release é `fb8a205768dce239c960ffb1cfb043b2680de7b3`. A comparação somente leitura por SHA-256 confirmou que **Project.dll, Core.dll, Data.dll e Domain.dll (4/4) e os 188 arquivos estáticos sem uploads (188/188)** no container produtivo são idênticos aos do Release Git usado na recuperação. Não se coletaram configurações, credenciais ou uploads reais. Isso identifica a versão do código publicada; equivalência de comportamento depende também do schema e da configuração, ainda não reproduzidos a partir de produção.
+## Etapas concluídas e pendência de mídias
 
-## Ações externas necessárias
+1. **Política GitHub individual aplicada:** quantidade 0, code owner false e último push false; comparação integral confirmou PR/validate strict app 15368/admins/conversas/force push/exclusão e todos os demais controles preservados. [Antes/depois](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md).
+2. **R2 isolado homologado:** dois buckets autorizados criados, token somente no primeiro, oito negativas AccessDenied, upload/HEAD/download/hash/sobrescrita/exclusão/limpeza aprovados e HTTPS r2.dev validado. Controle negativo privado/vazio. Zero objetos produtivos alterados. [Recibo e limites](./VALIDACAO_R2.md).
+3. **Mídias ausentes ainda pendentes:** obter os oito originais não recuperados e autorizar eventual reparação por objeto após validar correspondência/hash/formato/dimensões/ausência de colisão. Não apagar URLs, criar imagens fictícias ou atribuir imagens de terceiros. [Inventário](./RECUPERACAO_MIDIAS_R2.md).
 
-| Pendência | Evidência/impacto | Ação para desbloquear |
-|---|---|---|
-| Revisão da branch e autorização de envio | Tudo permanece local; CI/CD não foi disparado no GitHub. | Autorizar push/PR em etapa própria; revisar e executar CI remoto antes de aprovar integração. |
-| Aprovação formal de paridade | DLLs 4/4 e estáticos 188/188 coincidem com o Release investigado; matriz local documentada. | Revisar os testes e a matriz, aprovar o manifest de paridade para a futura ativação. |
-| Schema/dados exatos de produção | Migrations e SQL validados em SQL isolado/sintético; banco produtivo não foi alterado. | Fornecer backup sanitizado autorizado, validar restauração/constraints/histórico; revisar SQL e planejar backup/janela antes de qualquer aplicação. |
-| R2 de teste | Compatibilidade S3 e falhas/retry validadas com dublês; nenhuma escrita em bucket real. | Disponibilizar bucket exclusivo e credenciais de teste por segredo local; executar upload/HEAD/read/delete apenas nele. |
-| Environment GitHub | Workflow exige reviewers/main-only; configuração remota não foi alterada. | Criar/proteger `production`, revisar bypass administrativo, permissões e branch rules. |
-| SSH e servidor | Transporte, host key e gates estão implementados, sem provisionar destino real. | Configurar secrets SSH/known_hosts e diretório unificado em operação autorizada; revisar usuário e permissões. |
-| Configuração runtime | Exige SQL, R2 se utilizado, chaves persistentes, portas/volumes e health público. | Provisionar arquivos de ambiente e diretórios fora do Git; revisar redigido antes de ativar. |
-| Habilitação de publicação | Variáveis de habilitação e paridade continuam ausentes/falsas; segurança/integridade continuam obrigatórias. | Só após validações e aprovação específica, definir gates e realizar primeira publicação controlada com rollback preparado. |
-| Migração entre repositórios | Não se desativou legado nem arquivou repositório. | Fazer corte coordenado e observar nova publicação; arquivamento/desativação exigem autorização separada. |
+## Preparação técnica desta rodada
 
-Nenhuma dessas pendências foi contornada com acesso ao iPhone, execução cloud substituta ou escrita remota. O código está preparado para revisão e ensaio controlado; a ativação produtiva depende das evidências e autorizações acima. Não afirmar migração de produção concluída.
+O CD reconstruía a imagem após o CI sem testar esse novo resultado. A correção executa o ensaio de runtime na imagem final sem rede/SQL/R2, exige relatório completo com mesmo commit e ID imutável, verifica usuário não root e arquiva a evidência. O empacotamento falha antes de exportar uma imagem com evidência ausente, incompleta ou divergente. Não muda gates, secrets ou executor produtivo.
+
+Testes de CI/segurança, operação, integridade/proveniência e rollback permanecem obrigatórios. O ciclo real R2 foi aprovado; o CI do futuro SHA integrado e a paridade continuam necessários. A homologação sintética e a simulação das branches não aprovam o conjunto integrado. [CI/CD](./CI_CD_DEPLOYMENT.md).
+
+## PRs e sequência futura
+
+Main revalidada: `1e5612276e0809166a2ea33a21deabee0bf0f768`.
+
+- [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3): aberta/draft, tip auditado `8116388ca2eaac0ba7e9a0e473c9401b776f8912`, CI aprovado, sem conflito com main. Contém scripts/recibos das migrations já executadas, não uma ordem de reaplicação.
+- [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2): aberta/draft, tip auditado antes destes recibos `32ffadfa3ab78a8cbed148fff5ea541d03e041cc`, CI aprovado. Esta rodada prepara correções/documentação na mesma branch; exigir CI do novo tip, sem aproveitar aprovação do anterior.
+- A simulação `git merge-tree` das duas referências auditadas resultou sem conflitos. Ela não integrou branches nem executou CI combinado.
+
+Somente em rodada autorizada: satisfazer a política vigente e retirar draft → PR #3 → atualizar PR #2 com main resultante, sem force push → CI combinado → PR #2 → CI final main → pacote com proveniência e runtime final aprovados → decisão/reparação autorizada das mídias e paridade → novo backup restaurável imediatamente antes do primeiro corte → autorização operacional e gates. Nada dessa sequência implica autorização de merge/deploy nesta rodada.
+
+[Ativação](./ATIVACAO_PRODUCAO.md) e [rollback](./ROLLBACK_PRODUCAO.md) descrevem o corte futuro; não criar `deploy.enabled` nem `source-parity.approved.json` antecipadamente.
+
+## Produção e backups revalidados após a homologação
+
+[Comparação operacional](./evidence/POLICY_R2_OPERATIONS_2026-11-07.json): mesmos IDs/imagens/início/restarts do legado, SQL e NPM; site e /health 200, /health/release 404 esperado no legado. Timers/monitor ativos, retenção 7/4/3 e último snapshot/restore preservados; gates false/ausentes. Sem comandos SQL, restart, forget/prune, cópia externa ou mudança de alertas nesta rodada.
