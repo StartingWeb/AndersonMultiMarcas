@@ -66,3 +66,7 @@ O ciclo real R2 e a compatibilidade de mídia antiga/nova no provedor continuam 
 Não foi encontrado bucket **ou prefixo de homologação previamente autorizado**; o GitHub só tem Environment production, e a configuração privada auditada não declara destino de teste. Não usar um prefixo arbitrário no bucket produtivo. Faltam: (1) referência explícita da autorização; (2) endpoint/região e bucket; (3) prefixo de homologação, se compartilhado, com política que impeça acesso/modificação fora dele; (4) credencial de teste em arquivo privado no servidor, nunca colada em chat/Git; (5) base pública ou rota de download de teste; (6) permissões Put/Get/Head/Delete e List apenas quando necessário; (7) prova do isolamento e responsável pela limpeza.
 
 Com esses dados, executar arquivos sintéticos com chave UUID, upload/download/hash/ausente/overwrite/delete e falhas controladas exclusivamente no destino autorizado. Os oito testes locais já aprovados não foram repetidos sem necessidade e não substituem esse ciclo real. Nenhum objeto produtivo foi modificado/excluído. A atualização da conexão SQL futura não alterou campos R2.
+
+## Conferência de 07/11/2026
+
+Endpoint R2 da conta via HTTPS, região auto, campos necessários presentes, base pública HTTPS e HEAD autenticado do bucket 200. Zero requests de objetos, uploads ou exclusões produtivas. Configuração futura preservada após A/B/C; nenhum destino de teste autorizado foi identificado. O gate continua pendente pelos dados listados acima. [Recibo sanitizado](./evidence/PRODUCTION_SQL_2026-11-07.json).

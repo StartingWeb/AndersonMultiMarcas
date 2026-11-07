@@ -1,6 +1,6 @@
 # Identidade SQL de runtime — instalada no destino futuro
 
-Atualização de 06/11/2026: criação do login/usuário e instalação da conexão do ambiente futuro foram expressamente autorizadas nesta rodada. `anderson_runtime` foi instalado às 17:26:45 Brasília, com grants mínimos verificados. O arquivo privado futuro deixou de usar `sa`. Nenhum dado comercial ou migration A/B/C foi executado; a identidade/conexão do legado continua preservada.
+Atualização de 06/11/2026: criação do login/usuário e instalação da conexão do ambiente futuro foram expressamente autorizadas nesta rodada. `anderson_runtime` foi instalado às 17:26:45 Brasília, com grants mínimos verificados. O arquivo privado futuro deixou de usar `sa`. A identidade/conexão do legado continua preservada. Em 07/11, A/B/C foram aplicadas sob autorização separada; o runtime não foi recriado nem rotacionado.
 
 ## Resolvido em ambiente isolado
 
@@ -31,4 +31,4 @@ O instalador não aplica as migrations comerciais, não inicia app e não reinic
 
 ## Ainda bloqueante
 
-Schema comercial, rótulo do ID 4, decisão de nulabilidade LogoUrl, R2 real, revisão independente e demais gates de ativação continuam pendentes. A validação do executor continua recusando `sa`/identidade ausente, embora a conexão preparada já use a identidade dedicada. Os três gates continuam false.
+A/B/C e LogoUrl foram resolvidos em 07/11. Acesso real somente leitura confirmou novamente login, 49 marcas/401 veículos, CRUD e ausência de privilégios administrativos; escrita/negativas e login administrativo sintético passaram apenas na cópia. [Recibo](./evidence/PRODUCTION_SQL_2026-11-07.json). R2 real, revisão independente, backup externo/aceite de risco e paridade continuam pendentes. A validação do executor continua recusando `sa`/identidade ausente, embora a conexão preparada já use a identidade dedicada. Os três gates continuam false.

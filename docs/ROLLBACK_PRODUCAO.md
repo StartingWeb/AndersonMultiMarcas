@@ -28,7 +28,7 @@ O executor foi ampliado para a identidade OCI do servidor e retestado; a imagem 
 
 ## Limites
 
-Rollback de aplicação volta imagem e snapshot de configuração. Não desfaz dados, SQL, migrations, importações ou objetos R2. Um restore produtivo pode perder gravações posteriores e exige autorização separada. A proposta SQL de ampliação não reduz colunas nem altera registros, mas sua adoção e a política de duplicidade de marcas seguem em revisão; compatibilidade de escrita/rollback deve ser aceita antes do corte.
+Rollback de aplicação volta imagem e snapshot de configuração. Não desfaz dados, SQL, migrations, importações ou objetos R2. Um restore produtivo pode perder gravações posteriores e exige autorização separada. A/B/C já foram aplicadas sob autorização explícita em 07/11; preservar o estado ampliado e o rótulo aprovado ao voltar o binário. Compatibilidade de escrita/rollback foi ensaiada na cópia; R2 real e paridade final ainda dependem de validação antes do corte.
 
 `/health` comprova liveness. Para release unificada, exigir também o commit em `/health/release`, HTTPS público e fluxos relevantes. O legado não tem esse endpoint: hoje retorna 404; usar seu ID/digest registrado e health, sem inventar um SHA de fonte para o binário.
 
@@ -74,7 +74,7 @@ Manter aplicação ativa, pelo menos um baseline anterior e legado inicial duran
 
 O deploy novo exige backup íntegro/recente e schema conhecido compatível pelo checker fixo. Rollback não exige esse checker: uma falha de backup não deve impedir restaurar a aplicação anterior. Lock, gates locais, integridade do pacote, configurações e health continuam obrigatórios. Em falha de rollback o journal permanece; bloquear novas publicações e acionar recuperação manual. Não religar gates nem remover journal para forçar sucesso.
 
-A ampliação proposta na PR #3 preserva dados/larguras, mas o novo ensaio da PR #3 demonstrou operações representativas de escrita do binário antigo depois dessas alterações, inclusive editando os máximos gravados pela aplicação nova. O índice único continua bloqueado por dados duplicados. Assim, rollback binário não é autorização para alterar/reverter schema e o primeiro corte segue bloqueado.
+A ampliação proposta na PR #3 preserva dados/larguras, mas o novo ensaio da PR #3 demonstrou operações representativas de escrita do binário antigo depois dessas alterações, inclusive editando os máximos gravados pela aplicação nova. Em 07/11/2026, A/B/C foram aplicadas: índice único ativo e duplicidade resolvida com o rótulo aprovado, sem exclusão. O ensaio dos scripts produtivos exatos repetiu 78 checkpoints e nove negativas com retorno ao binário antigo aprovado. [Recibo](./evidence/PRODUCTION_SQL_2026-11-07.json). Assim, rollback binário não é autorização para alterar/reverter schema e o primeiro corte segue bloqueado.
 
 ## Ensaio cruzado adicional
 
@@ -87,3 +87,7 @@ O undo de nomes/índice fornecido na PR #3 é uma ferramenta separada e restrita
 A conexão futura usa `anderson_runtime`; a conexão anterior foi preservada em arquivo privado 0600 e o login/configuração do legado não foi revogado. O instalador não iniciou a aplicação e não executou A/B/C. O retorno ao legado não depende de remover a nova identidade.
 
 A/B/C produtivos têm journal próprio, sem down automático: A não deve reduzir colunas, B requer rótulo aprovado e preserva demais campos, C exige A/B e dados sem duplicidade. O undo técnico de ensaio não é um rollback comercial autorizado. Se faltar confirmação do nome/nulabilidade, R2, revisão ou outro requisito, não iniciar o corte. A primeira publicação tem autorização condicional, não irrestrita.
+
+## Estado após migrations de 07/11/2026
+
+Rollback normal conserva schema ampliado, LogoUrl NULL, rótulo aprovado e índice único; retorna apenas o binário/configuração compatíveis. Legado e suas credenciais/volumes continuam preservados, sem restart. Imagem antiga `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5`; imagem nova ensaiada `sha256:08b3ab8301d123f5b99e359bc7ec5bb4c94a28b678f38aef7706fffe6b62680f`, ainda não publicada. Não reduzir colunas, desfazer o nome ou restaurar automaticamente banco produtivo: isso pode descartar gravações recentes. O backup pré-migration permanece para recuperação deliberada, conforme [backup](./BACKUP_ANDERSONMULTIMARCAS.md).

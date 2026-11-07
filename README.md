@@ -2,7 +2,9 @@
 
 Sistema de catálogo e gestão de uma revenda de veículos: site público, filtros, detalhes, contato/WhatsApp e administração de veículos, lojas, marcas, vendedores, usuários, perfis e importação de imagens.
 
-Última atualização: **06/11/2026**. Preparação nas branches `infra/production-preparation` (PR #2) e `infra/schema-compatibility-review` (PR #3). A aplicação publicada e o mecanismo legado permanecem preservados; a identidade SQL dedicada foi instalada apenas na configuração do destino futuro. Recuperação técnica referenciada no Release `fb8a205768dce239c960ffb1cfb043b2680de7b3`; código descompilado foi tratado como evidência, não como fonte original.
+Última atualização: **07/11/2026**. Preparação nas branches `infra/production-preparation` (PR #2) e `infra/schema-compatibility-review` (PR #3). A aplicação publicada e o mecanismo legado permanecem preservados; a identidade SQL dedicada foi instalada apenas na configuração do destino futuro. Recuperação técnica referenciada no Release `fb8a205768dce239c960ffb1cfb043b2680de7b3`; código descompilado foi tratado como evidência, não como fonte original.
+
+Banco produtivo corrigido nesta rodada: A/B/C aplicadas, Marca 4 **Jaguar (cadastro adicional)**, LogoUrl NULL e índice único. Backup restaurado, DBCC e compatibilidade antigo/novo aprovados. Publicação nova e CI/CD ainda bloqueados por revisão independente, homologação R2, decisão sobre backup externo e paridade. [Estado e próximas ações](docs/PENDENCIAS_PRODUCAO.md), [recibo de execução](docs/evidence/PRODUCTION_SQL_2026-11-07.json).
 
 ## Tecnologias e requisitos
 
@@ -97,7 +99,7 @@ A entrega verifica checksums e identidade do commit, faz health check e retorna 
 
 ## Estado operacional — 06/11/2026
 
-A aplicação pública ainda usa o container legado. O destino unificado está preparado, com deploy desabilitado e PRs de infraestrutura/schema em revisão. `anderson_runtime` foi instalado com permissões limitadas para o ambiente futuro, sem reiniciar o SQL compartilhado nem alterar a conexão do legado. As migrations comerciais A/B/C não foram executadas; a proposta de rótulo do ID 4 aguarda confirmação explícita.
+A aplicação pública ainda usa o container legado. O destino unificado está preparado, com deploy desabilitado e PRs de infraestrutura/schema em revisão. `anderson_runtime` foi instalado com permissões limitadas para o ambiente futuro, sem reiniciar o SQL compartilhado nem alterar a conexão do legado. As migrations comerciais A/B/C foram aplicadas em 07/11, incluindo o rótulo aprovado do ID 4 e LogoUrl NULL. O corte continua bloqueado pelas dependências externas registradas.
 
 O backup diário de 06/11 às 03h foi concluído e verificado, com notificação aceita pelo SMTP; a próxima execução é 07/11 às 03h, America/Sao_Paulo. A primeira publicação já está autorizada **condicionalmente** pelo usuário: somente após confirmar o nome, resolver os demais bloqueios e satisfazer legitimamente checks/revisão. Não habilitar gates enquanto isso faltar. Depois da ativação, atualizações válidas da main publicarão automaticamente, sem aprovação por release.
 

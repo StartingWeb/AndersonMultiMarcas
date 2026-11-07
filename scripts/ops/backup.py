@@ -123,10 +123,12 @@ def load_config():
     return value
 
 
-def sql(query):
+def sql(query, *, database='master'):
+    if database not in ('master', DATABASE):
+        raise BackupError('SQL helper database is outside the audited scope.')
     return execute(['docker', 'exec', '-i', SQL_CONTAINER, 'sh', '-c',
                     'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" exec '
-                    '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -b -h -1 -W -w 65535'],
+                    '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -b -h -1 -W -w 65535 -d ' + database],
                    data='SET NOCOUNT ON;\n' + query, timeout=1200)
 
 
@@ -296,7 +298,7 @@ def saved(name):
     return json.loads(private(path).read_text()) if path.exists() else {}
 
 
-def run_backup(config, *, initial=False):
+def run_backup(config, *, initial=False, preserve_existing=False):
     start = now()
     run_id = start.strftime('%Y%m%dT%H%M%SZ') + '-' + secrets.token_hex(4)
     report = {'run_id': run_id, 'started_at': start.astimezone(ZONE).isoformat(),
@@ -370,19 +372,24 @@ def run_backup(config, *, initial=False):
                    'size_bytes': report['size_bytes'], 'verified_at': now().astimezone(ZONE).isoformat()}
         atomic_json(ROOT / 'state' / 'last-valid.json', receipt)
         report.update(snapshot=snapshot, last_valid=receipt)
-        report['stage'] = 'retention'
-        report['retained'] = repository.retain(snapshot)
-        # Raw native material is a convenience; encrypted snapshots carry 7/4/3.
-        # Keep the newest two confirmed native copies, never arbitrary directories.
-        copies = [destination] + sorted((p for p in (ROOT / 'native').iterdir()
-                                         if p.is_dir() and p != destination), reverse=True)
-        for old in copies[2:]:
-            private(old, directory=True)
-            manifest = json.loads(private(old / 'manifest.json').read_text())
-            if (set(p.name for p in old.iterdir()) != {'database.bak', 'manifest.json'}
-                    or manifest['run_id'] != old.name or digest(old / 'database.bak') != manifest['sha256']):
-                raise BackupError('Native retention inventory diverged; nothing further removed.')
-            shutil.rmtree(old)
+        if preserve_existing:
+            # One-off safety backup: defer deletion without changing daily policy.
+            report['retention_deferred'] = 'explicit pre-migration preservation'
+            report['retained'] = len(repository.snapshots())
+        else:
+            report['stage'] = 'retention'
+            report['retained'] = repository.retain(snapshot)
+            # Raw native material is a convenience; encrypted snapshots carry 7/4/3.
+            # Keep the newest two confirmed native copies, never arbitrary directories.
+            copies = [destination] + sorted((p for p in (ROOT / 'native').iterdir()
+                                             if p.is_dir() and p != destination), reverse=True)
+            for old in copies[2:]:
+                private(old, directory=True)
+                manifest = json.loads(private(old / 'manifest.json').read_text())
+                if (set(p.name for p in old.iterdir()) != {'database.bak', 'manifest.json'}
+                        or manifest['run_id'] != old.name or digest(old / 'database.bak') != manifest['sha256']):
+                    raise BackupError('Native retention inventory diverged; nothing further removed.')
+                shutil.rmtree(old)
         report.update(backup_status='success', stage='completed')
     except Exception as error:
         report['error_code'] = type(error).__name__
@@ -479,7 +486,7 @@ def deployment_check(config):
                ('Veiculo','UrlVideo',400), ('Veiculo','Versao',150),
                ('Vendedor','Cargo',120), ('Vendedor','Email',180), ('Vendedor','FotoUrl',400)]
     rows = ','.join(f"(N'{table}',N'{column}',{length})" for table,column,length in targets)
-    query = "USE [AndersonMultiMarcas]; SELECT CASE WHEN EXISTS (SELECT 1 FROM (VALUES " + rows + """
+    query = "SELECT CASE WHEN EXISTS (SELECT 1 FROM (VALUES " + rows + """
       ) t(tbl,col,characters) LEFT JOIN sys.columns c
       ON c.object_id=OBJECT_ID(N'dbo.'+QUOTENAME(t.tbl)) AND c.name=t.col
       WHERE c.column_id IS NULL OR TYPE_NAME(c.user_type_id)<>N'nvarchar'
@@ -496,7 +503,7 @@ def deployment_check(config):
                  AND ic.key_ordinal=1 AND c.name=N'Nome'))
       THEN 0 ELSE 1 END;
     """
-    if sql(query).strip() != '1':
+    if sql(query, database=DATABASE).strip() != '1':
         raise BackupError('Known SQL write-schema incompatibility blocks deployment.')
     return {'status': 'ready', 'backup_integrity': 'verified', 'schema_contract': 'compatible'}
 
@@ -523,6 +530,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=('backup', 'monitor', 'status', 'deployment-check'))
     parser.add_argument('--initial', action='store_true')
+    parser.add_argument('--preserve-existing', action='store_true',
+                        help='Skip all snapshot/native deletion for this extra safety backup.')
     args = parser.parse_args()
     config = load_config()
     if args.operation == 'status':
@@ -534,7 +543,7 @@ def main():
         elif args.operation == 'monitor':
             report = monitor(config)
         else:
-            report = run_backup(config, initial=args.initial)
+            report = run_backup(config, initial=args.initial, preserve_existing=args.preserve_existing)
     print(json.dumps({k: report.get(k) for k in ('run_id', 'backup_status', 'stage', 'notification', 'status')}))
     notification_failed = (args.operation == 'backup' and config.get('recipient') and
                            report.get('notification', {}).get('status') != 'accepted_by_smtp')

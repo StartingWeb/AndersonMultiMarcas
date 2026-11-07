@@ -41,6 +41,25 @@ class BackupSafetyTests(unittest.TestCase):
                 self.assertEqual('ready', backup.deployment_check({})['status'])
                 repository.return_value.command.assert_called_with('check','--read-data')
 
+    def test_schema_preflight_selects_database_without_context_message(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, last = self.readiness_fixture(directory)
+            with mock.patch.object(backup, 'ROOT', root), mock.patch.object(backup, 'Repository') as repository, \
+                    mock.patch.object(backup, 'execute', return_value='1\n') as execute:
+                repository.return_value.snapshots.return_value = [{'id':last['snapshot'],'tags':['verified']}]
+                self.assertEqual('ready', backup.deployment_check({})['status'])
+                sql_calls=[call for call in execute.call_args_list if call.args[0][0]=='docker']
+                self.assertEqual(1,len(sql_calls))
+                self.assertIn('-d AndersonMultiMarcas',sql_calls[0].args[0][-1])
+                self.assertNotIn('USE [',sql_calls[0].kwargs['data'])
+
+    def test_sql_database_argument_refuses_other_projects_and_shell_input(self):
+        with mock.patch.object(backup, 'execute') as execute:
+            for database in ('another_project', 'master; id', '$(id)'):
+                with self.subTest(database=database), self.assertRaises(backup.BackupError):
+                    backup.sql('SELECT 1', database=database)
+            execute.assert_not_called()
+
     def test_expired_missing_and_corrupt_backup_never_reaches_schema(self):
         for fault in ('expired','missing','corrupt'):
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
@@ -85,6 +104,17 @@ class BackupSafetyTests(unittest.TestCase):
                 mock.patch.object(sys, 'argv', ['backup.py','backup']), \
                 mock.patch.object(backup.signal, 'signal'), redirect_stdout(io.StringIO()):
             self.assertEqual(1, backup.main())
+
+    def test_extra_backup_preservation_is_explicit_and_daily_default_is_unchanged(self):
+        for extra in ([], ['--initial', '--preserve-existing']):
+            with self.subTest(extra=extra), \
+                    mock.patch.object(backup, 'load_config', return_value={}), \
+                    mock.patch.object(backup, 'lock', return_value=nullcontext()), \
+                    mock.patch.object(backup, 'run_backup', return_value={'backup_status':'success'}) as run, \
+                    mock.patch.object(sys, 'argv', ['backup.py','backup', *extra]), \
+                    mock.patch.object(backup.signal, 'signal'), redirect_stdout(io.StringIO()):
+                self.assertEqual(0, backup.main())
+                run.assert_called_once_with({}, initial=bool(extra), preserve_existing=bool(extra))
 
     def test_calendar_uses_civil_brasilia_time_and_next_day_at_boundary(self):
         self.assertEqual('2026-11-06T03:00:00-03:00', backup.next_execution(
