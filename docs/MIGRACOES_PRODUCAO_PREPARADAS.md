@@ -54,3 +54,7 @@ Os fingerprints de dados diferiram em Veiculo durante a janela. A migration B ve
 Retorno normal do **binário**, mantendo schema ampliado, LogoUrl NULL, rótulo aprovado, índice único, IDs e dados. Não reduzir colunas, desfazer nome/índice ou restaurar banco automaticamente. Backup pré-migration fica na VPS em diretório privado identificado pelo run ID; recuperação produtiva pode descartar gravações posteriores e requer decisão própria. Legado e identidade antiga preservados.
 
 Primeiro revisar/integrar PR #3; atualizar PR #2 com main resultante e validar/revisar o conjunto; integrar PR #2 somente com política satisfeita. Só StartingWeb tem acesso elegível: falta mantenedor independente autorizado e CODEOWNERS aplicável, sem bypass. R2 real isolado, destino externo de backup ou aceite explícito de risco, paridade e CI do SHA final ainda bloqueiam publicação. Gates continuam false e habilitação local ausente. Novo backup restaurável imediatamente antes do corte futuro.
+
+## Pendência de mídia verificada após o SQL
+
+Leitura R2 da página pública: três imagens de veículos 200 público/S3 autenticado; três fotos de vendedores 404 nos dois acessos, sem arquivo correspondente no container/checkout legado. Nenhuma URL foi modificada por A/B/C e nenhum PUT/DELETE foi feito. Localizar originais/fonte de recuperação autorizada antes de declarar a integridade dessa mídia; não substituir dados ou imagens por inferência. [Amostra e inventário](./evidence/PRODUCTION_SQL_2026-11-07.json). Homologação real de escrita continua dependendo de destino isolado autorizado.
