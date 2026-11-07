@@ -1,0 +1,491 @@
+{
+  "backup": {
+    "backup_status": "success",
+    "completed_at": "2026-11-07T12:05:00.292716-03:00",
+    "copy_only": true,
+    "duration_seconds": 7.81,
+    "last_restore": {
+      "completed_at": "2026-11-05T22:14:57.850389-03:00",
+      "dbcc_checkdb": "passed",
+      "native_restore": "passed",
+      "report": "/opt/startingweb/apps/anderson-multimarcas-unified/snapshots/amm-restore-a2483165e38b/restore-report.json",
+      "run_id": "a2483165e38b",
+      "snapshot": "0b8519e7243b7b4a86b110e3e80ceb1c5841640634a9902ec2a6ebebcf34b782",
+      "status": "verified"
+    },
+    "last_valid": {
+      "run_id": "20261107T150452Z-c36eef7e",
+      "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+      "size_bytes": 30334976,
+      "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "verified_at": "2026-11-07T12:04:59.333085-03:00"
+    },
+    "next_execution": "2026-11-08T03:00:00-03:00",
+    "notification": {
+      "attempt_history": [
+        {
+          "attempt": 1,
+          "result": "accepted_by_smtp"
+        }
+      ],
+      "attempts": 1,
+      "certificate_verified": true,
+      "data_response": 250,
+      "status": "accepted_by_smtp",
+      "tls_version": "TLSv1.3"
+    },
+    "retained": 5,
+    "retention_deferred": "explicit pre-migration preservation",
+    "run_id": "20261107T150452Z-c36eef7e",
+    "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+    "size_bytes": 30334976,
+    "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+    "sql_verify": "aprovado (VERIFYONLY WITH CHECKSUM)",
+    "stage": "completed",
+    "started_at": "2026-11-07T12:04:52.486245-03:00",
+    "storage_free_bytes": 66606850048,
+    "storage_status": "disponível"
+  },
+  "brands": [
+    {
+      "Ativo": true,
+      "DataCadastro": "2026-03-17T21:25:53.2550543",
+      "Id": 1,
+      "Nome": "Jaguar",
+      "vehicles": 1
+    },
+    {
+      "Ativo": true,
+      "DataCadastro": "2026-03-24T23:08:09.7600000",
+      "Id": 4,
+      "Nome": "Jaguar (cadastro adicional)",
+      "vehicles": 0
+    }
+  ],
+  "changed_relationships": 0,
+  "checked_at": "2026-11-07T15:16:44.230071+00:00",
+  "compatibility": {
+    "checks": 78,
+    "cleanup": {
+      "containers": [],
+      "networks": [],
+      "volumes": []
+    },
+    "dbcc_checkdb": "passed",
+    "negative_permissions": [
+      {
+        "denied": true,
+        "errors": [
+          "262"
+        ],
+        "operation": "create_table"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "1088"
+        ],
+        "operation": "alter_table"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "3701"
+        ],
+        "operation": "drop_table"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "15247"
+        ],
+        "operation": "create_user"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "15247"
+        ],
+        "operation": "create_login"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "15151"
+        ],
+        "operation": "grant"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "15151"
+        ],
+        "operation": "server_role"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "262"
+        ],
+        "operation": "create_database"
+      },
+      {
+        "denied": true,
+        "errors": [
+          "2571"
+        ],
+        "operation": "admin_dbcc"
+      }
+    ],
+    "phases": [
+      {
+        "passed": true,
+        "phase": "old_original"
+      },
+      {
+        "passed": true,
+        "phase": "old_widened"
+      },
+      {
+        "passed": true,
+        "phase": "new_widened"
+      },
+      {
+        "passed": true,
+        "phase": "old_binary_rollback"
+      }
+    ],
+    "production_migrations": [
+      {
+        "phase": "A",
+        "replay_unchanged": true,
+        "sha256": "91d38bd67f7700ea4ce6372238b82607d79fd0873a224df819c6e1a00c654643"
+      },
+      {
+        "phase": "B",
+        "replay_unchanged": true,
+        "sha256": "99d4d7d4537c6beb35d1bdc8265d76f5186d95a8f41a49071b53900e14d5ff12"
+      },
+      {
+        "phase": "C",
+        "replay_unchanged": true,
+        "sha256": "c797445d6d2535d07f6e98e1c8ae9352e894c8467449477ca56aad572e15ac26"
+      }
+    ],
+    "run": "23b9b122277e",
+    "source_hashes": {
+      "010_schema.sql": "91d38bd67f7700ea4ce6372238b82607d79fd0873a224df819c6e1a00c654643",
+      "020_marca.sql": "99d4d7d4537c6beb35d1bdc8265d76f5186d95a8f41a49071b53900e14d5ff12",
+      "030_index.sql": "c797445d6d2535d07f6e98e1c8ae9352e894c8467449477ca56aad572e15ac26",
+      "rehearse-production-20261107.py": "03a11da5b6e0cc4bc1733f4d255ac22957ba2fa58a420689c0aaa686cf10bd05",
+      "runtime-permissions.sql": "b566e2f8ca0162dca79fe595e69ad5c86a8475fba549b0fb2d4964b7bcec5e0b"
+    },
+    "status": "passed"
+  },
+  "database_validation": {
+    "counts_unchanged": true,
+    "dbcc_checkdb": "passed",
+    "ef_history_unchanged": true,
+    "foreign_keys_unchanged": true,
+    "journal_entries": 3,
+    "only_logo_nullability_changed": true,
+    "other_schema_unchanged": true,
+    "runtime": {
+      "alter_login": 0,
+      "alter_user": 0,
+      "brand_crud": 4,
+      "brands": 49,
+      "create_database": 0,
+      "create_table": 0,
+      "db_owner": 0,
+      "login_name": "anderson_runtime",
+      "sysadmin": 0,
+      "vehicles": 401
+    },
+    "schema_12_columns": "passed",
+    "unique_index": "IX_Marca_Nome",
+    "validated_at": "2026-11-07T15:14:55.849914+00:00"
+  },
+  "deleted_records": 0,
+  "duplicate_groups": 0,
+  "journal": [
+    {
+      "AuthorizationRef": "owner-2026-11-07-explicit-sql-abc",
+      "ExecutedAt": "2026-11-07T15:11:07.2644518",
+      "MigrationId": "010-expand-write-limits-v1",
+      "OperatorLogin": "sa",
+      "ScriptSha256": "91d38bd67f7700ea4ce6372238b82607d79fd0873a224df819c6e1a00c654643",
+      "after_hash": "D8705188BD586609F9F118AACCF8867A881261B22EA0604CC4ED76C25F494572",
+      "before_hash": "1BCA38720FFE8C5579FA5F90F05163C83614872E0D085AA0DD0F0DD4C9C52997",
+      "details": {
+        "logo_nullable": true,
+        "rollback_policy": "No commercial data changed; binary rollback keeps widened columns."
+      }
+    },
+    {
+      "AuthorizationRef": "owner-2026-11-07-explicit-sql-abc",
+      "ExecutedAt": "2026-11-07T15:11:32.6108181",
+      "MigrationId": "020-rename-marca-4-v1",
+      "OperatorLogin": "sa",
+      "ScriptSha256": "99d4d7d4537c6beb35d1bdc8265d76f5186d95a8f41a49071b53900e14d5ff12",
+      "after_hash": "9FC508FC2E884B30836F81569C5B229AECCF181A02914223F8EA3D79A2B104F3",
+      "before_hash": "C333EEFCDE6B89F480BEEF7930EF8A674596D4FF00F8CD3B03B14441094CE9C9",
+      "details": {
+        "impact": "Preserve both IDs; no deleted rows or changed relationships.",
+        "name_approval": "owner-2026-11-07-explicit-sql-abc",
+        "new_name": "Jaguar (cadastro adicional)",
+        "original_name": "Jaguar"
+      }
+    },
+    {
+      "AuthorizationRef": "owner-2026-11-07-explicit-sql-abc",
+      "ExecutedAt": "2026-11-07T15:13:33.4484416",
+      "MigrationId": "030-unique-marca-name-v1",
+      "OperatorLogin": "sa",
+      "ScriptSha256": "c797445d6d2535d07f6e98e1c8ae9352e894c8467449477ca56aad572e15ac26",
+      "after_hash": "62397AA923D2A6D51C5B705CFE4E30A8C76C23D02E4D2D754B8CDD70468F1107",
+      "before_hash": "673601F9DA98B6AB00ABCCD18DB8525E6FBA332FAED0D14DC0BEE8791E0D4AA4",
+      "details": {
+        "commercial_data_changed": false
+      }
+    }
+  ],
+  "legacy": {
+    "application_failures": 0,
+    "deploy_enabled": false,
+    "legacy_health": "healthy",
+    "log_read_exit": 0,
+    "parity_approved": false,
+    "since": "2026-11-07T15:11:06Z",
+    "sql_errors": 0
+  },
+  "migrations": [
+    {
+      "authorization": "owner-2026-11-07-explicit-sql-abc",
+      "backup": {
+        "run_id": "20261107T150452Z-c36eef7e",
+        "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+        "size_bytes": 30334976,
+        "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+        "verified_at": "2026-11-07T12:04:59.333085-03:00"
+      },
+      "completed_at": "2026-11-07T15:11:07.294392+00:00",
+      "exit_code": 0,
+      "phase": "A",
+      "script": "010_schema.sql",
+      "sha256": "91d38bd67f7700ea4ce6372238b82607d79fd0873a224df819c6e1a00c654643",
+      "sql_error_numbers": [],
+      "started_at": "2026-11-07T15:11:06.484655+00:00",
+      "target": {
+        "container_id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+        "database_guid": "9D811E45-14B7-48E2-A376-74B3D6A89ADF",
+        "server_identity": "491cbc5de981"
+      }
+    },
+    {
+      "authorization": "owner-2026-11-07-explicit-sql-abc",
+      "backup": {
+        "run_id": "20261107T150452Z-c36eef7e",
+        "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+        "size_bytes": 30334976,
+        "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+        "verified_at": "2026-11-07T12:04:59.333085-03:00"
+      },
+      "completed_at": "2026-11-07T15:11:32.628828+00:00",
+      "exit_code": 0,
+      "phase": "B",
+      "script": "020_marca.sql",
+      "sha256": "99d4d7d4537c6beb35d1bdc8265d76f5186d95a8f41a49071b53900e14d5ff12",
+      "sql_error_numbers": [],
+      "started_at": "2026-11-07T15:11:32.289140+00:00",
+      "target": {
+        "container_id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+        "database_guid": "9D811E45-14B7-48E2-A376-74B3D6A89ADF",
+        "server_identity": "491cbc5de981"
+      }
+    },
+    {
+      "authorization": "owner-2026-11-07-explicit-sql-abc",
+      "backup": {
+        "run_id": "20261107T150452Z-c36eef7e",
+        "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+        "size_bytes": 30334976,
+        "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+        "verified_at": "2026-11-07T12:04:59.333085-03:00"
+      },
+      "completed_at": "2026-11-07T15:13:33.467641+00:00",
+      "exit_code": 0,
+      "phase": "C",
+      "script": "030_index.sql",
+      "sha256": "c797445d6d2535d07f6e98e1c8ae9352e894c8467449477ca56aad572e15ac26",
+      "sql_error_numbers": [],
+      "started_at": "2026-11-07T15:13:33.198649+00:00",
+      "target": {
+        "container_id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+        "database_guid": "9D811E45-14B7-48E2-A376-74B3D6A89ADF",
+        "server_identity": "491cbc5de981"
+      }
+    }
+  ],
+  "preflight": {
+    "backup_integrity": "verified",
+    "schema_contract": "compatible",
+    "status": "ready"
+  },
+  "production_deployment": false,
+  "r2": {
+    "checked_at": "2026-11-07T15:08:45.246037+00:00",
+    "configured_fields": {
+      "AccessKeyId": true,
+      "AccountId": true,
+      "BucketName": true,
+      "PublicBaseUrl": true,
+      "Region": true,
+      "SecretAccessKey": true,
+      "ServiceUrl": true
+    },
+    "dual_read_enabled": "true",
+    "endpoint_is_account_r2_https": true,
+    "head_bucket": "passed",
+    "head_bucket_http_status": 200,
+    "object_requests": 0,
+    "production_deletions": 0,
+    "production_uploads": 0,
+    "provider": "R2",
+    "public_url_is_https": true,
+    "region": "auto",
+    "test_bucket_configured": false,
+    "write_cycle_test": "blocked_no_exclusive_test_bucket"
+  },
+  "r2_existing_media": {
+    "all_public_images_available": false,
+    "checked_at": "2026-11-07T15:26:37.186284+00:00",
+    "production_put_delete": 0,
+    "read_only": true,
+    "sample_checks": [
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/vendedores",
+        "public": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "signed_object_head": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "url_sha256": "f010f632270739758957516a63cbff1ade8e961ad406c8b272036f9036bd9aff"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/vendedores",
+        "public": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "signed_object_head": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "url_sha256": "d6c2555ca25c61e544a04cdd1a00c4eaf3f0da8a424591c0e606ddf35b8fa406"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/vendedores",
+        "public": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "signed_object_head": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "url_sha256": "bffcf934a5136f91447aa81eda4c2bf09e0b2f70b5f9274d0f20096bb99d07a8"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/veiculos",
+        "public": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "signed_object_head": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "url_sha256": "17702fa7de852bce40cb6db0baf2daa34fe1fdbaea42741be47813b7ba3b7ce2"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/veiculos",
+        "public": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "signed_object_head": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "url_sha256": "9e15b6def85995d588004554ff4a9d1b5525c54b5402106b6a1606f33b1a3923"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/veiculos",
+        "public": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "signed_object_head": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "url_sha256": "f8891dd1e370f90813817c634aad6df9332234121c6be446b7027e851bd67664"
+      }
+    ]
+  },
+  "r2_recovery_inventory": {
+    "files_scanned": 820,
+    "keys_with_original_found": 0,
+    "matching_files": 0,
+    "production_writes": 0,
+    "seller_keys_checked": 8,
+    "source": "legacy application checkout"
+  },
+  "restore": {
+    "completed_at": "2026-11-07T12:07:28.792647-03:00",
+    "dbcc_checkdb": "passed",
+    "native_restore": "passed",
+    "report": "/opt/startingweb/apps/anderson-multimarcas-unified/snapshots/amm-restore-46fe30bdb760/restore-report.json",
+    "run_id": "46fe30bdb760",
+    "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+    "status": "verified"
+  },
+  "restore_notification": {
+    "attempt_history": [
+      {
+        "attempt": 1,
+        "result": "accepted_by_smtp"
+      }
+    ],
+    "attempts": 1,
+    "certificate_verified": true,
+    "data_response": 250,
+    "status": "accepted_by_smtp",
+    "tls_version": "TLSv1.3"
+  },
+  "unchanged_other_tables": 19,
+  "vehicle_reconciliation": {
+    "baseline": "restored authenticated pre-migration backup",
+    "cleanup": {
+      "containers": [],
+      "networks": [],
+      "volumes": []
+    },
+    "counter_increments": 4,
+    "counter_only_changed_vehicles": 1,
+    "run": "e609ecd17121",
+    "status": "passed",
+    "vehicle_count": 401,
+    "vehicle_non_counter_fields_unchanged": true
+  }
+}

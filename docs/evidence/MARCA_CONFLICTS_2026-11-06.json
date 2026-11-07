@@ -1,0 +1,37 @@
+{
+  "database_collation": "SQL_Latin1_General_CP1_CI_AS",
+  "name_collation": "SQL_Latin1_General_CP1_CI_AS",
+  "duplicate_groups": 1,
+  "ci_ai_groups": 1,
+  "exact_byte_groups": 1,
+  "conflicts": [
+    {
+      "Id": 1,
+      "Ativo": true,
+      "characters": 6,
+      "trailing_spaces": 0,
+      "leading_spaces": 0,
+      "vehicle_references": 1,
+      "collation_conflict_members": 2,
+      "byte_variants": 1
+    },
+    {
+      "Id": 4,
+      "Ativo": true,
+      "characters": 6,
+      "trailing_spaces": 0,
+      "leading_spaces": 0,
+      "vehicle_references": 0,
+      "collation_conflict_members": 2,
+      "byte_variants": 1
+    }
+  ],
+  "foreign_keys": [
+    {
+      "fk": "FK_Veiculo_Marca_MarcaId",
+      "referring_table": "Veiculo",
+      "referring_column": "MarcaId",
+      "on_delete": "NO_ACTION"
+    }
+  ]
+}
