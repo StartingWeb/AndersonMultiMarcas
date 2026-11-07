@@ -4,7 +4,7 @@ Sistema de catálogo e gestão de uma revenda de veículos: site público, filtr
 
 Última atualização: **07/11/2026**. Preparação nas branches `infra/production-preparation` (PR #2) e `infra/schema-compatibility-review` (PR #3). A aplicação publicada e o mecanismo legado permanecem preservados; a identidade SQL dedicada foi instalada apenas na configuração do destino futuro. Recuperação técnica referenciada no Release `fb8a205768dce239c960ffb1cfb043b2680de7b3`; código descompilado foi tratado como evidência, não como fonte original.
 
-Banco produtivo corrigido nesta rodada: A/B/C aplicadas, Marca 4 **Jaguar (cadastro adicional)**, LogoUrl NULL e índice único. Backup restaurado, DBCC e compatibilidade antigo/novo aprovados. Publicação nova e CI/CD ainda bloqueados por revisão independente, homologação R2, decisão sobre backup externo e paridade. [Estado e próximas ações](docs/PENDENCIAS_PRODUCAO.md), [recibo de execução](docs/evidence/PRODUCTION_SQL_2026-11-07.json).
+Banco produtivo corrigido nesta rodada: A/B/C aplicadas, Marca 4 **Jaguar (cadastro adicional)**, LogoUrl NULL e índice único. Backup restaurado, DBCC e compatibilidade antigo/novo aprovados. Publicação nova e CI/CD ainda bloqueados por revisão independente, homologação R2 e recuperação de fotos de vendedores ausentes (404 na amostra), decisão sobre backup externo e paridade. [Estado e próximas ações](docs/PENDENCIAS_PRODUCAO.md), [recibo de execução](docs/evidence/PRODUCTION_SQL_2026-11-07.json).
 
 ## Tecnologias e requisitos
 

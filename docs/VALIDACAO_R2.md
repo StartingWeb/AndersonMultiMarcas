@@ -69,4 +69,10 @@ Com esses dados, executar arquivos sintéticos com chave UUID, upload/download/h
 
 ## Conferência de 07/11/2026
 
-Endpoint R2 da conta via HTTPS, região auto, campos necessários presentes, base pública HTTPS e HEAD autenticado do bucket 200. Zero requests de objetos, uploads ou exclusões produtivas. Configuração futura preservada após A/B/C; nenhum destino de teste autorizado foi identificado. O gate continua pendente pelos dados listados acima. [Recibo sanitizado](./evidence/PRODUCTION_SQL_2026-11-07.json).
+Endpoint R2 da conta via HTTPS, região auto, campos necessários presentes, base pública HTTPS e HEAD autenticado do bucket 200. A auditoria inicial fez apenas HEAD do bucket; a leitura adicional de objetos está descrita abaixo, sem uploads/exclusões produtivos. Configuração futura preservada após A/B/C; nenhum destino de teste autorizado foi identificado. O gate continua pendente pelos dados listados acima. [Recibo sanitizado](./evidence/PRODUCTION_SQL_2026-11-07.json).
+
+## Leitura real de mídia existente — 07/11/2026
+
+Amostra da página pública, sem PUT/DELETE: três imagens de veículos retornaram **200/image-webp** na URL pública e no HEAD S3 autenticado; três fotos de vendedores retornaram **404** em ambos. URLs não foram alteradas por A/B/C. Não se encontraram os arquivos correspondentes no container; a busca no checkout legado (820 entradas) não encontrou originais dos oito nomes de fotos de vendedores referenciados pela página. Isso não prova ausência em todos os acervos nem autoriza recriar imagens ou apontar para outros arquivos.
+
+**Falha técnica aberta:** localizar originais das três fotos ausentes ou uma fonte de recuperação autorizada, conferir correspondência/integridade e definir reparação com o proprietário. Nenhum objeto foi regravado ou excluído, nenhuma URL/dado comercial mudou. A homologação sintética de escrita permanece uma dependência separada, com destino isolado autorizado. A amostra de leitura confirma acesso às imagens de veículos testadas, não integridade de todo o bucket. [Evidência sanitizada](./evidence/PRODUCTION_SQL_2026-11-07.json).

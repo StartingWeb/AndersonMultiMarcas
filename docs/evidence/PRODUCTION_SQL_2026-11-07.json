@@ -357,6 +357,100 @@
     "test_bucket_configured": false,
     "write_cycle_test": "blocked_no_exclusive_test_bucket"
   },
+  "r2_existing_media": {
+    "all_public_images_available": false,
+    "checked_at": "2026-11-07T15:26:37.186284+00:00",
+    "production_put_delete": 0,
+    "read_only": true,
+    "sample_checks": [
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/vendedores",
+        "public": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "signed_object_head": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "url_sha256": "f010f632270739758957516a63cbff1ade8e961ad406c8b272036f9036bd9aff"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/vendedores",
+        "public": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "signed_object_head": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "url_sha256": "d6c2555ca25c61e544a04cdd1a00c4eaf3f0da8a424591c0e606ddf35b8fa406"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/vendedores",
+        "public": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "signed_object_head": {
+          "content_type": "text/plain",
+          "status": 404
+        },
+        "url_sha256": "bffcf934a5136f91447aa81eda4c2bf09e0b2f70b5f9274d0f20096bb99d07a8"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/veiculos",
+        "public": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "signed_object_head": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "url_sha256": "17702fa7de852bce40cb6db0baf2daa34fe1fdbaea42741be47813b7ba3b7ce2"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/veiculos",
+        "public": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "signed_object_head": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "url_sha256": "9e15b6def85995d588004554ff4a9d1b5525c54b5402106b6a1606f33b1a3923"
+      },
+      {
+        "legacy_local_file_exists": false,
+        "path_family": "/uploads/veiculos",
+        "public": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "signed_object_head": {
+          "content_type": "image/webp",
+          "status": 200
+        },
+        "url_sha256": "f8891dd1e370f90813817c634aad6df9332234121c6be446b7027e851bd67664"
+      }
+    ]
+  },
+  "r2_recovery_inventory": {
+    "files_scanned": 820,
+    "keys_with_original_found": 0,
+    "matching_files": 0,
+    "production_writes": 0,
+    "seller_keys_checked": 8,
+    "source": "legacy application checkout"
+  },
   "restore": {
     "completed_at": "2026-11-07T12:07:28.792647-03:00",
     "dbcc_checkdb": "passed",
