@@ -1,83 +1,78 @@
 # Validação do Cloudflare R2
 
-Atualizado em **07/11/2026**. Auditoria somente leitura: nenhum bucket, credencial, política ou objeto foi criado/alterado; nenhum PUT/DELETE produtivo. Homologação de escrita e recuperação das fotos são pendências independentes.
+**Homologação isolada concluída em 07/11/2026, às 16:36 UTC (13:36 de Brasília)**, com autorização expressa para dois buckets, nova credencial restrita e dados sintéticos. [Recibo sanitizado](./evidence/R2_HOMOLOGATION_2026-11-07.json). Objetos produtivos alterados: **zero**. Nenhuma mudança de aplicação, banco, DNS produtivo ou credenciais produtivas.
 
-## Resultado comprovado
+## Conta, buckets e credencial
 
-- HEAD autenticado do bucket: **200**, em 07/11/2026 às 16:02 UTC, SigV4/TLS, recusando redirects.
-- Três veículos: HEAD/GET **200** públicos e autenticados; SHA-256 dos bytes coincide em cada par.
-- As três fotos ausentes anteriores são dos registros **5, 6 e 7**. A conferência ampliada às **oito FotoUrl existentes no banco**, IDs **3–10**, encontrou **404** público e no HEAD autenticado em todas.
-- Oito ListObjectsV2 limitados aos prefixos exatos de UUID já referenciados pelo Anderson, MaxKeys=5: **200, vazios e sem truncamento**. Não se listou o bucket inteiro.
-- Originais encontrados: **zero nas fontes inspecionadas**. Os oito UUIDs aparecem nos bytes do backup de 28/07/2026 e dos três backups nativos retidos; referências históricas não são arquivos de fotos recuperados.
+A conta autenticada no Safari deste Mac foi comparada em memória com AccountId/endpoint do runtime existente. O recibo publica apenas fingerprint SHA-256 da identidade. A lista inicial continha somente startingweb-storage; os dois nomes autorizados estavam ausentes.
 
-[Evidência desta rodada](./evidence/R2_MEDIA_AUDIT_2026-11-07.json), [diagnóstico por foto e recuperação](./RECUPERACAO_MIDIAS_R2.md) e [evidência anterior preservada](./evidence/PRODUCTION_SQL_2026-11-07.json).
-
-## Configuração e integração observadas
-
-| Campo | Estado real, sem valores de acesso |
+| Recurso | Estado final |
 | --- | --- |
-| Endpoint | HTTPS no formato `https://<AccountId>.r2.cloudflarestorage.com`; conta conferida em memória, identificador omitido |
-| Bucket | `startingweb-storage`; o nome não comprova exclusividade ao Anderson |
-| Região/assinatura | `auto`, SigV4, path-style |
-| Base pública | `https://pub-2c5e28a366434870b48f2b07b425e788.r2.dev` — pública, sem credencial |
-| Provider/dual read | `R2` / `true` |
-| Legado | Variáveis efetivas de `andersonmultimarcas-web` |
-| Futuro | Arquivo privado `shared/runtime.env` na raiz unificada; container futuro não iniciado |
-| Comparação | AccountId, access/secret, bucket, base, endpoint e região idênticos entre legado e futuro, sem registrar valores de credenciais |
-| Histórico versionado | Quatro versões de appsettings examinadas, sem R2 preenchido; defaults locais são sobrepostos pelo environment do runtime |
-| Mounts legados | Somente volume Data Protection; dois XML, sem upload persistente |
-| Teste | Nenhum bucket/prefixo/credencial de homologação autorizado identificado na configuração auditada |
+| anderson-multimarcas-homologacao | Criado, ENAM, Standard; vazio após limpeza; r2.dev habilitado |
+| anderson-multimarcas-homologacao-negativa | Criado, ENAM, Standard; privado e vazio, sem domínio customizado ou URL pública |
+| startingweb-storage | Preservado; operações negativas usam somente token novo e chave sintética inexistente |
+| Credencial nova | Anderson-Homologacao-20261107; account R2 token, Object Read & Write somente no primeiro bucket |
+| Administração / todos os buckets | Não concedidos |
+| Armazenamento do segredo | Somente no Mac, JSON privado fora do Git; arquivo 0600 em diretório 0700 |
+| Validade / filtro IP | Forever; filtro IP padrão sem restrição adicional |
+| Credenciais existentes | Duas ativas, vinculadas ao bucket produtivo; preservadas; nenhum valor registrado |
+| Lifecycle dos dois novos buckets | Apenas aborto padrão de multipart incompleto após sete dias; sem expiração de objetos completos |
+| CORS / bucket locks / domínios customizados | Ausentes nos dois novos buckets |
+| Funcionalidades pagas adicionais | Nenhuma habilitada ou contratada |
 
-Não se comprovou exclusividade do bucket ao projeto. As consultas usaram referências reais do próprio Anderson e seus prefixos UUID exatos; não se acessaram objetos/volumes de outros projetos.
+Arquivo privado local não versionado: `.cache/production-prep/policy-r2-20261107/private/r2-homologacao.json`. Nenhum valor de acesso consta deste documento.
 
-### Chaves e URLs
+A credencial não foi instalada no runtime, em secrets GitHub ou no CI. As permissões foram conferidas no resumo de criação e na listagem persistida, depois comprovadas pelos testes abaixo. Não foi reutilizada a credencial de produção.
 
-[StoragePath](../Core/Storage/StoragePath.cs) reconhece `uploads/veiculos/`, `uploads/vendedores/` e `anderson-multimarcas/veiculos/`. Normaliza separadores/raiz web/query/fragment e rejeita travessia. [R2StorageService](../Core/Storage/R2StorageService.cs) forma `PublicBaseUrl + "/" + key` e usa esse mesmo key em S3; não há URL pré-assinada nesse serviço.
+## Ciclo autenticado real
 
-[VeiculoMediaService](../Project/Features/Veiculos/Services/VeiculoMediaService.cs) valida/encoda antes da gravação e gera UUID WebP. O storage sobrescreve quando recebe o mesmo key; o upload de veículo usa UUID para não depender do nome original. O [cadastro atual de vendedores](../Project/Pages/Admin/Cadastros/Vendedores/Upsert.cshtml.cs) persiste a FotoUrl fornecida, sem executar esse upload de veículo.
+Run: `20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c`. Prefixo exclusivo: `codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/`. Arquivo SVG de 178 bytes, gerado em memória para esta execução, Content-Type image/svg+xml. SigV4, região auto, endpoint da mesma conta, TLS validado e sem redirects.
 
-As oito FotoUrl têm formato `/uploads/vendedores/<UUID>.jpg`. O [resolver](../Project/Infrastructure/Storage/StorageImageResolver.cs) preserva key/extensão e forma exatamente as URLs examinadas. O formato coincide com o contrato; os objetos nesses keys estão ausentes. Não se demonstrou erro de normalização, renomeação `.jpg` para `.webp`, causa/momento da perda ou relação causal com A/B/C. Nenhuma URL foi alterada.
+| Teste | Resultado |
+| --- | --- |
+| Upload sintético | 200 |
+| HEAD autenticado / Content-Type | 200 / image/svg+xml |
+| GET autenticado / SHA-256 | 200 / coincidente |
+| Objeto inexistente distinto | 404 NoSuchKey |
+| Sobrescrita do objeto próprio | 200 |
+| Novo GET / hash novo | 200 / coincidente e diferente do original |
+| Exclusão do objeto próprio | 204 |
+| Ausência após exclusão | 404 NoSuchKey |
+| LIST do prefixo após limpeza | 200, zero chaves |
 
-### Política e permissões efetivas
+SHA-256 original: `49ad18fb22931675e6b3e0df4a3c3d99183f73e435d7e6cebba39558f32fcb06`.
 
-| Operação | Prova | Limite |
+SHA-256 após sobrescrita: `6a233e712eb8bb12420322c5ed840153bba96d84094bdc345acdb7b110119c3d`.
+
+A primeira tentativa completou upload/leitura/hash, mas recebeu 403 na entrega pública logo após habilitar a URL. Seu finally excluiu o único objeto próprio e confirmou prefixo vazio. O ciclo completo acima repetiu com outro prefixo e User-Agent de navegador e passou. A causa do primeiro 403 não foi estabelecida; o recibo preserva o resultado sem atribuí-lo conclusivamente à propagação ou ao cliente.
+
+## Testes negativos
+
+A mesma credencial foi usada nos dois buckets fora de escopo. LIST limitado ao prefixo aleatório/max-keys=1; GET/PUT/DELETE somente na chave sintética never-created.svg do run. Não houve DELETE de objeto real nem limpeza produtiva.
+
+| Operação | Controle negativo | startingweb-storage |
 | --- | --- | --- |
-| HEAD bucket | 200 | Não comprova escrita/política completa |
-| HEAD/GetObject | Três veículos 200; hashes público/autenticado iguais | Somente esses objetos; 404 dos vendedores não é teste negativo de autorização |
-| ListObjectsV2 | Oito consultas 200 nos prefixos UUID exatos | Não comprova restrição da credencial a esses prefixos |
-| PUT/overwrite/DeleteObject | Não executados | Permissões/transporte/limpeza reais não homologados |
-| Gestão Cloudflare/token | Sem política de gestão auditável nesta sessão | Escopo e negações fora dele não comprovados |
+| Listar | 403 AccessDenied | 403 AccessDenied |
+| Ler chave inexistente | 403 AccessDenied | 403 AccessDenied |
+| Criar chave inexistente | 403 AccessDenied | 403 AccessDenied |
+| Excluir chave inexistente | 403 AccessDenied | 403 AccessDenied |
 
-Sucesso de leitura não demonstra isolamento. Retry de transporte depende do SDK; não há retry próprio por operação. HEAD pós-PUT é diagnóstico: PUT aceito não vira falha porque HEAD foi recusado/ausente. [ApplicationStorageService](../Project/Infrastructure/Storage/ApplicationStorageService.cs) pode registrar falha de exclusão remota e ainda remover a cópia local; uma reparação futura exige conferência remota explícita.
+As oito negações comprovam acesso recusado para essas operações, além da política restrita conferida no painel. São distintas de NoSuchKey: o 404 foi obtido apenas em chave inexistente do bucket autorizado. O controle negativo foi novamente inspecionado no painel, privado e vazio. Nenhum objeto desconhecido foi apagado.
 
-## Destino isolado proposto — requer autorização
+## Entrega pública isolada
 
-A proposta concreta é criar **dois buckets exclusivamente sintéticos do Anderson**:
+URL: [https://pub-46c1a84ed617400fa2e2fdc830248159.r2.dev](https://pub-46c1a84ed617400fa2e2fdc830248159.r2.dev). Endpoint gratuito de desenvolvimento r2.dev, sujeito a rate limit e sem garantia de uso produtivo. Não foi criado domínio customizado, DNS, Worker ou plano adicional.
 
-1. `anderson-multimarcas-homologacao`: destino do ciclo; credencial **nova Object Read & Write limitada somente a este bucket**, sem administração da conta/buckets e sem reutilizar token produtivo.
-2. `anderson-multimarcas-homologacao-negativa`: controle vazio, privado, sem mídias comerciais; o token do ciclo não recebe acesso a ele. Permite testar negação fora do escopo sem tocar o bucket compartilhado.
+GET da mídia sintética retornou 200, image/svg+xml e SHA-256 idêntico ao autenticado. Certificado/hostname/cadeia HTTPS validados; sessão TLSv1.2, certificado com validade até Feb  3 05:25:19 2027 GMT. O objeto foi removido ao final, portanto a URL não preserva uma mídia de demonstração.
 
-Nomes sujeitos à disponibilidade. A autorização necessária cobre criação dos dois buckets, criação da credencial limitada, configuração de base pública exclusiva de teste no primeiro quando aplicável e entrega do arquivo privado 0600 fora do Git/GitHub. Registrar referência da autorização, política efetiva e responsável pela limpeza. **Nenhum recurso foi criado nesta rodada.**
+O bucket negativo permaneceu com Public Development URL desativada e sem domínio customizado, conferido novamente após os testes. A URL de homologação não oferece acesso autenticado ao controle negativo nem à produção.
 
-Um prefixo no bucket compartilhado só seria alternativa com política suportada e credencial própria impedindo acesso fora dele. Prefixo com token capaz de modificar o bucket inteiro não é isolamento. Não foi encontrada prova dessa alternativa no runtime auditado.
+## Fotos ausentes: pendência independente
 
-[r2-test.env.example](../deploy/r2-test.env.example) prepara o contrato local com destino/credenciais vazios. Não executa requisições, não concede autorização e não implementa sozinho uma barreira de isolamento. Não incluir configuração SQL produtiva.
+A [auditoria anterior somente leitura](./evidence/R2_MEDIA_AUDIT_2026-11-07.json) encontrou oito referências de fotos de vendedores sem original recuperado nas fontes examinadas. Três veículos tiveram leitura pública/autenticada e hashes coincidentes. Essas evidências históricas não foram substituídas por arquivos fictícios.
 
-## Ciclo preparado, ainda não executado
+Nesta rodada não se alterou FotoUrl, registros de vendedores/veículos, imagens, credenciais produtivas ou objetos comerciais. A [recuperação das fotos](./RECUPERACAO_MIDIAS_R2.md) depende dos originais e de autorização específica por objeto. O sucesso sintético não aprova paridade da aplicação nem resolve as oito fotos.
 
-1. Conferir autorização/política; comparar em memória bucket, token e base com produção, recusando coincidência. Rodar somente serviço R2 com configuração isolada, sem banco produtivo.
-2. Gerar imagem sintética válida até 10 MiB, SHA-256 e UUID da execução. Reservar keys `uploads/veiculos/r2-acceptance/<UUID>/`; manter manifesto apenas dos objetos criados.
-3. Fazer upload pelo mesmo `R2StorageService` da aplicação.
-4. HEAD autenticado: tamanho/content type. GET autenticado: comparar bytes/SHA-256.
-5. GET público pela base de teste, se aprovado, comparando SHA-256.
-6. Consultar key sintético inexistente da execução: distinguir ausência de 403/falha de transporte.
-7. Sobrescrever somente o key criado no passo 3 com segunda imagem; conferir novo hash/tamanho.
-8. Excluir somente keys do manifesto e confirmar ausência autenticada/pública, considerando cache. Nunca limpar bucket/prefixo inteiro.
-9. Com o token do passo 1, consultar HEAD/List do **bucket de controle sintético** e exigir negação. Conferir também a política: HEAD negado sozinho não prova proibição de escrita. Se a autorização abranger negativa real de PUT, usar apenas key UUID sintético no controle vazio; eventual sucesso indevido é falha de isolamento e exige limpeza pelo responsável com credencial própria. Não fazer qualquer teste negativo no bucket produtivo/compartilhado.
-10. Registrar recibos sanitizados, hashes, ausência, overwrite e limpeza. Simular 403/503/timeout/cancelamento em dublês/proxy isolado, sem manipular política/credencial produtiva.
+## Limpeza e próximos usos
 
-[Testes de contrato em memória](../Project.Tests/Features/Storage/R2IsolationContractTests.cs), [compatibilidade de release](../Project.Tests/Recovery/R2ReleaseRecoveryTests.cs) e [auditoria HEAD sem escrita](../scripts/ops/tests/test_r2_audit.py) não substituem esse ciclo real nem comprovam a política Cloudflare.
-
-## Gates e dependências
-
-A escrita real aguarda autorização/destino isolado. As oito fotos aguardam fonte original verificada e autorização específica de reparação. Não atestar paridade R2 nem ativar gates antes dos aceites aplicáveis; ver [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md). Nenhum merge, deploy, mudança de política Cloudflare, URL ou objeto produtivo foi feito nesta rodada.
+Os dois prefixos da execução foram confirmados vazios; os buckets foram preservados. Novos ensaios devem usar somente a credencial de homologação, outro prefixo aleatório e dados sintéticos, sem banco produtivo. Nunca executar limpeza global ou ampliar o token. [Pendências](./PENDENCIAS_PRODUCAO.md), [ativação](./ATIVACAO_PRODUCAO.md).

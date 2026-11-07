@@ -6,7 +6,7 @@ Atualizado em 07/11/2026. Preparação autorizada; **nenhum merge, deploy ou ati
 
 Main: `1e5612276e0809166a2ea33a21deabee0bf0f768`. [CI 42135590822](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42135590822) aprovado e [CD 42136110621](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42136110621) com pacote produzido/production ignorado são evidências históricas desse SHA. Não aprovam os commits novos das PRs.
 
-[PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3), tip auditado `8116388ca2eaac0ba7e9a0e473c9401b776f8912`, e [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2), tip inicial `3f319d4de6cdc287fa9b2730bb413ac54b1be518`, continuam abertas/draft com validate aprovado e sem conflito com main. A simulação da combinação inicial não apresentou conflitos; não é merge nem CI combinado. A branch da PR #2 recebe a correção descrita abaixo e precisa de CI no novo tip. [Auditoria GitHub](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md).
+[PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3), tip auditado `8116388ca2eaac0ba7e9a0e473c9401b776f8912`, e [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2), tip antes destes recibos `32ffadfa3ab78a8cbed148fff5ea541d03e041cc`, continuam abertas/draft com validate aprovado e sem conflito com main. A simulação da combinação inicial não apresentou conflitos; não é merge nem CI combinado. A branch da PR #2 recebe a correção descrita abaixo e precisa de CI no novo tip. [Auditoria GitHub](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md).
 
 ## Fluxo e proveniência
 
@@ -24,7 +24,7 @@ O servidor valida novamente SHA/manifesto/tag/configuração/rootfs/arquitetura/
 
 `production`: apenas branch `main`, tipo branch, `can_admins_bypass=false`, sem required reviewers por release. [verify_environment.py](../scripts/ci/verify_environment.py) recusa bypass ausente/true, revisores por execução, tags/outras branches e main sem proteção. Esse helper verifica existência da proteção; a configuração detalhada é auditada pela API administrativa conforme a [política GitHub](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md).
 
-Proteção atual: PR obrigatório, validate strict app 15368, uma aprovação, descarte de aprovações antigas, code owner/último push e conversas resolvidas, admins sujeitos às regras e force push/exclusão proibidos. Rulesets adicionais ausentes. A main não contém CODEOWNERS; a PR #2 adiciona regras para `@StartingWeb`. Só esse colaborador tem acesso. A proposta altera apenas quantidade de aprovações 1→0, code owner true→false e último push true→false; mantém CODEOWNERS no código. **Ainda não aplicada; aguarda aprovação específica.** Ela permite trabalho individual com PR/CI obrigatórios, mas elimina o veto independente de outra pessoa.
+Proteção aplicada em 07/11 às 16:26 UTC: PR obrigatório, validate strict app 15368, **zero aprovações**, code owner/último push false, descarte de aprovações antigas e conversas resolvidas, admins sujeitos às regras e force push/exclusão proibidos. Comparação integral antes/depois confirmou somente os três campos autorizados. Nenhum ruleset/bypass criado. CODEOWNERS da PR #2 permanece intacto. [Recibo da política](./evidence/GITHUB_POLICY_APPLIED_2026-11-07.json).
 
 | Tipo | Nome/estado revalidado |
 | --- | --- |
@@ -56,6 +56,10 @@ Health interno exige liveness e commit; HTTPS público deve responder o mesmo co
 
 Os resultados exatos e os SHAs auditados constam em [PIPELINE_AUDIT_2026-11-07.json](./evidence/PIPELINE_AUDIT_2026-11-07.json). Testes Python cobrem configuração GitHub, proveniência, rejeição de evidências da imagem, backup, chaves/caminhos, falhas de deploy e rollback. Actionlint/ShellCheck e scanner de secrets devem passar antes do push. O ensaio real local usa imagem .NET previamente disponível como fixture; ele verifica o novo empacotador, não aprova uma futura release integrada. Sem SQL descartável configurado, testes .NET SQL são explicitamente ignorados localmente; o CI obrigatório os executa em SQL descartável.
 
-R2 real de escrita continua pendente. Mocks/leitura não homologam PUT/sobrescrita/exclusão; a [investigação das fotos](./RECUPERACAO_MIDIAS_R2.md) tem resultado próprio. Não executar testes destrutivos contra produção.
+[R2 real isolado](./VALIDACAO_R2.md) homologado: ciclo autenticado, oito AccessDenied, HTTPS/hash públicos e limpeza aprovados, com credencial exclusiva. A [investigação das fotos](./RECUPERACAO_MIDIAS_R2.md) continua pendente. Zero objetos produtivos alterados.
 
-Sequência: aprovação/aplicação da política → integração autorizada PR #3 → atualização/CI combinado PR #2 → integração PR #2 → CI main final → pacote/runtime final → R2/mídias/paridade → backup novo restaurável → autorização de primeiro corte/gates. [Ativação](./ATIVACAO_PRODUCAO.md), [rollback](./ROLLBACK_PRODUCAO.md), [pendências](./PENDENCIAS_PRODUCAO.md). Nada nesta documentação autoriza merge/deploy nesta rodada.
+Sequência restante: integração autorizada PR #3 → atualização/CI combinado PR #2 → integração PR #2 → CI main final → pacote/runtime final → mídias/paridade → backup novo restaurável → autorização de primeiro corte/gates. [Ativação](./ATIVACAO_PRODUCAO.md), [rollback](./ROLLBACK_PRODUCAO.md), [pendências](./PENDENCIAS_PRODUCAO.md). Nada nesta documentação autoriza merge/deploy nesta rodada.
+
+## Revalidação de 07/11 após política/R2
+
+PR #2 no SHA 32ffadf: CI pull_request 42390020907, 193 testes .NET e 111 Python aprovados. PR #3 no SHA 8116388: CI pull_request 42386554511, 187 .NET e 59 Python aprovados. Checks de push também aprovados nos mesmos tips. A nova publicação documental exige CI do seu próprio SHA; essas contagens não aprovam commits futuros. O teste offline da imagem final permanece incorporado ao CD, que não foi disparado manualmente. Não houve publicação de imagem produtiva. Artefatos dos runs consultados continuam não expirados; CI das PRs não constitui pacote final de main nem aprova seu SHA integrado. [Comparação operacional](./evidence/POLICY_R2_OPERATIONS_2026-11-07.json).

@@ -44,3 +44,7 @@ O recibo de restauração descreve a cópia anterior às migrations A/B/C; seu c
 A próxima melhoria é uma **cópia externa criptografada**, com chave e credenciais recuperáveis independentemente da VPS, seguida de restauração periódica e ensaio de recuperação sem depender desse servidor. A [proposta técnica existente](./BACKUP_EXTERNO_PROPOSTA.md) continua apenas preparada, sem instalação ou destino contratado.
 
 A decisão pode ser revista pelo proprietário quando houver destino e gestão de credenciais/chave aprovados, ou quando o risco operacional justificar a mudança. **Nenhuma data de revisão ou prazo de validade foi definido pelo proprietário.** A recomendação não altera o aceite temporário atual nem autoriza ações na conta de um provedor.
+
+## Revalidação durante política GitHub e homologação R2
+
+Em 07/11/2026 às 16:36 UTC, a [comparação antes/depois](./evidence/POLICY_R2_OPERATIONS_2026-11-07.json) confirmou timers enabled/active, diário seguinte em 08/11 às 03:00 America/Sao_Paulo, serviços concluídos com código 0, monitor saudável e retenção 7/4/3 preservada. Último backup válido continua 20261107T150452Z-c36eef7e, SHA-256 15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370, e restore 46fe30bdb760 verificado. O monitor das 13:35 de Brasília também concluiu saudável. Recibos SMTP mantêm aceite 250/TLS/certificado. Nenhum novo backup/restore/alerta foi disparado e nenhuma cópia externa, alteração de timer ou limpeza foi executada. A criação dos buckets R2 sintéticos não cria backup externo e não altera este aceite.

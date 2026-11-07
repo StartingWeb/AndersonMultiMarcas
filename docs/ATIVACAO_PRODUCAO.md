@@ -10,8 +10,8 @@ O [risco temporário de backup exclusivamente local](./ACEITE_RISCO_BACKUP_LOCAL
 
 ## Ponto de parada
 
-- [Política individual](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md) preparada, ainda sem autorização de aplicação. A regra atual exige revisão independente; a proposta dispensa apenas requisitos humanos incompatíveis com único mantenedor, preservando PR/CI e demais controles. Não usar bypass.
-- [R2 isolado](./VALIDACAO_R2.md) depende de autorização para bucket/credencial/política restrita e de ciclo real sintético aprovado. Não usar o bucket produtivo para testes de escrita.
+- [Política individual](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md) aplicada e auditada: zero aprovações, code owner e último push false; PR/CI strict/demais controles preservados. Nenhum bypass criado.
+- [R2 isolado](./VALIDACAO_R2.md) concluído: dois buckets, credencial exclusiva, ciclo sintético e oito negativas aprovados; HTTPS r2.dev/hash e limpeza confirmados. Isso não aprova a paridade ou repara mídias ausentes.
 - [Fotos ausentes](./RECUPERACAO_MIDIAS_R2.md) exigem decisão sobre fonte e reparação específica. Nenhum upload/substituição/remoção de URL autorizado.
 - Integração legítima das PRs, CI do SHA final e paridade ainda não concluídos. Testes locais e evidência de SHAs anteriores não aprovam um novo commit.
 
@@ -22,7 +22,7 @@ As três variáveis GitHub permanecem false e `shared/deploy.enabled`/`shared/so
 1. Sob autorização própria, satisfazer a política vigente, remover draft e integrar PR #3. Scripts SQL já executados permanecem como fonte auditável; não reaplicá-los.
 2. Atualizar PR #2 com a main resultante sem force push. Resolver semântica/conflitos e obter CI combinado aprovado no novo tip antes de integrá-la.
 3. Exigir CI aprovado do SHA final em main. CD aceita somente push/main do próprio repositório, recusa fonte obsoleta, verifica manifest/checksums, testa a imagem final sem rede e liga o relatório aprovado ao ID exportado. Production continua ignorado com gates false.
-4. Concluir R2 real, decisão das mídias, paridade, rollback e janela/operador/monitoramento/critérios de retorno. Não conceder acesso de escrita a terceiros para contornar governança.
+4. Preservar isolamento R2 aprovado e concluir decisão das mídias, paridade, rollback e janela/operador/monitoramento/critérios de retorno. Não conceder acesso de escrita a terceiros para contornar governança.
 
 ## Janela futura — após nova autorização operacional
 

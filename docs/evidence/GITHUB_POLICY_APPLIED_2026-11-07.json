@@ -1,0 +1,527 @@
+{
+  "at": "2026-11-07T16:26:44.792519+00:00",
+  "verified_at": "2026-11-07T16:27:31.626577+00:00",
+  "repository": "StartingWeb/AndersonMultiMarcas",
+  "authorization": "Owner-provided explicit three-field authorization; no merge/deploy/gates",
+  "method": "PATCH",
+  "endpoint": "repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_pull_request_reviews",
+  "payload": {
+    "required_approving_review_count": 0,
+    "require_code_owner_reviews": false,
+    "require_last_push_approval": false
+  },
+  "before": {
+    "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection",
+    "required_status_checks": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_status_checks",
+      "strict": true,
+      "contexts": [
+        "validate"
+      ],
+      "contexts_url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_status_checks/contexts",
+      "checks": [
+        {
+          "context": "validate",
+          "app_id": 15368
+        }
+      ]
+    },
+    "required_pull_request_reviews": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_pull_request_reviews",
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": true,
+      "require_last_push_approval": true,
+      "required_approving_review_count": 1
+    },
+    "required_signatures": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_signatures",
+      "enabled": false
+    },
+    "enforce_admins": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/enforce_admins",
+      "enabled": true
+    },
+    "required_linear_history": {
+      "enabled": false
+    },
+    "allow_force_pushes": {
+      "enabled": false
+    },
+    "allow_deletions": {
+      "enabled": false
+    },
+    "block_creations": {
+      "enabled": false
+    },
+    "required_conversation_resolution": {
+      "enabled": true
+    },
+    "lock_branch": {
+      "enabled": false
+    },
+    "allow_fork_syncing": {
+      "enabled": false
+    }
+  },
+  "after": {
+    "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection",
+    "required_status_checks": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_status_checks",
+      "strict": true,
+      "contexts": [
+        "validate"
+      ],
+      "contexts_url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_status_checks/contexts",
+      "checks": [
+        {
+          "context": "validate",
+          "app_id": 15368
+        }
+      ]
+    },
+    "required_pull_request_reviews": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_pull_request_reviews",
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false,
+      "required_approving_review_count": 0
+    },
+    "required_signatures": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_signatures",
+      "enabled": false
+    },
+    "enforce_admins": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/enforce_admins",
+      "enabled": true
+    },
+    "required_linear_history": {
+      "enabled": false
+    },
+    "allow_force_pushes": {
+      "enabled": false
+    },
+    "allow_deletions": {
+      "enabled": false
+    },
+    "block_creations": {
+      "enabled": false
+    },
+    "required_conversation_resolution": {
+      "enabled": true
+    },
+    "lock_branch": {
+      "enabled": false
+    },
+    "allow_fork_syncing": {
+      "enabled": false
+    }
+  },
+  "exactly_authorized_delta": true,
+  "other_configuration_unchanged": {
+    "rulesets": true,
+    "environment": true,
+    "branch_policies": true,
+    "variables": true,
+    "environment_variables": true,
+    "environment_secrets": true,
+    "repository_secrets": true,
+    "workflow_permissions": true,
+    "actions_permissions": true,
+    "main": true
+  },
+  "before_configuration": {
+    "rulesets": [],
+    "environment": {
+      "id": 26427560052,
+      "node_id": "EN_kwDORg-pJ88AAAAGJzSQdA",
+      "name": "production",
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/environments/production",
+      "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/deployments/activity_log?environments_filter=production",
+      "created_at": "2026-11-06T00:36:49Z",
+      "updated_at": "2026-11-06T00:52:39Z",
+      "can_admins_bypass": false,
+      "protection_rules": [
+        {
+          "id": 71471991,
+          "node_id": "GA_kwDORg-pJ84EQpN3",
+          "type": "branch_policy"
+        }
+      ],
+      "deployment_branch_policy": {
+        "protected_branches": false,
+        "custom_branch_policies": true
+      }
+    },
+    "branch_policies": {
+      "total_count": 1,
+      "branch_policies": [
+        {
+          "id": 65685269,
+          "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2NTY4NTI2OQ==",
+          "name": "main",
+          "type": "branch"
+        }
+      ]
+    },
+    "variables": {
+      "variables": [
+        {
+          "name": "PRODUCTION_ADMIN_BYPASS_REVIEWED",
+          "value": "false",
+          "created_at": "2026-11-06T00:36:52Z",
+          "updated_at": "2026-11-06T00:36:52Z"
+        },
+        {
+          "name": "PRODUCTION_DEPLOY_ENABLED",
+          "value": "false",
+          "created_at": "2026-11-06T00:36:51Z",
+          "updated_at": "2026-11-06T00:36:51Z"
+        },
+        {
+          "name": "PRODUCTION_SOURCE_PARITY_CONFIRMED",
+          "value": "false",
+          "created_at": "2026-11-06T00:36:51Z",
+          "updated_at": "2026-11-06T00:36:51Z"
+        }
+      ],
+      "total_count": 3
+    },
+    "environment_variables": {
+      "variables": [
+        {
+          "name": "PRODUCTION_PUBLIC_HEALTH_URL",
+          "value": "https://www.andersonmultimarcas.com.br/health/release",
+          "created_at": "2026-11-06T00:36:52Z",
+          "updated_at": "2026-11-06T00:36:52Z"
+        }
+      ],
+      "total_count": 1
+    },
+    "environment_secrets": {
+      "total_count": 5,
+      "secrets": [
+        {
+          "name": "PRODUCTION_SSH_HOST",
+          "created_at": "2026-11-06T00:48:12Z",
+          "updated_at": "2026-11-06T00:48:12Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_KNOWN_HOSTS",
+          "created_at": "2026-11-06T00:48:15Z",
+          "updated_at": "2026-11-06T00:48:15Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_PORT",
+          "created_at": "2026-11-06T00:48:13Z",
+          "updated_at": "2026-11-06T00:48:13Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_PRIVATE_KEY",
+          "created_at": "2026-11-06T00:48:14Z",
+          "updated_at": "2026-11-06T00:48:14Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_USER",
+          "created_at": "2026-11-06T00:48:12Z",
+          "updated_at": "2026-11-06T00:48:12Z"
+        }
+      ]
+    },
+    "repository_secrets": {
+      "total_count": 0,
+      "secrets": []
+    },
+    "workflow_permissions": {
+      "default_workflow_permissions": "read",
+      "can_approve_pull_request_reviews": false
+    },
+    "actions_permissions": {
+      "enabled": true,
+      "allowed_actions": "all",
+      "sha_pinning_required": false
+    },
+    "main": {
+      "name": "main",
+      "protected": true,
+      "sha": "1e5612276e0809166a2ea33a21deabee0bf0f768"
+    }
+  },
+  "after_configuration": {
+    "rulesets": [],
+    "environment": {
+      "id": 26427560052,
+      "node_id": "EN_kwDORg-pJ88AAAAGJzSQdA",
+      "name": "production",
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/environments/production",
+      "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/deployments/activity_log?environments_filter=production",
+      "created_at": "2026-11-06T00:36:49Z",
+      "updated_at": "2026-11-06T00:52:39Z",
+      "can_admins_bypass": false,
+      "protection_rules": [
+        {
+          "id": 71471991,
+          "node_id": "GA_kwDORg-pJ84EQpN3",
+          "type": "branch_policy"
+        }
+      ],
+      "deployment_branch_policy": {
+        "protected_branches": false,
+        "custom_branch_policies": true
+      }
+    },
+    "branch_policies": {
+      "total_count": 1,
+      "branch_policies": [
+        {
+          "id": 65685269,
+          "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2NTY4NTI2OQ==",
+          "name": "main",
+          "type": "branch"
+        }
+      ]
+    },
+    "variables": {
+      "variables": [
+        {
+          "name": "PRODUCTION_ADMIN_BYPASS_REVIEWED",
+          "value": "false",
+          "created_at": "2026-11-06T00:36:52Z",
+          "updated_at": "2026-11-06T00:36:52Z"
+        },
+        {
+          "name": "PRODUCTION_DEPLOY_ENABLED",
+          "value": "false",
+          "created_at": "2026-11-06T00:36:51Z",
+          "updated_at": "2026-11-06T00:36:51Z"
+        },
+        {
+          "name": "PRODUCTION_SOURCE_PARITY_CONFIRMED",
+          "value": "false",
+          "created_at": "2026-11-06T00:36:51Z",
+          "updated_at": "2026-11-06T00:36:51Z"
+        }
+      ],
+      "total_count": 3
+    },
+    "environment_variables": {
+      "variables": [
+        {
+          "name": "PRODUCTION_PUBLIC_HEALTH_URL",
+          "value": "https://www.andersonmultimarcas.com.br/health/release",
+          "created_at": "2026-11-06T00:36:52Z",
+          "updated_at": "2026-11-06T00:36:52Z"
+        }
+      ],
+      "total_count": 1
+    },
+    "environment_secrets": {
+      "total_count": 5,
+      "secrets": [
+        {
+          "name": "PRODUCTION_SSH_HOST",
+          "created_at": "2026-11-06T00:48:12Z",
+          "updated_at": "2026-11-06T00:48:12Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_KNOWN_HOSTS",
+          "created_at": "2026-11-06T00:48:15Z",
+          "updated_at": "2026-11-06T00:48:15Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_PORT",
+          "created_at": "2026-11-06T00:48:13Z",
+          "updated_at": "2026-11-06T00:48:13Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_PRIVATE_KEY",
+          "created_at": "2026-11-06T00:48:14Z",
+          "updated_at": "2026-11-06T00:48:14Z"
+        },
+        {
+          "name": "PRODUCTION_SSH_USER",
+          "created_at": "2026-11-06T00:48:12Z",
+          "updated_at": "2026-11-06T00:48:12Z"
+        }
+      ]
+    },
+    "repository_secrets": {
+      "total_count": 0,
+      "secrets": []
+    },
+    "workflow_permissions": {
+      "default_workflow_permissions": "read",
+      "can_approve_pull_request_reviews": false
+    },
+    "actions_permissions": {
+      "enabled": true,
+      "allowed_actions": "all",
+      "sha_pinning_required": false
+    },
+    "main": {
+      "name": "main",
+      "protected": true,
+      "sha": "1e5612276e0809166a2ea33a21deabee0bf0f768"
+    }
+  },
+  "graphql": {
+    "repository": {
+      "branchProtectionRules": {
+        "nodes": [
+          {
+            "pattern": "main",
+            "requiresApprovingReviews": true,
+            "requiredApprovingReviewCount": 0,
+            "requiresCodeOwnerReviews": false,
+            "dismissesStaleReviews": true,
+            "requiresStatusChecks": true,
+            "requiresStrictStatusChecks": true,
+            "requiresConversationResolution": true,
+            "isAdminEnforced": true,
+            "allowsForcePushes": false,
+            "allowsDeletions": false,
+            "restrictsPushes": false,
+            "bypassPullRequestAllowances": {
+              "totalCount": 0
+            },
+            "bypassForcePushAllowances": {
+              "totalCount": 0
+            }
+          }
+        ]
+      },
+      "pullRequest": {
+        "isDraft": true,
+        "reviewDecision": null,
+        "mergeStateStatus": "CLEAN",
+        "reviewThreads": {
+          "nodes": []
+        }
+      }
+    }
+  },
+  "prs_before_documentation": {
+    "pr2": {
+      "baseRefName": "main",
+      "headRefName": "infra/production-preparation",
+      "headRefOid": "32ffadfa3ab78a8cbed148fff5ea541d03e041cc",
+      "isDraft": true,
+      "mergeStateStatus": "CLEAN",
+      "number": 2,
+      "reviewDecision": "",
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-11-07T16:14:11Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42390020907/job/128455450869",
+          "name": "validate",
+          "startedAt": "2026-11-07T16:11:25Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-11-07T16:14:30Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42390016282/job/128455437184",
+          "name": "validate",
+          "startedAt": "2026-11-07T16:11:22Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        }
+      ]
+    },
+    "pr3": {
+      "baseRefName": "main",
+      "headRefName": "infra/schema-compatibility-review",
+      "headRefOid": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+      "isDraft": true,
+      "mergeStateStatus": "CLEAN",
+      "number": 3,
+      "reviewDecision": "",
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-11-07T15:31:33Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386554511/job/128445080857",
+          "name": "validate",
+          "startedAt": "2026-11-07T15:28:40Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-11-07T15:31:12Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386549835/job/128445066164",
+          "name": "validate",
+          "startedAt": "2026-11-07T15:28:37Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        }
+      ]
+    }
+  },
+  "governance_verification": {
+    "method": "REST + GraphQL effective settings; non-destructive local policy evaluation, not a GitHub merge dry-run",
+    "pending_required_check": "blocked by required validate",
+    "failed_required_check": "blocked by required validate",
+    "unresolved_conversation": "blocked by required conversation resolution",
+    "all_checks_passed_no_reviewer": "reviewDecision null; zero required approvals; drafts retained",
+    "direct_push": "PR protection still present; no bypass allowances; no direct push attempted",
+    "limitations": "No failing/pending checks or review threads were injected. No merge, direct push, draft conversion or main change performed.",
+    "local_evaluation": {
+      "pending_check": [
+        "required_validate_pending"
+      ],
+      "failing_check": [
+        "required_validate_failure"
+      ],
+      "outdated_branch": [
+        "branch_outdated"
+      ],
+      "unresolved_thread": [
+        "unresolved_conversation"
+      ],
+      "passed_without_reviewer": [],
+      "direct_push_without_pr": [
+        "pull_request_required"
+      ]
+    },
+    "local_evaluation_assumptions": "Draft=false only for evaluation of the protection criteria; actual PRs remain draft. Evaluator is not GitHub enforcement simulation."
+  },
+  "official_reference": "https://docs.github.com/en/rest/branches/branch-protection#update-pull-request-review-protection",
+  "ci_before_documentation": [
+    {
+      "pr": 2,
+      "run_id": 42390020907,
+      "head_sha": "32ffadfa3ab78a8cbed148fff5ea541d03e041cc",
+      "dotnet_passed": 193,
+      "python_passed": 111,
+      "artifact_metadata": [
+        {
+          "name": "ci-evidence-42390020907-1",
+          "digest": "sha256:96927f6a71d9d6664d947922eaaa5fd2563d5713191ab0dfeb67b65833a16bec",
+          "expired": false
+        }
+      ]
+    },
+    {
+      "pr": 3,
+      "run_id": 42386554511,
+      "head_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+      "dotnet_passed": 187,
+      "python_passed": 59,
+      "artifact_metadata": [
+        {
+          "name": "ci-evidence-42386554511-1",
+          "digest": "sha256:c6904fc2169bd51245157bd035f833839225443d3b530bb18a903271d2e9f8d3",
+          "expired": false
+        }
+      ]
+    }
+  ]
+}
