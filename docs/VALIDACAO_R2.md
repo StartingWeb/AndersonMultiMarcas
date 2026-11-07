@@ -1,78 +1,83 @@
 # Validação do Cloudflare R2
 
-Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **corte de produção não autorizado nem executado**.
+Atualizado em **07/11/2026**. Auditoria somente leitura: nenhum bucket, credencial, política ou objeto foi criado/alterado; nenhum PUT/DELETE produtivo. Homologação de escrita e recuperação das fotos são pendências independentes.
 
-## O que foi comprovado
+## Resultado comprovado
 
-A configuração real da aplicação foi inventariada sem exibir valores de acesso e preparada no runtime.env privado. Provider R2, dual read ativo, região auto, endpoint HTTPS da conta e base pública HTTPS foram confirmados. Campos de account/access/secret/bucket/service/public URL estavam preenchidos. O endpoint foi comparado ao formato de conta esperado; redirects no request autenticado são recusados.
+- HEAD autenticado do bucket: **200**, em 07/11/2026 às 16:02 UTC, SigV4/TLS, recusando redirects.
+- Três veículos: HEAD/GET **200** públicos e autenticados; SHA-256 dos bytes coincide em cada par.
+- As três fotos ausentes anteriores são dos registros **5, 6 e 7**. A conferência ampliada às **oito FotoUrl existentes no banco**, IDs **3–10**, encontrou **404** público e no HEAD autenticado em todas.
+- Oito ListObjectsV2 limitados aos prefixos exatos de UUID já referenciados pelo Anderson, MaxKeys=5: **200, vazios e sem truncamento**. Não se listou o bucket inteiro.
+- Originais encontrados: **zero nas fontes inspecionadas**. Os oito UUIDs aparecem nos bytes do backup de 28/07/2026 e dos três backups nativos retidos; referências históricas não são arquivos de fotos recuperados.
 
-[validate_r2.py](../scripts/ops/validate_r2.py) assinou exclusivamente **HEAD do bucket** com SigV4 e recebeu HTTP 200, com validação TLS. Não acessou objetos, não listou registros de clientes, não realizou uploads/exclusões nem modificou permissões. O recibo protegido está em `history/r2-validation.json` na raiz unificada.
+[Evidência desta rodada](./evidence/R2_MEDIA_AUDIT_2026-11-07.json), [diagnóstico por foto e recuperação](./RECUPERACAO_MIDIAS_R2.md) e [evidência anterior preservada](./evidence/PRODUCTION_SQL_2026-11-07.json).
 
-Uma consulta agregada ao banco identificou referências no domínio público R2 e referências legadas `/uploads/`; nenhum URL, nome de arquivo ou objeto real de cliente foi usado como teste. O inventário de mounts confirmou somente Data Protection na aplicação viva. Os quatro arquivos de uploads do checkout antigo foram inventariados e não movidos; não se assumiu que representam todas as referências legadas.
+## Configuração e integração observadas
 
-O código [R2StorageService.cs](../Core/Storage/R2StorageService.cs), [StoragePath.cs](../Core/Storage/StoragePath.cs) e [StorageImageResolver.cs](../Project/Infrastructure/Storage/StorageImageResolver.cs) preserva comportamento S3/dual read e paths legados recuperados. Os testes do CI de referência passaram, incluindo tratamento de falhas e compatibilidade de URLs com dados sintéticos/dublês. Isso não comprova disponibilidade de cada objeto legado nem permissões de PUT/DELETE reais.
-
-## Impedimento do ciclo real
-
-Não foi encontrada configuração de bucket exclusivo de testes Anderson. O bucket produtivo não foi usado para gravação, nem mesmo sob prefixo temporário. Não se reutilizou bucket de outro projeto.
-
-O contrato sem credenciais está em [r2-test.env.example](../deploy/r2-test.env.example). Faltam bucket exclusivo, endpoint, URL e credenciais de teste autorizadas, com permissões mínimas e separadas da produção. Manter esse arquivo real fora do Git e do GitHub de código-fonte; configuração de produção permanece somente no servidor.
-
-## Teste a executar quando houver bucket autorizado
-
-1. Confirmar que bucket/credenciais são exclusivamente de teste e diferentes da produção.
-2. Gerar imagem sintética sem dados de clientes, com chave aleatória exclusiva da execução.
-3. Calcular SHA-256 local e executar upload por meio do mesmo código da aplicação.
-4. Executar HEAD, conferir tamanho/content type e ler o objeto pelo caminho previsto.
-5. Comparar bytes/SHA-256 e a URL pública de teste quando aplicável.
-6. Excluir somente o objeto sintético criado pela execução e confirmar ausência.
-7. Simular credencial/objeto ausente e recusa de HEAD, verificando erros/retry e ausência de segredos nos logs.
-8. Registrar aceite, limpeza e limitações. Não promover o resultado de dublês para prova de permissões no serviço real.
-
-## Aceitação antes do corte
-
-O HEAD 200 comprova acesso de metadados ao bucket configurado; não comprova upload, exclusão, leitura pública de objetos ou compatibilidade integral das imagens antigas. A aprovação R2 e o ciclo sintético continuam pendentes. O teste HTTP da imagem padrão no container é de um estático publicado, não de um objeto R2 de cliente.
-
-Não alterar objetos, prefixos, bucket produtivo, NPM ou URLs de clientes para fazer o ensaio passar. Qualquer migração de mídia precisa de inventário e escopo próprios. Ver [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md).
-
-## Revisão técnica adicional — resolvido localmente
-
-A única Environment GitHub encontrada continua sendo `production`; não há configuração de homologação autorizada no mecanismo auditado. A fonte privada do endpoint é `Storage__R2__ServiceUrl` (`https://<AccountId>.r2.cloudflarestorage.com`), com região `auto`, path-style e bucket indicado pelo runtime privado. Não publicar identificadores/chaves desnecessários no Git. Nenhuma operação de objeto produtivo foi feita nesta revisão.
-
-| Área | Contrato observado |
+| Campo | Estado real, sem valores de acesso |
 | --- | --- |
-| Escrita | PutObject sem chunked encoding; assinatura SigV4/região auto; rewind de stream; PUT confirmado não vira falha se faltar HEAD |
-| Leitura | HEAD/GetObject; 404/NoSuchKey viram ausência; a camada da aplicação tenta fallback local em erro remoto |
-| Listagem | ListObjectsV2 com prefixo/paginação para ferramentas de sincronização; permissão restrita aos prefixos autorizados quando habilitada |
-| Chaves | uploads/veiculos, uploads/vendedores e legado anderson-multimarcas/veiculos; uploads normais usam UUID WebP, sem depender do nome original |
-| Duplicidade/overwrite | A API de storage sobrescreve se o mesmo key for enviado. O fluxo de upload gera chaves diferentes; não faz overwrite de arquivo preexistente por nome original |
-| URLs | URL pública formada pela base configurada; não foi encontrado uso de URL pré-assinada nesse serviço. Espaços/acentos são normalizados como chaves; `?`/`#` seguem a regra de interpretação de URLs do StoragePath e não devem ser enviados como nomes arbitrários de objetos |
-| Exclusão | DeleteObject; ausente é tolerado. A camada ApplicationStorageService registra falha remota e ainda remove a cópia local, portanto requer monitoramento/reconciliação de órfãos; sucesso de DB não prova deleção remota |
-| Transação de mídia | Validação/encode antes do primeiro write; chaves novas são compensadas em falha; referências antigas só são excluídas após commit SQL e conferência de uso |
-| Credenciais | Exclusivas do bucket/prefixos necessários, sem administração da conta; Get/Head/Put/Delete e List apenas quando a ferramenta realmente exigir; fora do Git/log |
+| Endpoint | HTTPS no formato `https://<AccountId>.r2.cloudflarestorage.com`; conta conferida em memória, identificador omitido |
+| Bucket | `startingweb-storage`; o nome não comprova exclusividade ao Anderson |
+| Região/assinatura | `auto`, SigV4, path-style |
+| Base pública | `https://pub-2c5e28a366434870b48f2b07b425e788.r2.dev` — pública, sem credencial |
+| Provider/dual read | `R2` / `true` |
+| Legado | Variáveis efetivas de `andersonmultimarcas-web` |
+| Futuro | Arquivo privado `shared/runtime.env` na raiz unificada; container futuro não iniciado |
+| Comparação | AccountId, access/secret, bucket, base, endpoint e região idênticos entre legado e futuro, sem registrar valores de credenciais |
+| Histórico versionado | Quatro versões de appsettings examinadas, sem R2 preenchido; defaults locais são sobrepostos pelo environment do runtime |
+| Mounts legados | Somente volume Data Protection; dois XML, sem upload persistente |
+| Teste | Nenhum bucket/prefixo/credencial de homologação autorizado identificado na configuração auditada |
 
-Oito novos testes .NET usam um S3 em memória, sem rede: upload/HEAD/read/hash/delete, ausente, overwrite, chaves geradas distintas para nomes repetidos, acentos/espaços, roundtrip de 10 MiB, credencial/503, timeout/cancelamento e falha de exclusão preservando objeto. Somam-se aos testes de compatibilidade R2 já existentes. Não são prova de permissão, retry ou timeout no provedor real. O retry de transporte depende do SDK; o serviço não implementa um retry próprio por operação.
+Não se comprovou exclusividade do bucket ao projeto. As consultas usaram referências reais do próprio Anderson e seus prefixos UUID exatos; não se acessaram objetos/volumes de outros projetos.
 
-## Preparado, aguardando autorização
+### Chaves e URLs
 
-O arquivo de configuração de teste já está em [r2-test.env.example](../deploy/r2-test.env.example). Fornecer bucket/endpoint/base pública exclusivos e credenciais autorizadas. Executar o ciclo real somente após comparar esse destino com o produtivo; usar chaves UUID de execução, limite de 10 MiB, SHA-256 e limpeza exclusiva dos objetos sintéticos. Cobrir 403, 503 e timeout via proxy controlado no ambiente de homologação, nunca por injeção de falhas no bucket produtivo.
+[StoragePath](../Core/Storage/StoragePath.cs) reconhece `uploads/veiculos/`, `uploads/vendedores/` e `anderson-multimarcas/veiculos/`. Normaliza separadores/raiz web/query/fragment e rejeita travessia. [R2StorageService](../Core/Storage/R2StorageService.cs) forma `PublicBaseUrl + "/" + key` e usa esse mesmo key em S3; não há URL pré-assinada nesse serviço.
 
-## Bloqueante
+[VeiculoMediaService](../Project/Features/Veiculos/Services/VeiculoMediaService.cs) valida/encoda antes da gravação e gera UUID WebP. O storage sobrescreve quando recebe o mesmo key; o upload de veículo usa UUID para não depender do nome original. O [cadastro atual de vendedores](../Project/Pages/Admin/Cadastros/Vendedores/Upsert.cshtml.cs) persiste a FotoUrl fornecida, sem executar esse upload de veículo.
 
-O ciclo real R2 e a compatibilidade de mídia antiga/nova no provedor continuam bloqueantes da ativação. O ensaio de rollback validou upload e referências com storage **local isolado** e volume descartável compartilhado entre binários. Não transforma esse resultado em prova sobre objetos/R2 produtivos. Manter o aceite R2 pendente na revisão formal de paridade e os gates false.
+As oito FotoUrl têm formato `/uploads/vendedores/<UUID>.jpg`. O [resolver](../Project/Infrastructure/Storage/StorageImageResolver.cs) preserva key/extensão e forma exatamente as URLs examinadas. O formato coincide com o contrato; os objetos nesses keys estão ausentes. Não se demonstrou erro de normalização, renomeação `.jpg` para `.webp`, causa/momento da perda ou relação causal com A/B/C. Nenhuma URL foi alterada.
 
-## Dados externos necessários nesta rodada
+### Política e permissões efetivas
 
-Não foi encontrado bucket **ou prefixo de homologação previamente autorizado**; o GitHub só tem Environment production, e a configuração privada auditada não declara destino de teste. Não usar um prefixo arbitrário no bucket produtivo. Faltam: (1) referência explícita da autorização; (2) endpoint/região e bucket; (3) prefixo de homologação, se compartilhado, com política que impeça acesso/modificação fora dele; (4) credencial de teste em arquivo privado no servidor, nunca colada em chat/Git; (5) base pública ou rota de download de teste; (6) permissões Put/Get/Head/Delete e List apenas quando necessário; (7) prova do isolamento e responsável pela limpeza.
+| Operação | Prova | Limite |
+| --- | --- | --- |
+| HEAD bucket | 200 | Não comprova escrita/política completa |
+| HEAD/GetObject | Três veículos 200; hashes público/autenticado iguais | Somente esses objetos; 404 dos vendedores não é teste negativo de autorização |
+| ListObjectsV2 | Oito consultas 200 nos prefixos UUID exatos | Não comprova restrição da credencial a esses prefixos |
+| PUT/overwrite/DeleteObject | Não executados | Permissões/transporte/limpeza reais não homologados |
+| Gestão Cloudflare/token | Sem política de gestão auditável nesta sessão | Escopo e negações fora dele não comprovados |
 
-Com esses dados, executar arquivos sintéticos com chave UUID, upload/download/hash/ausente/overwrite/delete e falhas controladas exclusivamente no destino autorizado. Os oito testes locais já aprovados não foram repetidos sem necessidade e não substituem esse ciclo real. Nenhum objeto produtivo foi modificado/excluído. A atualização da conexão SQL futura não alterou campos R2.
+Sucesso de leitura não demonstra isolamento. Retry de transporte depende do SDK; não há retry próprio por operação. HEAD pós-PUT é diagnóstico: PUT aceito não vira falha porque HEAD foi recusado/ausente. [ApplicationStorageService](../Project/Infrastructure/Storage/ApplicationStorageService.cs) pode registrar falha de exclusão remota e ainda remover a cópia local; uma reparação futura exige conferência remota explícita.
 
-## Conferência de 07/11/2026
+## Destino isolado proposto — requer autorização
 
-Endpoint R2 da conta via HTTPS, região auto, campos necessários presentes, base pública HTTPS e HEAD autenticado do bucket 200. A auditoria inicial fez apenas HEAD do bucket; a leitura adicional de objetos está descrita abaixo, sem uploads/exclusões produtivos. Configuração futura preservada após A/B/C; nenhum destino de teste autorizado foi identificado. O gate continua pendente pelos dados listados acima. [Recibo sanitizado](./evidence/PRODUCTION_SQL_2026-11-07.json).
+A proposta concreta é criar **dois buckets exclusivamente sintéticos do Anderson**:
 
-## Leitura real de mídia existente — 07/11/2026
+1. `anderson-multimarcas-homologacao`: destino do ciclo; credencial **nova Object Read & Write limitada somente a este bucket**, sem administração da conta/buckets e sem reutilizar token produtivo.
+2. `anderson-multimarcas-homologacao-negativa`: controle vazio, privado, sem mídias comerciais; o token do ciclo não recebe acesso a ele. Permite testar negação fora do escopo sem tocar o bucket compartilhado.
 
-Amostra da página pública, sem PUT/DELETE: três imagens de veículos retornaram **200/image-webp** na URL pública e no HEAD S3 autenticado; três fotos de vendedores retornaram **404** em ambos. URLs não foram alteradas por A/B/C. Não se encontraram os arquivos correspondentes no container; a busca no checkout legado (820 entradas) não encontrou originais dos oito nomes de fotos de vendedores referenciados pela página. Isso não prova ausência em todos os acervos nem autoriza recriar imagens ou apontar para outros arquivos.
+Nomes sujeitos à disponibilidade. A autorização necessária cobre criação dos dois buckets, criação da credencial limitada, configuração de base pública exclusiva de teste no primeiro quando aplicável e entrega do arquivo privado 0600 fora do Git/GitHub. Registrar referência da autorização, política efetiva e responsável pela limpeza. **Nenhum recurso foi criado nesta rodada.**
 
-**Falha técnica aberta:** localizar originais das três fotos ausentes ou uma fonte de recuperação autorizada, conferir correspondência/integridade e definir reparação com o proprietário. Nenhum objeto foi regravado ou excluído, nenhuma URL/dado comercial mudou. A homologação sintética de escrita permanece uma dependência separada, com destino isolado autorizado. A amostra de leitura confirma acesso às imagens de veículos testadas, não integridade de todo o bucket. [Evidência sanitizada](./evidence/PRODUCTION_SQL_2026-11-07.json).
+Um prefixo no bucket compartilhado só seria alternativa com política suportada e credencial própria impedindo acesso fora dele. Prefixo com token capaz de modificar o bucket inteiro não é isolamento. Não foi encontrada prova dessa alternativa no runtime auditado.
+
+[r2-test.env.example](../deploy/r2-test.env.example) prepara o contrato local com destino/credenciais vazios. Não executa requisições, não concede autorização e não implementa sozinho uma barreira de isolamento. Não incluir configuração SQL produtiva.
+
+## Ciclo preparado, ainda não executado
+
+1. Conferir autorização/política; comparar em memória bucket, token e base com produção, recusando coincidência. Rodar somente serviço R2 com configuração isolada, sem banco produtivo.
+2. Gerar imagem sintética válida até 10 MiB, SHA-256 e UUID da execução. Reservar keys `uploads/veiculos/r2-acceptance/<UUID>/`; manter manifesto apenas dos objetos criados.
+3. Fazer upload pelo mesmo `R2StorageService` da aplicação.
+4. HEAD autenticado: tamanho/content type. GET autenticado: comparar bytes/SHA-256.
+5. GET público pela base de teste, se aprovado, comparando SHA-256.
+6. Consultar key sintético inexistente da execução: distinguir ausência de 403/falha de transporte.
+7. Sobrescrever somente o key criado no passo 3 com segunda imagem; conferir novo hash/tamanho.
+8. Excluir somente keys do manifesto e confirmar ausência autenticada/pública, considerando cache. Nunca limpar bucket/prefixo inteiro.
+9. Com o token do passo 1, consultar HEAD/List do **bucket de controle sintético** e exigir negação. Conferir também a política: HEAD negado sozinho não prova proibição de escrita. Se a autorização abranger negativa real de PUT, usar apenas key UUID sintético no controle vazio; eventual sucesso indevido é falha de isolamento e exige limpeza pelo responsável com credencial própria. Não fazer qualquer teste negativo no bucket produtivo/compartilhado.
+10. Registrar recibos sanitizados, hashes, ausência, overwrite e limpeza. Simular 403/503/timeout/cancelamento em dublês/proxy isolado, sem manipular política/credencial produtiva.
+
+[Testes de contrato em memória](../Project.Tests/Features/Storage/R2IsolationContractTests.cs), [compatibilidade de release](../Project.Tests/Recovery/R2ReleaseRecoveryTests.cs) e [auditoria HEAD sem escrita](../scripts/ops/tests/test_r2_audit.py) não substituem esse ciclo real nem comprovam a política Cloudflare.
+
+## Gates e dependências
+
+A escrita real aguarda autorização/destino isolado. As oito fotos aguardam fonte original verificada e autorização específica de reparação. Não atestar paridade R2 nem ativar gates antes dos aceites aplicáveis; ver [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md). Nenhum merge, deploy, mudança de política Cloudflare, URL ou objeto produtivo foi feito nesta rodada.

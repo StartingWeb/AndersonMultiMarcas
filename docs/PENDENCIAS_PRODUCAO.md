@@ -1,32 +1,34 @@
 # Estado de produção — 07/11/2026
 
-**A/B/C aplicadas e validadas. O site continua no legado; nenhum merge ou deploy foi executado.** [Recibo sanitizado](./evidence/PRODUCTION_SQL_2026-11-07.json).
+**Rodada de auditoria/preparação: nenhum merge, deploy, alteração de proteção GitHub ou escrita no R2 produtivo.** Gates GitHub false; arquivos locais de habilitação/paridade ausentes. A aplicação permanece no legado.
 
-## Concluído e comprovado
+## Decisões confirmadas e estado preservado
 
-- Novo backup pré-migration `20261107T150452Z-c36eef7e`, COPY_ONLY/CHECKSUM/VERIFYONLY, SHA-256, Restic autenticado e check/read-data aprovados. Restauração SQL real `46fe30bdb760`: DBCC, constraints, schema e contagens iguais à origem. Relatório e confirmação de restauração aceitos pelo Gmail (DATA 250/TLS 1.3), sem prova de entrega na caixa de entrada. Nenhum backup anterior excluído; retenção diária 7/4/3 preservada.
-- A: 12 ampliações, somente Marca.LogoUrl passa a nvarchar(400) NULL. Demais nulabilidades e valores preservados.
-- B: somente Nome do ID 4, Jaguar → Jaguar (cadastro adicional). ID 1 Jaguar, veículos 1/0, ambos ativos e mesmas datas de cadastro. Nenhuma exclusão, mudança de MarcaId ou relacionamento.
-- C: IX_Marca_Nome único, não filtrado, coluna Nome; zero grupos duplicados sob SQL_Latin1_General_CP1_CI_AS. Três recibos no journal; histórico EF original com 23 entradas preservado.
-- DBCC produtivo e preflight de backup/schema aprovados. Runtime existente autenticado: CRUD necessário, sem sysadmin/db_owner/DDL/admin; nenhuma recriação/rotação.
-- Ensaio dos SQLs produtivos exatos na cópia: antigo/original → antigo/ampliado → novo/ampliado → retorno ao antigo, 78 checkpoints e nove negativas de permissão. Inclui login sintético, CRUD, mídia local, limites máximos e replay A/B/C; DBCC e limpeza aprovados. Nenhum teste de escrita em produção.
-- Comparação das 20 tabelas: 19 inalteradas (normalizando apenas o nome autorizado). Veiculo teve somente quatro incrementos de visualizações em um registro durante a janela; nova restauração do backup comprovou os demais campos dos 401 veículos iguais. Não foram revertidas gravações legítimas.
-- Legado healthy, rotas públicas/login/imagem padrão 200, três domínios HTTPS 200, zero erros SQL/falhas de aplicação nos logs da janela. IDs/imagens/inícios de legado, SQL e NPM preservados. Login autenticado foi ensaiado na cópia; nenhuma conta real foi redefinida.
-- Preflight corrigido para selecionar o banco por `sqlcmd -d`: a mensagem de mudança de contexto não contamina o escalar. Teste de regressão e 37 testes operacionais passaram. Backup extra admite preservação explícita de todas as cópias, sem alterar o padrão diário.
+- A/B/C já foram aplicadas: 12 ampliações, LogoUrl NULL, Marca 4 `Jaguar (cadastro adicional)` e índice único. Histórico EF preservado, DBCC e ensaio com 78 checkpoints/nove negativas aprovados. Não repetir migrations, recriar runtime, rotacionar credenciais ou modificar dados comerciais. [Recibo SQL](./evidence/PRODUCTION_SQL_2026-11-07.json).
+- [Backup exclusivamente local aceito temporariamente](./ACEITE_RISCO_BACKUP_LOCAL.md), inclusive risco de perda dos backups com a VPS. Não é mais uma decisão pendente nem equivale a disaster recovery externo. Sem contratação, transferência, redução de retenção ou limpeza de snapshots.
+- Diário de 07/11 às 03h concluído; próximo 08/11 às 03h America/Sao_Paulo. Timers/monitor ativos, retenção 7/4/3, integridade verificada e aceite SMTP comprovado. [Auditoria de backup](./BACKUP_ANDERSONMULTIMARCAS.md).
+- Legado e SQL permanecem ativos; runtime existente preservado. Não houve troca de upstream, container, DNS ou gate. [Auditoria de pipeline](./evidence/PIPELINE_AUDIT_2026-11-07.json).
 
-## Preparado, aguardando dependência
+## Aprovações ainda necessárias
 
-Environment production limitado à main, cinco secrets SSH, sem aprovador por release e sem bypass de admins. Fluxo CI → artefato imutável/proveniência → preflight → deploy/health/rollback preparado. As três variáveis de ativação seguem false; os arquivos locais de habilitação/paridade continuam ausentes.
+1. **Política GitHub individual:** aprovar os três valores propostos de review: quantidade 1→0, code owner true→false e último push true→false. Manter PR obrigatório, `validate` strict associado ao GitHub Actions, admins sujeitos às regras, conversas resolvidas e proibição de force push/exclusão. CODEOWNERS permanece no conteúdo da PR #2. [Valores exatos, payload, riscos e reversão](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md). Nenhuma regra foi modificada. Se a proposta não for aprovada, a alternativa é definir outro revisor elegível autorizado.
+2. **Homologação R2 isolada:** autorizar os buckets sintéticos `anderson-multimarcas-homologacao` e `anderson-multimarcas-homologacao-negativa` (controle vazio privado), token Object Read & Write limitado exclusivamente ao primeiro, sem acesso ao controle ou produção, e URL de teste exclusiva. Um prefixo com credenciais amplas não basta. Não criar recursos remotos nem executar PUT/DELETE até existir destino autorizado e isolamento comprovado. [Configuração e ciclo de testes](./VALIDACAO_R2.md).
+3. **Mídias ausentes:** decidir a origem dos arquivos não recuperados e autorizar eventual restauração por objeto, depois de validar correspondência/hash/formato/dimensões/ausência de colisão. Não apagar URLs nem atribuir imagens de terceiros. [Inventário e fontes pesquisadas](./RECUPERACAO_MIDIAS_R2.md).
 
-Ordem: revisar/integrar PR #3 → atualizar PR #2 com main resultante → CI combinado/revisão → integrar PR #2 → CI do SHA final. Main permanece `1e5612276e0809166a2ea33a21deabee0bf0f768`. O CI das atualizações desta rodada deve passar antes da integração.
+## Preparação técnica desta rodada
 
-## Bloqueios externos e ação exata
+O CD reconstruía a imagem após o CI sem testar esse novo resultado. A correção executa o ensaio de runtime na imagem final sem rede/SQL/R2, exige relatório completo com mesmo commit e ID imutável, verifica usuário não root e arquiva a evidência. O empacotamento falha antes de exportar uma imagem com evidência ausente, incompleta ou divergente. Não muda gates, secrets ou executor produtivo.
 
-1. **Revisor independente:** somente StartingWeb é colaborador, sem equipe elegível. Proprietário deve indicar e autorizar mantenedor independente com acesso de escrita, incluí-lo corretamente no CODEOWNERS aplicável e obter revisão real do último push. Main exige validate strict, uma aprovação, code owner aplicável, aprovação do último push por outro ator e conversas resolvidas, inclusive admins. Não houve convite, bypass ou remoção de regras.
-2. **R2 real:** HEAD autenticado 200, endpoint/base HTTPS e região auto conferidos, sem PUT/DELETE. A amostra posterior encontrou veículos 200 e vendedores 404 (ver falha técnica abaixo). Falta bucket/prefixo de homologação expressamente autorizado e isolado, credencial privada restrita e URL de teste; executar ciclo sintético real conforme [VALIDACAO_R2.md](./VALIDACAO_R2.md). Mocks/storage local não substituem o provedor.
-3. **Backup externo:** informar destino/namespace/chave/acesso/responsável autorizados para segunda cópia criptografada e restauração, ou aceitar explicitamente a operação temporária sem cobertura de perda total da VPS. Nenhum destino novo recebeu dados; nenhum serviço foi contratado.
-4. **Paridade e corte:** concluir evidências R2 e revisão integrada, aprovar paridade com evidência e confirmar pacote/rollback/health do SHA final. A publicação já tem autorização condicional; não pedir novamente autorização SQL. Criar novo backup restaurável imediatamente antes do corte futuro.
+Testes de CI/segurança, operação, integridade/proveniência e rollback permanecem obrigatórios. O ciclo real R2 e o CI do futuro SHA integrado continuam necessários; mocks e a simulação de combinação das branches não os substituem. [CI/CD](./CI_CD_DEPLOYMENT.md).
 
-## Falhas técnicas
+## PRs e sequência futura
 
-Banco/preflight sem falha aberta. Na leitura R2 real, três fotos de vendedores retornaram 404 público e S3 autenticado, sem original encontrado no container/checkout legado; três imagens de veículos responderam 200. Localizar originais ou fonte de recuperação autorizada e definir reparação, sem inventar arquivos/substituir URLs. Detalhes em [VALIDACAO_R2.md](./VALIDACAO_R2.md). As divergências de auditoria SQL foram investigadas; publicação segue bloqueada também pelas dependências acima. Não criar deploy.enabled nem atestar paridade antecipadamente. [Ativação](./ATIVACAO_PRODUCAO.md), [rollback](./ROLLBACK_PRODUCAO.md), [backup](./BACKUP_ANDERSONMULTIMARCAS.md).
+Main revalidada: `1e5612276e0809166a2ea33a21deabee0bf0f768`.
+
+- [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3): aberta/draft, tip auditado `8116388ca2eaac0ba7e9a0e473c9401b776f8912`, CI aprovado, sem conflito com main. Contém scripts/recibos das migrations já executadas, não uma ordem de reaplicação.
+- [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2): aberta/draft, tip inicial auditado `3f319d4de6cdc287fa9b2730bb413ac54b1be518`, CI aprovado. Esta rodada prepara correções/documentação na mesma branch; exigir CI do novo tip, sem aproveitar aprovação do anterior.
+- A simulação `git merge-tree` das duas referências auditadas resultou sem conflitos. Ela não integrou branches nem executou CI combinado.
+
+Somente em rodada autorizada: satisfazer a política vigente e retirar draft → PR #3 → atualizar PR #2 com main resultante, sem force push → CI combinado → PR #2 → CI final main → pacote com proveniência e runtime final aprovados → homologação R2/mídias/paridade → novo backup restaurável imediatamente antes do primeiro corte → autorização operacional e gates. Nada dessa sequência implica autorização de merge/deploy nesta rodada.
+
+[Ativação](./ATIVACAO_PRODUCAO.md) e [rollback](./ROLLBACK_PRODUCAO.md) descrevem o corte futuro; não criar `deploy.enabled` nem `source-parity.approved.json` antecipadamente.

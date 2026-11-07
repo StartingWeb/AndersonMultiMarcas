@@ -1,6 +1,6 @@
 # Rollback da aplicação
 
-Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **corte de produção não autorizado nem executado**.
+Atualizado em 07/11/2026, horário de Brasília. Nesta rodada, **nenhum merge, deploy, troca de container/upstream ou ativação de gates está autorizado**.
 
 ## Baseline preservado
 
@@ -86,8 +86,14 @@ O undo de nomes/índice fornecido na PR #3 é uma ferramenta separada e restrita
 
 A conexão futura usa `anderson_runtime`; a conexão anterior foi preservada em arquivo privado 0600 e o login/configuração do legado não foi revogado. O instalador não iniciou a aplicação e não executou A/B/C. O retorno ao legado não depende de remover a nova identidade.
 
-A/B/C produtivos têm journal próprio, sem down automático: A não deve reduzir colunas, B requer rótulo aprovado e preserva demais campos, C exige A/B e dados sem duplicidade. O undo técnico de ensaio não é um rollback comercial autorizado. Se faltar confirmação do nome/nulabilidade, R2, revisão ou outro requisito, não iniciar o corte. A primeira publicação tem autorização condicional, não irrestrita.
+A/B/C produtivos têm journal próprio, sem down automático: A não deve reduzir colunas, B usa o rótulo já aprovado e preserva demais campos, C exige A/B e dados sem duplicidade. O undo técnico de ensaio não é um rollback comercial autorizado. Nome/nulabilidade já foram aprovados e aplicados; não solicitar de novo nem reaplicar. R2, governança, paridade e integração continuam exigidos antes de um corte futuro autorizado.
 
 ## Estado após migrations de 07/11/2026
 
 Rollback normal conserva schema ampliado, LogoUrl NULL, rótulo aprovado e índice único; retorna apenas o binário/configuração compatíveis. Legado e suas credenciais/volumes continuam preservados, sem restart. Imagem antiga `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5`; imagem nova ensaiada `sha256:08b3ab8301d123f5b99e359bc7ec5bb4c94a28b678f38aef7706fffe6b62680f`, ainda não publicada. Não reduzir colunas, desfazer o nome ou restaurar automaticamente banco produtivo: isso pode descartar gravações recentes. O backup pré-migration permanece para recuperação deliberada, conforme [backup](./BACKUP_ANDERSONMULTIMARCAS.md).
+
+## Revalidação operacional e de governança
+
+Nesta auditoria, IDs/imagens/StartedAt do legado, SQL e NPM foram comparados sem alteração; nenhuma transação/release nova foi criada. Os três gates GitHub continuam false e os arquivos locais de habilitação/paridade ausentes. As 42 verificações Python de integridade/transações/rollback passaram sem tocar produção; o novo ensaio de imagem final do CD usa containers sem rede e não muda o executor produtivo.
+
+A [política GitHub individual](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md) é proposta, não autorização de merge ou bypass. O [aceite de backup somente local](./ACEITE_RISCO_BACKUP_LOCAL.md) preserva retenção/verificação/restauração/alertas; não equivale a recuperação após perda da VPS. Antes do futuro primeiro deploy exigir novo backup restaurável. Rollback binário não recupera as [fotos ausentes](./RECUPERACAO_MIDIAS_R2.md) nem valida escrita R2; reparo de objetos exige autorização própria.

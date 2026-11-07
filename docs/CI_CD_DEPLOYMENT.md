@@ -1,108 +1,61 @@
 # CI/CD e preparação de produção
 
-Atualizado em 05/11/2026, horário de Brasília. Preparação autorizada; **corte de produção não autorizado nem executado**.
+Atualizado em 07/11/2026. Preparação autorizada; **nenhum merge, deploy ou ativação nesta rodada**. [Auditoria](./evidence/PIPELINE_AUDIT_2026-11-07.json) e [pendências](./PENDENCIAS_PRODUCAO.md).
 
-## Estado atual
+## Estado auditado
 
-A PR #1 já foi integrada. A referência validada é `1e5612276e0809166a2ea33a21deabee0bf0f768` em `main`. [CI 42135590822](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42135590822) aprovou 184 testes .NET, segurança, SQL e imagem. [CD 42136110621](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42136110621) empacotou o artefato `release-1e5612276e0809166a2ea33a21deabee0bf0f768-42136110621-1`; o job production foi ignorado.
+Main: `1e5612276e0809166a2ea33a21deabee0bf0f768`. [CI 42135590822](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42135590822) aprovado e [CD 42136110621](https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42136110621) com pacote produzido/production ignorado são evidências históricas desse SHA. Não aprovam os commits novos das PRs.
 
-A preparação desta branch instala backup e destino isolado, configura Environment/secrets e corrige a compatibilidade entre o image store do runner e o do servidor. **As correções de entrega precisam de revisão e merge autorizados, novo CI e novo artefato do commit resultante antes de usar o pipeline para o primeiro corte.** O artefato existente comprovou a aplicação sobre a cópia de produção, mas referencia a versão anterior dos scripts CI.
+[PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3), tip auditado `8116388ca2eaac0ba7e9a0e473c9401b776f8912`, e [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2), tip inicial `3f319d4de6cdc287fa9b2730bb413ac54b1be518`, continuam abertas/draft com validate aprovado e sem conflito com main. A simulação da combinação inicial não apresentou conflitos; não é merge nem CI combinado. A branch da PR #2 recebe a correção descrita abaixo e precisa de CI no novo tip. [Auditoria GitHub](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md).
 
 ## Fluxo e proveniência
 
-[ci.yml](../.github/workflows/ci.yml) restaura dependências travadas, compila .NET 10, executa testes com SQL Server descartável e testes Python de CI/deploy/operação, valida YAML, ensaia rollback, gera SQL idempotente, audita vulnerabilidades e publica aplicação/checksums. As actions estão fixadas por SHA; permissões são contents/read.
+[ci.yml](../.github/workflows/ci.yml) executa em PR/push/workflow_dispatch: restore travado, build .NET 10, testes SQL descartáveis, segurança/HTTP/storage, Python, Actionlint/ShellCheck, falhas de deploy/rollback Docker, SQL revisável sem acesso produtivo e auditoria NuGet. Somente push/main publica o artefato de aplicação imutável `app-SHA-attempt`, sem sobrescrita. Permissão global `contents: read`, actions por SHA e checkout sem persistência de credenciais.
 
-[cd.yml](../.github/workflows/cd.yml) aceita CI de push main do mesmo repositório, recusa fonte obsoleta, verifica manifestos/SHAs e constrói linux/amd64 no runner. O servidor recebe imagem pronta. Production exige os três gates de repositório em true, Environment protegido e gates privados locais; todos permanecem bloqueados.
+[cd.yml](../.github/workflows/cd.yml) recebe `workflow_run` de CI e exige sucesso, evento push, branch main e mesmo repositório. Confere igualdade entre SHA do CI, checkout e main consultada no checkout, baixa artefato do run correto e verifica manifest/checksums/commit/ciRunId. Constrói linux/amd64 no runner; nunca compila no servidor.
 
-O pacote contém `image.tar.gz`, `release.json` e `SHA256SUMS`. Hashes do ensaio:
+**Correção de 07/11:** a reconstrução da imagem no CD podia diferir da imagem testada no CI, inclusive por dependências instaladas no Dockerfile. O CD agora ensaia a própria imagem final com [test_runtime_image.py](../scripts/ci/test_runtime_image.py), sem rede, SQL ou R2, usando conexão sintética. Verifica usuário app/arquitetura/revisão, startup/health, commit, fallback estático, WebP nativo e recusa de migrations produtivas. Confere limpeza dos containers descartáveis. Não é deploy de teste em produção.
 
-| Arquivo | SHA-256 |
-| --- | --- |
-| Imagem | `4351bc95a24064c6ac04ced7f80931656eba8c6dc4a3a69252cbec1c03ce6300` |
-| Manifesto | `0a09c4e0c30b612d6ec2b0316ca411b5c9437fe3394c71976481561d4af8ae24` |
-| SQL original do CI | `cc838077ae10de1af0dc59fbc67e9cf372c3e6e4d575d0a7b4fc60f1dfb3265d` |
+[package_release.py](../scripts/ci/package_release.py) exige `--runtime-report`, status passado, todos os cenários, rede none, ausência de containers remanescentes, mesmo commit e **mesmo imageId** da imagem a exportar, além de usuário não root. Evidência ausente/incompleta/divergente bloqueia antes da exportação. O relatório fica no artefato `cd-evidence-run-attempt` por 90 dias, inclusive em falha; o bundle imutável continua com `image.tar.gz`, `release.json`, `SHA256SUMS`, retido 90 dias, sem sobrescrita.
 
-Imagem/config do CI: `sha256:cb6efb50078385a03a905c312cdfee30cb4c8f7ad355dc2a0c161b7791b33e24`. Imagem OCI efetiva no servidor: `sha256:08b3ab8301d123f5b99e359bc7ec5bb4c94a28b678f38aef7706fffe6b62680f`. Docker clássico identifica configuração; o image store containerd identifica manifest/index OCI. [release.py](../scripts/deploy/release.py) agora valida identidade/tag do arquivo, configuração carregada, rootfs, arquitetura e commit, e só então usa o ID imutável local. O manifesto original permanece inalterado. Tests cobrem identidade OCI, tag incorreta e configuração/camadas adulteradas.
+O servidor valida novamente SHA/manifesto/tag/configuração/rootfs/arquitetura/commit. Docker clássico usa config digest e o image store containerd pode usar OCI digest; [release.py](../scripts/deploy/release.py) autentica ambas as identidades, usa ID imutável local e preserva o manifesto do CI. Os testes de adulteração OCI/transação/rollback continuam obrigatórios. SHA/checksum e origem do run fornecem proveniência interna; não foi criada uma atestação Sigstore externa.
 
-## Environment e gates
+## Environment, governança e gates
 
-`production` foi consultado novamente: única branch policy `main`, tipo branch; `can_admins_bypass=false`; sem required reviewers e sem aprovação por publicação. A política futura é automática depois de uma ativação expressamente autorizada. [verify_environment.py](../scripts/ci/verify_environment.py) exige esse estado, recusa revisores por execução, bypass true/ausente, tags e outras branches e consulta se `main` está protegida.
+`production`: apenas branch `main`, tipo branch, `can_admins_bypass=false`, sem required reviewers por release. [verify_environment.py](../scripts/ci/verify_environment.py) recusa bypass ausente/true, revisores por execução, tags/outras branches e main sem proteção. Esse helper verifica existência da proteção; a configuração detalhada é auditada pela API administrativa conforme a [política GitHub](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md).
 
-A proteção clássica da `main` foi aplicada e confirmada pela API: `validate` obrigatório, associado ao GitHub Actions (app 15368), branch atualizada, uma revisão de PR, descarte de aprovações antigas, aprovação do último push, code owner review e conversas resolvidas. Force push/exclusão estão proibidos e admins seguem as regras. Não foram encontradas rulesets adicionais. [CODEOWNERS](../.github/CODEOWNERS) propõe revisão de workflows e scripts/infra por `StartingWeb`; só passa a valer após merge autorizado. Só esse colaborador foi identificado: integrar mudanças feitas por ele exige um segundo revisor autorizado. Não se concedeu acesso a ninguém.
+Proteção atual: PR obrigatório, validate strict app 15368, uma aprovação, descarte de aprovações antigas, code owner/último push e conversas resolvidas, admins sujeitos às regras e force push/exclusão proibidos. Rulesets adicionais ausentes. A main não contém CODEOWNERS; a PR #2 adiciona regras para `@StartingWeb`. Só esse colaborador tem acesso. A proposta altera apenas quantidade de aprovações 1→0, code owner true→false e último push true→false; mantém CODEOWNERS no código. **Ainda não aplicada; aguarda aprovação específica.** Ela permite trabalho individual com PR/CI obrigatórios, mas elimina o veto independente de outra pessoa.
 
-Push direto na main é bloqueado pela política aplicada. Qualquer relaxamento futuro dessa política pode permitir que um push direto publique automaticamente após a ativação; deve ser tratado como mudança de segurança.
-
-| Tipo | Nome/estado |
+| Tipo | Nome/estado revalidado |
 | --- | --- |
 | Repository variable | `PRODUCTION_DEPLOY_ENABLED=false` |
 | Repository variable | `PRODUCTION_SOURCE_PARITY_CONFIRMED=false` |
 | Repository variable | `PRODUCTION_ADMIN_BYPASS_REVIEWED=false` |
 | Environment variable | `PRODUCTION_PUBLIC_HEALTH_URL=https://www.andersonmultimarcas.com.br/health/release` |
-| Environment secret | `PRODUCTION_SSH_HOST` configurado |
-| Environment secret | `PRODUCTION_SSH_USER` configurado |
-| Environment secret | `PRODUCTION_SSH_PORT` configurado |
-| Environment secret | `PRODUCTION_SSH_PRIVATE_KEY` configurado |
-| Environment secret | `PRODUCTION_SSH_KNOWN_HOSTS` configurado |
+| Environment secrets, somente nomes | `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_PORT`, `PRODUCTION_SSH_PRIVATE_KEY`, `PRODUCTION_SSH_KNOWN_HOSTS` |
 | Gate local | `shared/deploy.enabled` ausente |
 | Aprovação local | `shared/source-parity.approved.json` ausente |
 
-## SSH de publicação
+O CD serializa publicações com `cancel-in-progress=false`; no servidor há lock e journal. CI pode cancelar execução superada por novo commit. Checks de um SHA anterior não aprovam outro. Há uma janela entre consulta da main e entrega; o SHA entregue ainda precisa ser o que passou no CI e o CD é serializado. A origem nunca é uma tag mutável ou um rebuild no host produtivo.
 
-Chave Ed25519 exclusiva, conta existente `pedro`, com forced command [ssh_gate.py](../scripts/ops/ssh_gate.py), `restrict`, sem shell, SFTP, leitura de arquivos, forwarding ou PTY. Não se copiou a chave administrativa existente para o GitHub. A chave privada fica no Environment e em arquivo privado no SSH do Mac, fora do repositório.
+## SSH e servidor
 
-Known hosts foi comparado com a confiança já estabelecida no Mac e com as chaves públicas do host obtidas por essa sessão SSH. Nenhum ssh-keyscan foi usado como prova única.
+Raiz exclusiva `/opt/startingweb/apps/anderson-multimarcas-unified`, modo 0700. Env/server.json privados 0600; valores reais fora do Git. A conexão futura usa `anderson_runtime`; login/configuração do legado preservados, sem recriação/rotação. Migrations/importação/recovery de jobs permanecem false.
 
-O gate aceita somente criação de diretório incoming com identidade de release, SCP de recebimento e execução do executor instalado/revisado. O Python arbitrário enviado pelo cliente nunca é executado. SHA do executor recebido precisa coincidir com a cópia instalada; mudanças futuras do executor exigem atualização revisada no servidor. Arquivos recebidos têm limite de tamanho. A conta Docker tem privilégios amplos no host; o escopo da chave é imposto pelo forced command, não pela associação ao grupo Docker.
+Chave Ed25519 dedicada com forced command [ssh_gate.py](../scripts/ops/ssh_gate.py), restrict, sem shell/SFTP/leitura/forwarding/PTY. [deliver.py](../scripts/ci/deliver.py) usa SCP receive-only `-O`, valida destino exclusivo e host key fixada, transfere pacote e só permite executor instalado/revisado com SHA igual. A chave administrativa do Mac não é a chave do GitHub. A conta Docker tem privilégios amplos no host; o isolamento é imposto pelo forced command. Alterar o executor requer instalação revisada separada; esta correção de empacotamento não altera o executor instalado.
 
-[deliver.py](../scripts/ci/deliver.py) usa `scp -O` para o protocolo de recebimento restrito. O script antigo sem essa opção tentaria SFTP e seria recusado. Autenticação, host key, recebimento SCP e recusa de shell/leitura/SFTP/destino legado foram testados de fato. O executor real, chamado com a chave, recusou deploy por ausência de `deploy.enabled`.
+Rede `startingweb_network`, volume DP `andersonmultimarcas-dataprotection-keys`, usuário app 1654, caminho `/home/app/.aspnet/DataProtection-Keys`, ApplicationName AndersonMultiMarcas. Upstream legado continua `andersonmultimarcas-web:8080`; nenhum mount novo de uploads. O fallback reservado `andersonmultimarcas-legacy-fb8a205768dc` ainda não foi renomeado/criado. O executor recusa parar/substituir legado vivo não gerido.
 
-## Servidor preparado
+## Preflight, saúde e rollback
 
-Raiz `/opt/startingweb/apps/anderson-multimarcas-unified`, modo 0700, com `shared/`, `releases/`, `incoming/`, `history/`, `snapshots/`, `bin/` e lock 0600. `shared/runtime.env` e `shared/server.json` foram preparados com modo 0600; valores reais não passaram pelo Git. O env-file usa valores Docker literais, sem expansão/aspas Compose. A configuração preserva R2, SQL, rede e volume DP e fixa migrations/importação/recovery de jobs em false.
+Antes de deploy, o executor exige checker fixo de backup/schema, pacote íntegro, gates/paridade, configuração segura e baseline conhecido. A/B/C já aplicadas; não há migration automática. Antes do primeiro corte futuro exigir novo backup restaurável, sem excluir anteriores. [Backup local aceito](./ACEITE_RISCO_BACKUP_LOCAL.md) não elimina verificações, monitor/alertas ou retenção 7/4/3.
 
-Rede: `startingweb_network`. Volume: `andersonmultimarcas-dataprotection-keys`, usuário app 1654, caminho `/home/app/.aspnet/DataProtection-Keys`, aplicação `AndersonMultiMarcas`. Upstream continua `andersonmultimarcas-web:8080`. Não há mount de uploads na aplicação atual; arquivos do checkout legado foram inventariados e mantidos.
+Health interno exige liveness e commit; HTTPS público deve responder o mesmo commit em `/health/release`. Falha inicia retorno pelo journal ao container/configuração anterior. Rollback não exige checker de backup para evitar impedir recuperação da aplicação; preserva lock/gates/integridade/health. Não altera SQL ou objetos R2. O legado tem `/health=200` e `/health/release=404`; não atribuir um SHA do código recuperado ao binário antigo.
 
-Fallback planejado: `andersonmultimarcas-legacy-fb8a205768dc`. **Esse nome é uma reserva do futuro corte; o container ainda não foi parado nem renomeado.** O executor recusa o container legado vivo/não gerido mesmo se alguém preparar gates por engano.
+## Verificação desta rodada e limites
 
-A imagem legada foi exportada e verificada por SHA, blobs e docker load. Consulte [ROLLBACK_PRODUCAO.md](./ROLLBACK_PRODUCAO.md). Nenhum prune, remoção de volumes antigos, reinício SQL ou alteração NPM foi executado.
+Os resultados exatos e os SHAs auditados constam em [PIPELINE_AUDIT_2026-11-07.json](./evidence/PIPELINE_AUDIT_2026-11-07.json). Testes Python cobrem configuração GitHub, proveniência, rejeição de evidências da imagem, backup, chaves/caminhos, falhas de deploy e rollback. Actionlint/ShellCheck e scanner de secrets devem passar antes do push. O ensaio real local usa imagem .NET previamente disponível como fixture; ele verifica o novo empacotador, não aprova uma futura release integrada. Sem SQL descartável configurado, testes .NET SQL são explicitamente ignorados localmente; o CI obrigatório os executa em SQL descartável.
 
-## Verificação e limites
+R2 real de escrita continua pendente. Mocks/leitura não homologam PUT/sobrescrita/exclusão; a [investigação das fotos](./RECUPERACAO_MIDIAS_R2.md) tem resultado próprio. Não executar testes destrutivos contra produção.
 
-- Build local .NET 10: zero erros/avisos; 193/193 testes locais passaram nesta revisão, incluindo SQL descartável, sem skips. O helper local foi corrigido para não contaminar os hosts de teste com migrations/bootstrap de Development.
-- **98 testes Python passaram nesta revisão**: 28 de CI/segurança, 42 de arquivo OCI/transações de deploy e 28 de operação. Os testes de operação foram incluídos na CI.
-- Nove cenários Docker locais passaram com limpeza conferida: publicação, falhas de startup/health, pacote inválido/adulterado, configuração insegura, transferência interrompida, rollback por arquivo e retorno ao legado simulado.
-- O artefato .NET real foi carregado no VPS, ligado somente à cópia SQL interna e verificado sem credenciais produtivas, jobs externos ou migrations na cópia original. DP persistiu entre containers de teste.
-- HTTPS válido e `/health=200` foram confirmados nos três domínios. `/health/release=404` continua sendo a resposta do legado; a nova release deve responder com seu commit após um corte autorizado.
-- O drift conhecido de limites/índice foi corrigido em 07/11 com A/B/C e preflight real aprovado. R2 de escrita continua pendente. SMTP foi aceito; a revisão independente é exigida no PR, não a cada publicação.
-
-Operação completa: [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md). Backup: [BACKUP_ANDERSONMULTIMARCAS.md](./BACKUP_ANDERSONMULTIMARCAS.md). Diferenças SQL: [VALIDACAO_SCHEMA_PRODUCAO.md](./VALIDACAO_SCHEMA_PRODUCAO.md). Pendências: [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md).
-
-## Preparação automática desta execução
-
-Fluxo: push main → CI (restore, Release, .NET/SQL isolado, Python, YAML/Actionlint/ShellCheck e vulnerabilidades) → artefato do CI aprovado → pacote imutável com SHA/commit/ciRunId → gates GitHub e Environment → transferência SSH restrita → gates locais → backup recente/íntegro e schema → ativação → health interno/commit e HTTPS público → histórico ou rollback automático. Concorrência é serializada no CD e recusada pelo lock no servidor. Não há migrations automáticas. CI reprovado, evento de PR, outro repositório/branch ou SHA obsoleto não habilitam o pacote produtivo.
-
-[release.py](../scripts/deploy/release.py) chama o checker fixo instalado de backup/schema antes da ativação. A nova cópia do executor e do backup foi instalada com modo 0700; hashes conferidos, sem executar o executor produtivo. O bloqueio SQL foi resolvido em 07/11; consulta de metadados, DBCC, runtime e checker real passaram. Três variáveis false e dois gates locais ausentes mantêm publicação desabilitada.
-
-As simulações de CI aprovado/reprovado e branch são verificações das condições de workflow; Environment incorreto, proveniência/commit/SHA, backup ausente/vencido/corrompido, schema incompatível, rollback com falha e concorrência são testes Python isolados. Nove cenários usam Docker real local (sucesso, startup/health, pacote inválido, adulteração, configuração insegura, transferência, rollback por arquivo e retorno ao legado). As fixtures descartáveis substituem explicitamente o checker produtivo; testes específicos verificam o checker. Nenhum cenário de falha toca produção.
-
-Evidências finais de testes e CI desta revisão estão na PR #2 e em [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md). Não usar o CI antigo como aprovação de um commit novo.
-
-CI atualizado: [execuções desta branch](https://github.com/StartingWeb/AndersonMultiMarcas/actions/workflows/ci.yml?query=branch%3Ainfra%2Fproduction-preparation). O resultado do SHA final é registrado na PR #2; não executar CD produtivo para validar essa preparação.
-
-Nesta rodada, o runtime privado foi atualizado sob autorização para `anderson_runtime` e os grants efetivos foram verificados. A validação continua recusando `sa` e identidade ausente; essa proteção não foi removida. Nenhuma identidade do legado/outro projeto foi alterada. A aplicação futura ainda não foi publicada.
-
-## Revisão técnica de 06/11/2026
-
-Nenhuma lacuna nova de proveniência/Environment/concorrência/rollback foi encontrada na revalidação. Foram acrescentados testes SQL de permissões mínimas e S3 em memória; o renderer de credencial só cria uma proposta privada fora do Git, sem conectar/instalar. Perfil e limites em [USUARIO_SQL_RUNTIME.md](./USUARIO_SQL_RUNTIME.md). O ensaio cruzado de binários está na [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3), separado da infraestrutura. Seu sucesso não autoriza SQL produtivo nem substitui R2 real.
-
-Somente StartingWeb foi identificado como colaborador, sem equipes elegíveis. **Merge bloqueado por falta de revisor independente autorizado.** Os gates continuam false; nenhuma deployment production foi criada. R2 e destino externo permanecem bloqueios documentados antes da aceitação de paridade. A [lista de bloqueios](./PENDENCIAS_PRODUCAO.md) é a referência atual para ativação.
-
-## Continuação autorizada de 06/11/2026
-
-O CI acrescenta validação do instalador de runtime em SQL descartável rotulado, usando schema gerado sem acesso produtivo; não conecta ao VPS nem aplica A/B/C. O perfil SQL permanece o mesmo já ensaiado. O login e a conexão futura foram instalados sob autorização explícita, com credencial fora do Git em 0600, receipt privado e verificação efetiva sem privilégios administrativos. A aplicação legada continua usando sua própria configuração preservada.
-
-O usuário autorizou o primeiro deploy condicionalmente às decisões/demais bloqueios/checks/revisão legítimos. Gates continuam false e arquivos de habilitação ausentes. A integração deve começar pela PR #3 e depois atualizar/revalidar a #2 com a main resultante. A política exige um aprovador independente, último push aprovado por outro ator e code owner nas áreas aplicáveis; um mantenedor independente autorizado precisa ser definido também em CODEOWNERS. Não usar bypass.
-
-## Execução de 07/11/2026
-
-[Recibo](./evidence/PRODUCTION_SQL_2026-11-07.json): A/B/C efetivamente aplicadas, backup pré-migration restaurado e checker retorna ready. Corrigido falso bloqueio do checker causado pelo texto de USE: agora sqlcmd seleciona o banco por -d; teste de regressão incluído. Instalado helper revisado no servidor, padrão diário preservado e opção preserve-existing para backup extra sem exclusão. 37 testes operacionais locais passaram. As PRs continuam dependentes de revisão independente legítima; main inalterada, nenhuma deployment production ou ativação criada. Os três gates permanecem false. Não houve aprovação de paridade nem corte. [Bloqueios e ordem de integração](./PENDENCIAS_PRODUCAO.md).
+Sequência: aprovação/aplicação da política → integração autorizada PR #3 → atualização/CI combinado PR #2 → integração PR #2 → CI main final → pacote/runtime final → R2/mídias/paridade → backup novo restaurável → autorização de primeiro corte/gates. [Ativação](./ATIVACAO_PRODUCAO.md), [rollback](./ROLLBACK_PRODUCAO.md), [pendências](./PENDENCIAS_PRODUCAO.md). Nada nesta documentação autoriza merge/deploy nesta rodada.

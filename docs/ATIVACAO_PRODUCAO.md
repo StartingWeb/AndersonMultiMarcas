@@ -1,35 +1,38 @@
-# Primeiro corte — autorização condicional e ponto de parada
+# Primeiro corte — preparação e ponto de parada
 
-Atualizado em 06/11/2026. O usuário autorizou o primeiro deploy **somente depois** de confirmar o novo nome da Marca 4, resolver dependências obrigatórias e satisfazer checks/política de revisão. Essa autorização não precisa ser solicitada novamente para o mesmo escopo quando todas as condições forem cumpridas. Não é autorização para contornar qualquer uma delas. Não haverá aprovação humana por release depois da ativação.
+Atualizado em 07/11/2026. A instrução vigente desta rodada é **não executar merge, deploy, troca de container/upstream/DNS ou ativação de gates**. A autorização condicional histórica não sobrepõe esse limite. Depois da primeira ativação autorizada, a política desejada é publicação automática da main validada, sem aprovação humana por release.
 
-## Executado em 07/11/2026
+## Já concluído
 
-A/B/C aplicadas e validadas sob autorização explícita: 12 ampliações, somente LogoUrl NULL, Marca 4 Jaguar (cadastro adicional), IX_Marca_Nome único. Novo backup COPY_ONLY/CHECKSUM/VERIFYONLY/Restic restaurado em instância isolada, DBCC e comparações aprovados. Ensaio dos scripts exatos com ambos os binários e retorno ao antigo: 78 checkpoints, nove negativas, limpeza aprovada. Runtime existente validado sem recriação/rotação. Legado healthy e domínios HTTPS 200, nenhum restart/corte/merge. [Recibo](./evidence/PRODUCTION_SQL_2026-11-07.json).
+A/B/C aplicadas e validadas: 12 ampliações, somente LogoUrl NULL, Marca 4 `Jaguar (cadastro adicional)`, IX_Marca_Nome único. Backup pré-migration restaurado em instância isolada, DBCC e comparações aprovados. Ensaio dos scripts exatos com ambos os binários e retorno ao antigo: 78 checkpoints/nove negativas. Runtime existente validado sem recriação/rotação. [Recibo](./evidence/PRODUCTION_SQL_2026-11-07.json). Não repetir migrations ou alterar dados comerciais.
 
-## Ponto de parada atual
+O [risco temporário de backup exclusivamente local](./ACEITE_RISCO_BACKUP_LOCAL.md) foi aceito. Não solicitar novamente essa decisão nem tratar backup externo como bloqueio técnico obrigatório. Agendamento, criptografia, integridade, restauração, alertas e retenção continuam exigidos. Perda total da VPS pode perder todas as cópias.
 
-- Falta R2 de homologação expressamente autorizado, isolado e validado por ciclo real sintético.
-- Falta destino externo de backup autorizado e validado, ou aceitação explícita do risco temporário de perda total da VPS.
-- Falta revisor independente elegível. Só StartingWeb tem acesso; definir mantenedor autorizado e CODEOWNERS aplicável, obter revisão real do último push. Não conceder acesso por inferência, convidar ou usar bypass.
-- Faltam integração legítima/CI do SHA final e paridade comprovada. Nome e nulabilidade já foram aprovados e executados; não pedir novamente.
+## Ponto de parada
 
-Referência completa: [PENDENCIAS_PRODUCAO.md](./PENDENCIAS_PRODUCAO.md). Os três gates GitHub continuam false e os arquivos locais de habilitação/paridade estão ausentes.
+- [Política individual](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md) preparada, ainda sem autorização de aplicação. A regra atual exige revisão independente; a proposta dispensa apenas requisitos humanos incompatíveis com único mantenedor, preservando PR/CI e demais controles. Não usar bypass.
+- [R2 isolado](./VALIDACAO_R2.md) depende de autorização para bucket/credencial/política restrita e de ciclo real sintético aprovado. Não usar o bucket produtivo para testes de escrita.
+- [Fotos ausentes](./RECUPERACAO_MIDIAS_R2.md) exigem decisão sobre fonte e reparação específica. Nenhum upload/substituição/remoção de URL autorizado.
+- Integração legítima das PRs, CI do SHA final e paridade ainda não concluídos. Testes locais e evidência de SHAs anteriores não aprovam um novo commit.
 
-## Ordem de integração e preparação
+As três variáveis GitHub permanecem false e `shared/deploy.enabled`/`shared/source-parity.approved.json` ausentes. [Pendências](./PENDENCIAS_PRODUCAO.md).
 
-1. Satisfazer legitimamente a revisão/checks da PR #3 e integrá-la; nenhuma integração foi feita nesta rodada. Ela contém A/B/C já executadas e seus recibos/testes, separados por responsabilidade.
-2. Atualizar PR #2 com a main resultante sem force push, conferir conflitos/semântica e CI do SHA combinado. Integrar somente após nova revisão/checks da política vigente. Nenhum merge direto ou bypass.
-3. Gerar CI aprovado e pacote imutável do SHA final em main; verificar proveniência, SHA, ciRunId, arquitetura e identidade da imagem. CD pode empacotar com gates false; production deve continuar ignorado até o corte.
-4. Conferir R2 real, recibos A/B/C, permissões runtime, backup externo/limitação deliberada, paridade formal e [rollback](./ROLLBACK_PRODUCAO.md). Registrar janela, operador, monitoramento e critérios de retorno.
+## Ordem futura de integração
 
-## Janela do primeiro corte — somente com todas as condições satisfeitas
+1. Sob autorização própria, satisfazer a política vigente, remover draft e integrar PR #3. Scripts SQL já executados permanecem como fonte auditável; não reaplicá-los.
+2. Atualizar PR #2 com a main resultante sem force push. Resolver semântica/conflitos e obter CI combinado aprovado no novo tip antes de integrá-la.
+3. Exigir CI aprovado do SHA final em main. CD aceita somente push/main do próprio repositório, recusa fonte obsoleta, verifica manifest/checksums, testa a imagem final sem rede e liga o relatório aprovado ao ID exportado. Production continua ignorado com gates false.
+4. Concluir R2 real, decisão das mídias, paridade, rollback e janela/operador/monitoramento/critérios de retorno. Não conceder acesso de escrita a terceiros para contornar governança.
 
-5. Executar um backup adicional pelo serviço Anderson e aguardar seu recibo completo: SHA, VERIFYONLY, Restic autenticado e status SMTP. Registrar o recibo imediatamente antes de qualquer SQL comercial/corte; não tratar timer como prova de execução.
-6. Revalidar identidade imutável do SQL, journal A/B/C e contrato atual; as migrations já foram aplicadas em 07/11. Não repetir DML nem usar propostas de ensaio. Qualquer drift requer avaliação; não executar migrations no startup. Confirmar preflight/DBCC/backup e contagens atuais.
-7. Revalidar pacote/configuração/volume DP/rede, imagem offline e snapshot do legado. Preservar o publicador antigo até a janela e confirmar que não há outra execução concorrente. Suspender seu gatilho conforme a autorização do corte, sem apagá-lo.
-8. Apenas então preparar o bootstrap do executor: preservar/parar/renomear o legado para o nome reservado, criar aprovação local de paridade e habilitação e habilitar as três variáveis conforme o SHA/escopo aceitos. Não alterar NPM/DNS para esconder falhas.
-9. Acionar o CD de um CI de push main aprovado e ainda atual (por exemplo, rerun do CD correspondente). Source/proveniência são reconferidos; não publicar de branch de preparação ou executar pacote local sem a mesma cadeia. O Environment é automático, sem aprovadores por execução.
-10. Conferir health interno, `/health/release` com commit exato, HTTPS público, catálogo/contato/admin/imagens e persistência DP. Falha interna/externa exige rollback automático e confirmação do retorno; falha de rollback preserva journal e exige recuperação do operador. Não restaurar banco, reduzir colunas ou desfazer nomes automaticamente.
-11. Registrar imagem/commit/pacote/recibos, resultado, horários e eventual retorno. Observar antes de retirar o legado/publicador; essa retirada definitiva não está autorizada por esta preparação.
+## Janela futura — após nova autorização operacional
 
-O bootstrap pode causar indisponibilidade enquanto o nome do container é trocado; não se promete zero downtime. O executor continua recusando o container legado vivo/não gerido, mesmo se alguém preparar gates indevidamente. Os deploys seguintes serão automáticos após atualizações válidas da main, serializados por concorrência e lock, sem aprovação manual por publicação.
+5. Exigir **novo backup restaurável imediatamente antes do primeiro deploy**: CHECKSUM/VERIFYONLY/SHA-256/Restic, restauração real isolada com DBCC e comparação, recibo/SMTP. Preservar cópias existentes; não basta reutilizar o recibo de 07/11 ou constatar timer ativo.
+6. Revalidar schema/journal A/B/C/runtime e preflight somente leitura. Drift exige avaliação; não executar migrations no startup, repetir DML ou reduzir colunas.
+7. Revalidar pacote imutável do SHA final, snapshot/configuração/DP/rede, imagem offline do legado e [rollback](./ROLLBACK_PRODUCAO.md). Conferir ausência de publicação concorrente. Suspender gatilho legado apenas no escopo autorizado, sem apagá-lo.
+8. Preparar aprovação formal de paridade e gates GitHub/locais apenas sob autorização específica. O gate `PRODUCTION_ADMIN_BYPASS_REVIEWED` significa revisão dos controles, não concessão de bypass. Environment continua restrito à main, sem aprovação por release e sem bypass administrativo.
+9. Parar/renomear o legado preservando ID/imagem/mounts e publicar pelo executor revisado. Não remover container antigo ou volume. O executor recusa substituir automaticamente um legado vivo.
+10. Exigir health interno, commit exato em `/health/release`, HTTPS público, catálogo/login/mídias e observação. Falha retorna ao container/configuração anteriores pelo journal; nunca reverte banco ou R2 automaticamente. Tráfego NPM só pode mudar conforme a autorização do corte.
+
+## Depois da ativação
+
+Pushes válidos da main passam por CI, pacote, validações e deploy serializado, health/rollback. Não há aprovação humana por release. PR obrigatório/CI/sem force push/exclusão continuam necessários mesmo com único mantenedor. Incidentes preservam snapshots/journal e suspendem novas publicações até diagnóstico.

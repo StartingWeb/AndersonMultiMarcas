@@ -1,0 +1,1055 @@
+{
+  "audited_at_utc": "2026-11-07T16:00:28.966494+00:00",
+  "repository": "StartingWeb/AndersonMultiMarcas",
+  "scope": "read-only GitHub API snapshot; local documentation/evidence only",
+  "mutations_executed": false,
+  "sources": [
+    "GitHub connector: get_repo/get_pr_info/fetch_commit_workflow_runs/list_pull_request_reviews/list_pull_request_review_threads",
+    "gh REST GET and GraphQL read queries (policy, checks, security metadata)",
+    "official github/rest-api-description OpenAPI GET for proposed PATCH schema"
+  ],
+  "main": {
+    "sha": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+    "protected": true
+  },
+  "protection": {
+    "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection",
+    "required_status_checks": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_status_checks",
+      "strict": true,
+      "contexts": [
+        "validate"
+      ],
+      "contexts_url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_status_checks/contexts",
+      "checks": [
+        {
+          "context": "validate",
+          "app_id": 15368
+        }
+      ]
+    },
+    "required_pull_request_reviews": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_pull_request_reviews",
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": true,
+      "require_last_push_approval": true,
+      "required_approving_review_count": 1
+    },
+    "required_signatures": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_signatures",
+      "enabled": false
+    },
+    "enforce_admins": {
+      "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/enforce_admins",
+      "enabled": true
+    },
+    "required_linear_history": {
+      "enabled": false
+    },
+    "allow_force_pushes": {
+      "enabled": false
+    },
+    "allow_deletions": {
+      "enabled": false
+    },
+    "block_creations": {
+      "enabled": false
+    },
+    "required_conversation_resolution": {
+      "enabled": true
+    },
+    "lock_branch": {
+      "enabled": false
+    },
+    "allow_fork_syncing": {
+      "enabled": false
+    }
+  },
+  "rulesets": [],
+  "environment": {
+    "id": 26427560052,
+    "node_id": "EN_kwDORg-pJ88AAAAGJzSQdA",
+    "name": "production",
+    "url": "https://api.github.com/repos/StartingWeb/AndersonMultiMarcas/environments/production",
+    "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/deployments/activity_log?environments_filter=production",
+    "created_at": "2026-11-06T00:36:49Z",
+    "updated_at": "2026-11-06T00:52:39Z",
+    "can_admins_bypass": false,
+    "protection_rules": [
+      {
+        "id": 71471991,
+        "node_id": "GA_kwDORg-pJ84EQpN3",
+        "type": "branch_policy"
+      }
+    ],
+    "deployment_branch_policy": {
+      "protected_branches": false,
+      "custom_branch_policies": true
+    }
+  },
+  "deployment_branch_policies": {
+    "total_count": 1,
+    "branch_policies": [
+      {
+        "id": 65685269,
+        "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2NTY4NTI2OQ==",
+        "name": "main",
+        "type": "branch"
+      }
+    ]
+  },
+  "repository_variables": {
+    "variables": [
+      {
+        "name": "PRODUCTION_ADMIN_BYPASS_REVIEWED",
+        "value": "false",
+        "created_at": "2026-11-06T00:36:52Z",
+        "updated_at": "2026-11-06T00:36:52Z"
+      },
+      {
+        "name": "PRODUCTION_DEPLOY_ENABLED",
+        "value": "false",
+        "created_at": "2026-11-06T00:36:51Z",
+        "updated_at": "2026-11-06T00:36:51Z"
+      },
+      {
+        "name": "PRODUCTION_SOURCE_PARITY_CONFIRMED",
+        "value": "false",
+        "created_at": "2026-11-06T00:36:51Z",
+        "updated_at": "2026-11-06T00:36:51Z"
+      }
+    ],
+    "total_count": 3
+  },
+  "environment_variables": {
+    "variables": [
+      {
+        "name": "PRODUCTION_PUBLIC_HEALTH_URL",
+        "value": "https://www.andersonmultimarcas.com.br/health/release",
+        "created_at": "2026-11-06T00:36:52Z",
+        "updated_at": "2026-11-06T00:36:52Z"
+      }
+    ],
+    "total_count": 1
+  },
+  "environment_secret_names": {
+    "total_count": 5,
+    "names": [
+      "PRODUCTION_SSH_HOST",
+      "PRODUCTION_SSH_KNOWN_HOSTS",
+      "PRODUCTION_SSH_PORT",
+      "PRODUCTION_SSH_PRIVATE_KEY",
+      "PRODUCTION_SSH_USER"
+    ]
+  },
+  "repository_secret_names": {
+    "total_count": 0,
+    "names": []
+  },
+  "workflow_permissions": {
+    "default_workflow_permissions": "read",
+    "can_approve_pull_request_reviews": false
+  },
+  "actions_permissions": {
+    "enabled": true,
+    "allowed_actions": "all",
+    "sha_pinning_required": false
+  },
+  "collaborators": [
+    {
+      "login": "StartingWeb",
+      "role_name": "admin",
+      "permissions": {
+        "admin": true,
+        "maintain": true,
+        "push": true,
+        "triage": true,
+        "pull": true
+      }
+    }
+  ],
+  "repository_settings": {
+    "visibility": "public",
+    "default_branch": "main",
+    "allow_auto_merge": false,
+    "allow_merge_commit": true,
+    "allow_rebase_merge": true,
+    "allow_squash_merge": true,
+    "allow_update_branch": false,
+    "delete_branch_on_merge": false,
+    "security_and_analysis": {
+      "secret_scanning": {
+        "status": "enabled"
+      },
+      "secret_scanning_push_protection": {
+        "status": "enabled"
+      },
+      "dependabot_security_updates": {
+        "status": "disabled"
+      },
+      "secret_scanning_non_provider_patterns": {
+        "status": "disabled"
+      },
+      "secret_scanning_validity_checks": {
+        "status": "disabled"
+      }
+    }
+  },
+  "graphql_policy_and_review_state": {
+    "branchProtectionRules": {
+      "nodes": [
+        {
+          "id": "BPR_kwDORg-pJ84FHr19",
+          "pattern": "main",
+          "requiresApprovingReviews": true,
+          "requiredApprovingReviewCount": 1,
+          "requiresCodeOwnerReviews": true,
+          "requireLastPushApproval": true,
+          "dismissesStaleReviews": true,
+          "requiresConversationResolution": true,
+          "isAdminEnforced": true,
+          "requiresStatusChecks": true,
+          "requiresStrictStatusChecks": true,
+          "requiredStatusCheckContexts": [
+            "validate"
+          ],
+          "allowsForcePushes": false,
+          "allowsDeletions": false,
+          "restrictsPushes": false,
+          "pushAllowances": {
+            "totalCount": 0
+          },
+          "bypassPullRequestAllowances": {
+            "totalCount": 0
+          },
+          "bypassForcePushAllowances": {
+            "totalCount": 0
+          },
+          "branchProtectionRuleConflicts": {
+            "totalCount": 0
+          }
+        }
+      ]
+    },
+    "pr2": {
+      "mergeStateStatus": "BLOCKED",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "reviews": {
+        "totalCount": 0
+      },
+      "reviewThreads": {
+        "totalCount": 0
+      }
+    },
+    "pr3": {
+      "mergeStateStatus": "BLOCKED",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "reviews": {
+        "totalCount": 0
+      },
+      "reviewThreads": {
+        "totalCount": 0
+      }
+    }
+  },
+  "security_metadata": {
+    "dependabot": {
+      "unavailable": true,
+      "http_status": "403",
+      "message": "Dependabot alerts are disabled for this repository."
+    },
+    "code_scanning": {
+      "unavailable": true,
+      "http_status": "404",
+      "message": "no analysis found"
+    },
+    "secret_scanning": {
+      "open_count": 0,
+      "pagination": "100 requested; no items returned"
+    }
+  },
+  "production_deployments": {
+    "count": 0
+  },
+  "pull_requests": [
+    {
+      "number": 2,
+      "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/pull/2",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "commits": 11,
+      "changed_files": 52,
+      "additions": 3722,
+      "deletions": 530,
+      "updated_at": "2026-11-07T15:32:29Z",
+      "head_branch": "infra/production-preparation",
+      "head_sha": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+      "base_branch": "main",
+      "base_sha": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+      "author": "StartingWeb",
+      "checks": [
+        {
+          "id": 128445070852,
+          "name": "validate",
+          "head_sha": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386551265/job/128445070852",
+          "started_at": "2026-11-07T15:28:38Z",
+          "completed_at": "2026-11-07T15:31:55Z",
+          "app_id": 15368
+        },
+        {
+          "id": 128445063136,
+          "name": "validate",
+          "head_sha": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386548809/job/128445063136",
+          "started_at": "2026-11-07T15:28:36Z",
+          "completed_at": "2026-11-07T15:31:59Z",
+          "app_id": 15368
+        }
+      ],
+      "workflow_runs": [
+        {
+          "id": 42386551265,
+          "name": "CI",
+          "event": "pull_request",
+          "head_branch": "infra/production-preparation",
+          "head_sha": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+          "run_attempt": 1,
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386551265"
+        },
+        {
+          "id": 42386548809,
+          "name": "CI",
+          "event": "push",
+          "head_branch": "infra/production-preparation",
+          "head_sha": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+          "run_attempt": 1,
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386548809"
+        }
+      ],
+      "compare_with_main": {
+        "status": "ahead",
+        "ahead_by": 11,
+        "behind_by": 0,
+        "total_commits": 11,
+        "merge_base_sha": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+        "changed_file_count": 52,
+        "dependency_manifests_changed": []
+      },
+      "job_step_verification": [
+        {
+          "job_id": 128445070852,
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Restore",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build Release",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Start disposable SQL Server for migration integration tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Automated .NET tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Deployment and security tests (offline)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate workflow YAML and embedded scripts",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Exercise isolated Docker deployment and rollback failures",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Generate reviewable SQL without database access",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate dedicated runtime installer on disposable SQL",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Audit all NuGet dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Prepare application artifact from this exact commit",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build and verify linux/amd64 runtime image",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Store immutable application artifact",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Publish test, SQL and vulnerability evidence",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Failure report",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Remove disposable SQL Server",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "job_id": 128445063136,
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Restore",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build Release",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Start disposable SQL Server for migration integration tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Automated .NET tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Deployment and security tests (offline)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate workflow YAML and embedded scripts",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Exercise isolated Docker deployment and rollback failures",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Generate reviewable SQL without database access",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate dedicated runtime installer on disposable SQL",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Audit all NuGet dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Prepare application artifact from this exact commit",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build and verify linux/amd64 runtime image",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Store immutable application artifact",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Publish test, SQL and vulnerability evidence",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Failure report",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Remove disposable SQL Server",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/pull/3",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "commits": 5,
+      "changed_files": 22,
+      "additions": 2557,
+      "deletions": 0,
+      "updated_at": "2026-11-07T15:32:31Z",
+      "head_branch": "infra/schema-compatibility-review",
+      "head_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+      "base_branch": "main",
+      "base_sha": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+      "author": "StartingWeb",
+      "checks": [
+        {
+          "id": 128445080857,
+          "name": "validate",
+          "head_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386554511/job/128445080857",
+          "started_at": "2026-11-07T15:28:40Z",
+          "completed_at": "2026-11-07T15:31:33Z",
+          "app_id": 15368
+        },
+        {
+          "id": 128445066164,
+          "name": "validate",
+          "head_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386549835/job/128445066164",
+          "started_at": "2026-11-07T15:28:37Z",
+          "completed_at": "2026-11-07T15:31:12Z",
+          "app_id": 15368
+        }
+      ],
+      "workflow_runs": [
+        {
+          "id": 42386554511,
+          "name": "CI",
+          "event": "pull_request",
+          "head_branch": "infra/schema-compatibility-review",
+          "head_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+          "run_attempt": 1,
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386554511"
+        },
+        {
+          "id": 42386549835,
+          "name": "CI",
+          "event": "push",
+          "head_branch": "infra/schema-compatibility-review",
+          "head_sha": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+          "run_attempt": 1,
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/StartingWeb/AndersonMultiMarcas/actions/runs/42386549835"
+        }
+      ],
+      "compare_with_main": {
+        "status": "ahead",
+        "ahead_by": 5,
+        "behind_by": 0,
+        "total_commits": 5,
+        "merge_base_sha": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+        "changed_file_count": 22,
+        "dependency_manifests_changed": []
+      },
+      "job_step_verification": [
+        {
+          "job_id": 128445080857,
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Restore",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build Release",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Start disposable SQL Server for migration integration tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Automated .NET tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Deployment and security tests (offline)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate workflow YAML and embedded scripts",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Exercise isolated Docker deployment and rollback failures",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Generate reviewable SQL without database access",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Audit all NuGet dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Prepare application artifact from this exact commit",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build and verify linux/amd64 runtime image",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Store immutable application artifact",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Publish test, SQL and vulnerability evidence",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Failure report",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Remove disposable SQL Server",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "job_id": 128445066164,
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Restore",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build Release",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Start disposable SQL Server for migration integration tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Automated .NET tests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Deployment and security tests (offline)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate workflow YAML and embedded scripts",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Exercise isolated Docker deployment and rollback failures",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Generate reviewable SQL without database access",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Audit all NuGet dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Prepare application artifact from this exact commit",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build and verify linux/amd64 runtime image",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Store immutable application artifact",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Publish test, SQL and vulnerability evidence",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Failure report",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Remove disposable SQL Server",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "codeowners_and_workflows": {
+    "main": {
+      "ref": "1e5612276e0809166a2ea33a21deabee0bf0f768",
+      "tree_truncated": false,
+      "codeowners_files": [],
+      "workflows": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "blob_sha": "3cc4a5f54417de5c75a64b61a12f958c42e8387c",
+          "sha256": "1f6a36fb7c67fe50d62d91a4e726c9391bd59bea72b9e8eed010436c2c424796",
+          "top_level_permissions": [
+            "contents: read"
+          ],
+          "action_refs": [
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4",
+            "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4"
+          ]
+        },
+        {
+          "path": ".github/workflows/cd.yml",
+          "blob_sha": "0b1b3b2c0b6a6bee57a2b0d8613d977320f01863",
+          "sha256": "45387e3ba6ccbf90caf97635d88600fbf1f623091e7187f01d53192a27952294",
+          "top_level_permissions": [
+            "contents: read",
+            "actions: read"
+          ],
+          "action_refs": [
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4",
+            "- uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4"
+          ]
+        }
+      ]
+    },
+    "pr2": {
+      "ref": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+      "tree_truncated": false,
+      "codeowners_files": [
+        {
+          "path": ".github/CODEOWNERS",
+          "blob_sha": "d22f2109071047fb154a94034be87e2c1b7d91dc",
+          "sha256": "3e1bb08ffa38156586b94f4b76ea766e2f32a1ce744124be0db9a394a35463ae",
+          "content": "# Workflow and production infrastructure changes require owner review on main.\n# Add an independent authorized maintainer before activating production.\n/.github/ @StartingWeb\n/scripts/ci/ @StartingWeb\n/scripts/deploy/ @StartingWeb\n/scripts/ops/ @StartingWeb\n/deploy/ @StartingWeb\n"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "blob_sha": "de140a4af1eac0ea1a1fa5f31860d25b9f8d6d61",
+          "sha256": "a375551275186d0f5d37078e429ac367f71978be2bcd9acf61dcfaef473bbac9",
+          "top_level_permissions": [
+            "contents: read"
+          ],
+          "action_refs": [
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4",
+            "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4"
+          ]
+        },
+        {
+          "path": ".github/workflows/cd.yml",
+          "blob_sha": "f73675e66c502fb300e1685cdd4ab43165965ee1",
+          "sha256": "a35d8036676f6611a01c72680f5ba04b223ff70019f8032cf9c116fcbf248932",
+          "top_level_permissions": [
+            "contents: read",
+            "actions: read"
+          ],
+          "action_refs": [
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4",
+            "- uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4"
+          ]
+        }
+      ]
+    },
+    "pr3": {
+      "ref": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+      "tree_truncated": false,
+      "codeowners_files": [],
+      "workflows": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "blob_sha": "3cc4a5f54417de5c75a64b61a12f958c42e8387c",
+          "sha256": "1f6a36fb7c67fe50d62d91a4e726c9391bd59bea72b9e8eed010436c2c424796",
+          "top_level_permissions": [
+            "contents: read"
+          ],
+          "action_refs": [
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4",
+            "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4"
+          ]
+        },
+        {
+          "path": ".github/workflows/cd.yml",
+          "blob_sha": "0b1b3b2c0b6a6bee57a2b0d8613d977320f01863",
+          "sha256": "45387e3ba6ccbf90caf97635d88600fbf1f623091e7187f01d53192a27952294",
+          "top_level_permissions": [
+            "contents: read",
+            "actions: read"
+          ],
+          "action_refs": [
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4",
+            "- uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4",
+            "- uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4"
+          ]
+        }
+      ]
+    }
+  },
+  "proposed_not_applied": {
+    "method": "PATCH",
+    "endpoint": "/repos/StartingWeb/AndersonMultiMarcas/branches/main/protection/required_pull_request_reviews",
+    "body": {
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": false,
+      "required_approving_review_count": 0,
+      "require_last_push_approval": false
+    },
+    "preserve_pull_request_requirement": true,
+    "preserve_all_other_branch_environment_variable_secret_workflow_permissions": true
+  },
+  "limitations": [
+    "Secret values are never returned by the secrets-list endpoint and were not read. Presence of a secret name is not proof of a usable credential.",
+    "Dependabot alert endpoint is disabled; no zero-vulnerabilities claim is made from that endpoint.",
+    "Code scanning has no analysis; CI security and NuGet step conclusions are separate evidence.",
+    "Branch-protection update is a reviewed proposal and was not submitted to GitHub. API schema validates support for count 0, not a live mutation test.",
+    "New local CD/runtime-image verification changes prepared in this session are not part of the recorded remote SHAs or their successful CI.",
+    "Current protection requires an independent reviewer; existing CI success alone does not authorize integration or deployment."
+  ],
+  "local_verification": {
+    "checked_at_utc": "2026-11-07T16:04:04.801276+00:00",
+    "merge_tree": {
+      "left": "8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+      "right": "3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+      "command": "git merge-tree --write-tree --messages <left> <right>",
+      "exit_code": 0,
+      "result_tree": "1088e7251b3d337b1e5de401acebd6a361115639",
+      "conflict_messages": [],
+      "refs_index_and_worktree_unchanged": true,
+      "note": "Creates only a local tree object; no merge commit or GitHub mutation. No combined CI was executed."
+    },
+    "gitleaks": [
+      {
+        "range": "1e5612276e0809166a2ea33a21deabee0bf0f768..3f319d4de6cdc287fa9b2730bb413ac54b1be518",
+        "commits_scanned": 11,
+        "bytes_scanned_approx": 308154,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "range": "1e5612276e0809166a2ea33a21deabee0bf0f768..8116388ca2eaac0ba7e9a0e473c9401b776f8912",
+        "commits_scanned": 5,
+        "bytes_scanned_approx": 164809,
+        "exit_code": 0,
+        "findings": 0
+      }
+    ]
+  }
+}

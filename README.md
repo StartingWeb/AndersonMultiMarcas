@@ -4,7 +4,7 @@ Sistema de catálogo e gestão de uma revenda de veículos: site público, filtr
 
 Última atualização: **07/11/2026**. Preparação nas branches `infra/production-preparation` (PR #2) e `infra/schema-compatibility-review` (PR #3). A aplicação publicada e o mecanismo legado permanecem preservados; a identidade SQL dedicada foi instalada apenas na configuração do destino futuro. Recuperação técnica referenciada no Release `fb8a205768dce239c960ffb1cfb043b2680de7b3`; código descompilado foi tratado como evidência, não como fonte original.
 
-Banco produtivo corrigido nesta rodada: A/B/C aplicadas, Marca 4 **Jaguar (cadastro adicional)**, LogoUrl NULL e índice único. Backup restaurado, DBCC e compatibilidade antigo/novo aprovados. Publicação nova e CI/CD ainda bloqueados por revisão independente, homologação R2 e recuperação de fotos de vendedores ausentes (404 na amostra), decisão sobre backup externo e paridade. [Estado e próximas ações](docs/PENDENCIAS_PRODUCAO.md), [recibo de execução](docs/evidence/PRODUCTION_SQL_2026-11-07.json).
+Banco produtivo corrigido em 07/11: A/B/C aplicadas, Marca 4 **Jaguar (cadastro adicional)**, LogoUrl NULL e índice único. Backup restaurado, DBCC e compatibilidade antigo/novo aprovados; não repetir migrations. A operação temporária com [backup exclusivamente local foi aceita](docs/ACEITE_RISCO_BACKUP_LOCAL.md). Publicação depende da política GitHub individual aprovada e aplicada, homologação R2, decisão sobre as mídias ausentes e paridade. Nesta rodada, **não executar merge, deploy ou ativação de gates**. [Estado e próximas ações](docs/PENDENCIAS_PRODUCAO.md), [recibo SQL](docs/evidence/PRODUCTION_SQL_2026-11-07.json).
 
 ## Tecnologias e requisitos
 
@@ -85,7 +85,7 @@ dotnet ef migrations script --idempotent --project Data/Data.csproj --startup-pr
 
 O [CI](.github/workflows/ci.yml) compila, testa .NET/Python/SQL, audita vulnerabilidades, gera SQL revisável e manifest, constrói a imagem Linux x64 e valida inicialização e mídia nativa. Os ensaios Docker verificam deploy/rollback e falhas de integridade, configuração e saúde.
 
-O [CD](.github/workflows/cd.yml) prepara um bundle imutável após CI aprovado na `main`; a publicação continua **desabilitada**. Uma futura ativação exige variáveis explícitas, paridade aprovada, Environment `production` protegido, revisão de bypass administrativo, SSH com host key fixada e configuração local no servidor. As PRs #2/#3 receberam commits publicados; não houve merge nem deploy.
+O [CD](.github/workflows/cd.yml) prepara um bundle imutável após CI aprovado na `main`; a publicação continua **desabilitada**. A imagem final reconstruída no CD deve passar pelo ensaio offline sem rede, e o empacotador confere o ID da imagem e o relatório aprovado antes de exportá-la. Uma futura ativação exige variáveis explícitas, paridade aprovada, Environment `production` protegido, revisão de bypass administrativo, SSH com host key fixada e configuração local no servidor. As PRs #2/#3 permanecem sem merge.
 
 A entrega verifica checksums e identidade do commit, faz health check e retorna à imagem/container anterior se falhar. O rollback manual reutiliza o artefato aprovado; não reverte banco automaticamente.
 
@@ -97,10 +97,12 @@ A entrega verifica checksums e identidade do commit, faz health check e retorna 
 - [Segurança e regressões](docs/SEGURANCA_E_REGRESSOES.md)
 - [Pendências para produção](docs/PENDENCIAS_PRODUCAO.md)
 
-## Estado operacional — 06/11/2026
+## Estado operacional — 07/11/2026
 
 A aplicação pública ainda usa o container legado. O destino unificado está preparado, com deploy desabilitado e PRs de infraestrutura/schema em revisão. `anderson_runtime` foi instalado com permissões limitadas para o ambiente futuro, sem reiniciar o SQL compartilhado nem alterar a conexão do legado. As migrations comerciais A/B/C foram aplicadas em 07/11, incluindo o rótulo aprovado do ID 4 e LogoUrl NULL. O corte continua bloqueado pelas dependências externas registradas.
 
-O backup diário de 06/11 às 03h foi concluído e verificado, com notificação aceita pelo SMTP; a próxima execução é 07/11 às 03h, America/Sao_Paulo. A primeira publicação já está autorizada **condicionalmente** pelo usuário: somente após confirmar o nome, resolver os demais bloqueios e satisfazer legitimamente checks/revisão. Não habilitar gates enquanto isso faltar. Depois da ativação, atualizações válidas da main publicarão automaticamente, sem aprovação por release.
+O backup diário de 07/11 às 03h foi concluído e verificado, com notificação aceita pelo SMTP; a próxima execução é 08/11 às 03h, America/Sao_Paulo. A retenção permanece 7 diários/4 semanais/3 mensais, com monitor ativo e nenhuma cópia excluída nesta auditoria. Backup local não oferece recuperação após perda total da VPS. O aceite dessa limitação está registrado sem prazo arbitrário de revisão.
+
+A [política individual proposta](docs/GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md) mantém PR e CI obrigatórios, admins sujeitos às regras, conversas resolvidas e proibição de force push/exclusão; só os requisitos de aprovação humana incompatíveis com mantenedor único dependem de alteração autorizada. A proteção atual ainda exige outro revisor. [R2](docs/VALIDACAO_R2.md) e [recuperação de mídias](docs/RECUPERACAO_MIDIAS_R2.md) têm diagnósticos separados: acesso de leitura não comprova escrita, e objetos ausentes precisam de decisão própria. Nenhum destino Cloudflare foi criado.
 
 Referências: [pendências atuais](docs/PENDENCIAS_PRODUCAO.md), [identidade SQL](docs/USUARIO_SQL_RUNTIME.md), [primeiro corte](docs/ATIVACAO_PRODUCAO.md), [CI/CD](docs/CI_CD_DEPLOYMENT.md), [rollback](docs/ROLLBACK_PRODUCAO.md), [backup](docs/BACKUP_ANDERSONMULTIMARCAS.md) e [R2](docs/VALIDACAO_R2.md). As versões de migration e suas evidências permanecem na [PR #3](https://github.com/StartingWeb/AndersonMultiMarcas/pull/3); a infraestrutura/runtime na [PR #2](https://github.com/StartingWeb/AndersonMultiMarcas/pull/2).

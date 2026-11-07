@@ -2,6 +2,8 @@
 
 Atualizado em 07/11/2026, horário de Brasília. A/B/C autorizadas/aplicadas com backup restaurável. Primeiro corte tem autorização condicional, mas segue bloqueado e não executado.
 
+O proprietário confirmou em 07/11/2026 o **aceite temporário de backup exclusivamente local na VPS**, com risco de perda das cópias em caso de perda total do servidor. O [registro formal do aceite](./ACEITE_RISCO_BACKUP_LOCAL.md) preserva todos os controles atuais e não estabelece data de revisão arbitrária. A ausência de cópia externa, isoladamente, não bloqueia a preparação técnica. A decisão não habilita deploy nem autoriza contratação ou transferência externa.
+
 ## Resultado comprovado
 
 | Item | Evidência |
@@ -18,9 +20,11 @@ Atualizado em 07/11/2026, horário de Brasília. A/B/C autorizadas/aplicadas com
 | SMTP | Backup e confirmação da restauração aceitos em uma tentativa, DATA 250, certificado validado, TLS 1.3; destinatário startingwebltda@gmail.com |
 | Caixa de entrada | Entrega não comprovada |
 | Preservação | Três cópias nativas presentes (diários 06/07 e extra); cinco snapshots presentes, nenhum anterior removido nesta rodada |
-| Armazenamento/monitor | 66.606.850.048 bytes livres no recibo; monitor saudável; somente VPS, sem cópia externa autorizada |
+| Armazenamento/monitor | 65.336.471.552 bytes livres na auditoria de 07/11 12:57; monitor saudável às 12:35; operação somente local com risco aceito |
 
 [Recibo consolidado](./evidence/PRODUCTION_SQL_2026-11-07.json). O campo backup.last_restore retrata o instante anterior ao restore novo; o campo restore e a confirmação SMTP complementar registram a restauração efetiva desta rodada.
+
+[Auditoria operacional de 07/11 às 12:57–12:59](./evidence/BACKUP_AUDIT_2026-11-07.json): leitura por SSH confirmou o diário, timers, retenção e último restore já existente. O helper `deployment-check` revalidou tamanho/SHA nativo, identidade/snapshot Restic e `check --read-data`, retornando `ready`, com contrato de escrita conhecido compatível. Cinco snapshots e três nativos permaneceram idênticos antes/depois. Não houve novo backup, restore, envio SMTP, limpeza ou alteração de configuração/serviços nesta auditoria.
 
 ## Arquitetura reutilizada e isolamento
 
@@ -32,7 +36,7 @@ O Anderson usa os mesmos componentes já instalados: systemd, Docker, SQL Server
 
 Diretório privado: `/opt/startingweb/backups/anderson-multimarcas`, proprietário `pedro`, modo 0700. Configuração e chave Restic são 0600 e permanecem no servidor. A última cópia nativa está em `/opt/startingweb/backups/anderson-multimarcas/native/20261107T150452Z-c36eef7e/database.bak`; cópias nativas antigas são rotacionadas conforme retenção. O repositório criptografado está em `/opt/startingweb/backups/anderson-multimarcas/repository`; recibos em `state/` e relatórios por execução em `logs/`.
 
-No padrão diário, os dois backups nativos mais recentes são mantidos com proteção de acesso; a execução extra usou --preserve-existing, mantendo todos os anteriores sem mudar a política; esses `.bak` não têm criptografia SQL nativa. As cópias históricas no Restic são criptografadas. Tanto os `.bak` quanto o Restic estão no disco da VPS: **não oferecem recuperação de perda total da VPS**. Nenhum destino externo já autorizado foi encontrado no mecanismo reutilizado. Cópia protegida fora da VPS continua pendente; não usar o bucket produtivo de mídias para isso.
+No padrão diário, os dois backups nativos mais recentes são mantidos com proteção de acesso; a execução extra usou --preserve-existing, mantendo todos os anteriores sem mudar a política; esses `.bak` não têm criptografia SQL nativa. As cópias históricas no Restic são criptografadas. Tanto os `.bak` quanto o Restic estão no disco da VPS: **não oferecem recuperação de perda total da VPS**. Esse risco local foi expressamente aceito em 07/11/2026. Cópia protegida fora da VPS continua como melhoria recomendada, dependente de autorização de destino e credenciais; não usar o bucket produtivo de mídias para isso. Não é bloqueio isolado à preparação técnica sob o aceite atual.
 
 ## Contrato de cada execução
 
@@ -114,6 +118,18 @@ O timer executou de fato às 03:00:00.722334, encerrando às 03:00:44.006428 (Br
 Nesta rodada foi reconferido o hash do nativo, a presença/identidade do snapshot e o Restic check/read-data, sem criar backup duplicado, enviar outro e-mail ou excluir cópias. Retenção 7/4/3 e monitor saudável. Próximo timer: **07/11/2026 03:00 America/Sao_Paulo (06:00 UTC)**, com Persistent e linger preservados. Esta evidência substitui a indicação histórica de que a execução de hoje ainda estaria no futuro.
 
 O backup adicional pré-SQL foi concluído/restaurado em 07/11 conforme recibo acima. Criar outro backup restaurável imediatamente antes do corte futuro; o backup desta janela não é autorização permanente para publicar. Segunda cópia externa continua dependendo de destino autorizado; nenhum dado foi transferido para destino novo.
+
+## Revalidação operacional e aceite em 07/11/2026
+
+O diário de 07/11 executou às 03:00:00.766526 e concluiu às 03:00:38.601179 (Brasília); o serviço terminou às 03:00:45, com `Result=success` e código zero. O próximo disparo confirmado é **08/11/2026 03:00 America/Sao_Paulo (06:00 UTC)**. O host usa Etc/UTC com NTP sincronizado; os calendários systemd declaram explicitamente America/Sao_Paulo. Os timers de backup e monitor seguem enabled/active, `Persistent=yes`, `Linger=yes`.
+
+O último monitor salvo às 12:35:36 apontou `healthy`, snapshot verificado presente e notificação aceita, sem arquivo de incidente pendente. O próximo monitor era 13:35 de Brasília no instante auditado. Não se chamou a operação `monitor`, que pode gravar status ou emitir alerta, nem se injetou falha. Diário e extra registram SMTP aceito em uma tentativa com DATA 250, certificado validado e TLS 1.3; o aceite não comprova caixa de entrada.
+
+O último restore real permanece `46fe30bdb760`, concluído às 12:07:28, com DBCC, restauração nativa e integridade referencial aprovados, zero violações e comparação da cópia com a origem aprovada. Seu campo `schema_compatibility_status=review_required` é histórico da cópia pré-A/B/C comparada ao modelo futuro; não se deve interpretar essa cópia como novo restore posterior às alterações. O checker de leitura atual retornou contrato conhecido compatível, e continua necessário novo backup restaurável antes do futuro primeiro deploy.
+
+Foram verificados somente metadados do banco Anderson: ONLINE, login runtime habilitado, usuário correspondente presente e 23 registros no histórico EF. Não se repetiram A/B/C, provisionamento de usuário, rotação de credenciais ou gravação comercial. As configurações/chave mantêm modo 0600 e diretórios privados 0700. Não se leu configuração SMTP nem conteúdo de chave. As cinco identidades de snapshots verificados e as três cópias nativas foram comparadas antes/depois, sem qualquer exclusão nesta auditoria.
+
+A operação temporária somente local está formalizada no [aceite de risco](./ACEITE_RISCO_BACKUP_LOCAL.md). Agendamento, verificações, restauração, criptografia Restic, retenção 7/4/3 e relatórios/alertas permanecem exigidos; nenhuma data de revisão foi inventada. A melhoria externa continua recomendada e requer decisão própria, sem bloquear sozinha a preparação técnica.
 
 ## Backup extra sem exclusão e recuperação
 
