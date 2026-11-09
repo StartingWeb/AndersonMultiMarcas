@@ -1,0 +1,232 @@
+{
+  "at": "2026-11-07T16:36:23.113014+00:00",
+  "run_id": "20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c",
+  "prefix": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/",
+  "bucket": "anderson-multimarcas-homologacao",
+  "negative_bucket": "anderson-multimarcas-homologacao-negativa",
+  "production_bucket": "startingweb-storage",
+  "credential_scope": "Object Read & Write only anderson-multimarcas-homologacao",
+  "private_file_mode": "0600",
+  "private_directory_mode": "0700",
+  "positive": [
+    {
+      "http": 200,
+      "test": "upload"
+    },
+    {
+      "http": 200,
+      "test": "authenticated_head",
+      "content_type": "image/svg+xml"
+    },
+    {
+      "http": 200,
+      "test": "authenticated_download_hash",
+      "sha256": "49ad18fb22931675e6b3e0df4a3c3d99183f73e435d7e6cebba39558f32fcb06",
+      "sha256_matches": true,
+      "content_type": "image/svg+xml"
+    },
+    {
+      "http": 404,
+      "code": "NoSuchKey",
+      "test": "nonexistent_object"
+    },
+    {
+      "http": 200,
+      "test": "overwrite_synthetic"
+    },
+    {
+      "http": 200,
+      "test": "overwritten_download_hash",
+      "sha256": "6a233e712eb8bb12420322c5ed840153bba96d84094bdc345acdb7b110119c3d",
+      "sha256_matches": true,
+      "content_type": "image/svg+xml"
+    },
+    {
+      "http": 204,
+      "test": "delete_synthetic"
+    },
+    {
+      "http": 404,
+      "code": "NoSuchKey",
+      "test": "absence_after_delete"
+    }
+  ],
+  "negative": [
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "anderson-multimarcas-homologacao-negativa",
+      "operation": "list",
+      "key": null,
+      "list_prefix": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/"
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "anderson-multimarcas-homologacao-negativa",
+      "operation": "read",
+      "key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/never-created.svg",
+      "list_prefix": null
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "anderson-multimarcas-homologacao-negativa",
+      "operation": "create",
+      "key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/never-created.svg",
+      "list_prefix": null
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "anderson-multimarcas-homologacao-negativa",
+      "operation": "delete",
+      "key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/never-created.svg",
+      "list_prefix": null
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "startingweb-storage",
+      "operation": "list",
+      "key": null,
+      "list_prefix": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/"
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "startingweb-storage",
+      "operation": "read",
+      "key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/never-created.svg",
+      "list_prefix": null
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "startingweb-storage",
+      "operation": "create",
+      "key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/never-created.svg",
+      "list_prefix": null
+    },
+    {
+      "http": 403,
+      "code": "AccessDenied",
+      "bucket": "startingweb-storage",
+      "operation": "delete",
+      "key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/never-created.svg",
+      "list_prefix": null
+    }
+  ],
+  "public": {
+    "url": "https://pub-46c1a84ed617400fa2e2fdc830248159.r2.dev",
+    "object_key": "codex-homologacao/20261107T163623Z-56f7ba2ecd541ae7c1c4cf0c/synthetic.svg",
+    "http": 200,
+    "content_type": "image/svg+xml",
+    "sha256": "49ad18fb22931675e6b3e0df4a3c3d99183f73e435d7e6cebba39558f32fcb06",
+    "sha256_matches": true,
+    "https_certificate_validation": true,
+    "tls_version": "TLSv1.2",
+    "certificate_not_after": "Feb  3 05:25:19 2027 GMT",
+    "negative_bucket_exposure": "Negative bucket public development URL disabled; no custom domain; rechecked after S3 tests. No public negative URL enabled.",
+    "after_cleanup_http": 404
+  },
+  "cleanup": {
+    "list_http": 200,
+    "remaining_run_keys": [],
+    "prefix_empty": true
+  },
+  "production_objects_changed": 0,
+  "synthetic": {
+    "original_sha256": "49ad18fb22931675e6b3e0df4a3c3d99183f73e435d7e6cebba39558f32fcb06",
+    "overwritten_sha256": "6a233e712eb8bb12420322c5ed840153bba96d84094bdc345acdb7b110119c3d",
+    "content_type": "image/svg+xml",
+    "original_bytes": 178
+  },
+  "status": "passed",
+  "first_attempt": {
+    "run_id": "20261107T163548Z-4a6a9518845211cb81e9d13b",
+    "public_http": 403,
+    "completed_positive_tests": [
+      "upload",
+      "authenticated_head",
+      "authenticated_download_hash",
+      "nonexistent_object"
+    ],
+    "cleanup": {
+      "delete_retry": {
+        "http": 204
+      },
+      "list_http": 200,
+      "remaining_run_keys": [],
+      "prefix_empty": true
+    },
+    "note": "First public request returned 403 after URL activation. Repeated with browser User-Agent and new unique prefix; succeeded. Cause of first response not established.",
+    "synthetic": {
+      "original_sha256": "dd850c475a0bb6881d2bdded7c65bc34e06bb4a6d8dfd6adb3f528effe7da1e6",
+      "overwritten_sha256": "d96cb0c6ed468091ec3aad0cd40a3b98a640d0792982e9212a5b9c0ad9008902",
+      "content_type": "image/svg+xml",
+      "original_bytes": 178
+    },
+    "positive_results": [
+      {
+        "http": 200,
+        "test": "upload"
+      },
+      {
+        "http": 200,
+        "test": "authenticated_head",
+        "content_type": "image/svg+xml"
+      },
+      {
+        "http": 200,
+        "test": "authenticated_download_hash",
+        "sha256": "dd850c475a0bb6881d2bdded7c65bc34e06bb4a6d8dfd6adb3f528effe7da1e6",
+        "sha256_matches": true,
+        "content_type": "image/svg+xml"
+      },
+      {
+        "http": 404,
+        "code": "NoSuchKey",
+        "test": "nonexistent_object"
+      }
+    ]
+  },
+  "account_identity_sha256": "8d21e5a4a87e2a487507317c01098119cf037e56af07a0b86d9e330ed4dacd08",
+  "management_audit": {
+    "method": "Cloudflare dashboard via local Safari; account compared with runtime fingerprint",
+    "initial_buckets": [
+      "startingweb-storage"
+    ],
+    "created_buckets": [
+      "anderson-multimarcas-homologacao",
+      "anderson-multimarcas-homologacao-negativa"
+    ],
+    "location": "ENAM",
+    "s3_region": "auto",
+    "storage_class": "Standard",
+    "existing_credentials": "Two active account credentials scoped to startingweb-storage; names/values omitted; unchanged",
+    "new_credential": {
+      "name": "Anderson-Homologacao-20261107",
+      "type": "account R2 token",
+      "permission": "Object Read & Write",
+      "buckets": [
+        "anderson-multimarcas-homologacao"
+      ],
+      "admin_permissions": false,
+      "all_buckets": false,
+      "ttl": "Forever",
+      "ip_filter": "default; none configured",
+      "persistence": "Mac only; ignored private JSON; file 0600 and parent 0700; no CI secret created"
+    },
+    "negative_public_access": false,
+    "negative_custom_domains": [],
+    "negative_cors": null,
+    "bucket_locks": [],
+    "lifecycle": "Only default abort of incomplete multipart uploads after 7 days; no expiry of completed objects",
+    "extra_paid_features_enabled": false,
+    "production_dns_changes": false,
+    "public_url_kind": "r2.dev development endpoint; rate limited; not a production delivery SLA",
+    "negative_final_empty_confirmed_in_dashboard": true
+  },
+  "test_method": "Python stdlib SigV4 HTTPS on Mac; credentials read only from private file. Production requests use test-only token and unique nonexistent synthetic key; ListObjectsV2 limited to unique prefix/max-keys=1."
+}

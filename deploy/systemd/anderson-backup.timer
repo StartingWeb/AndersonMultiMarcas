@@ -1,0 +1,12 @@
+[Unit]
+Description=AndersonMultiMarcas backup at 03:00 Sao Paulo
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 America/Sao_Paulo
+Persistent=true
+AccuracySec=1s
+RandomizedDelaySec=0
+Unit=anderson-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -45,6 +45,8 @@ class LocalSqlTests(unittest.TestCase):
         self.assertEqual('Development', env['DOTNET_ENVIRONMENT'])
         self.assertEqual('Development', env['ASPNETCORE_ENVIRONMENT'])
         self.assertEqual('false', env['StorageMigration__Execute'])
+        self.assertEqual('false', env['Database__ApplyMigrationsOnStartup'])
+        self.assertEqual('false', env['DevelopmentBootstrap__Enabled'])
 
     def test_stop_preserves_unrelated_local_files(self):
         note = self.state / 'unrelated.txt'

@@ -106,6 +106,15 @@ class FakeDocker(release.Docker):
         if commit is not None and current["Config"]["Labels"].get(release.REVISION_LABEL) != commit:
             raise release.DeploymentError("Simulated wrong release identity")
 
+    def check_image(self, manifest, archive):
+        # Transactional fixtures model Docker identity; archive parsing has its
+        # own real tar/OCI tests, and smoke_docker exercises the real engine.
+        self.run("load", "--input", str(archive))
+        image = json.loads(self.run("image", "inspect", manifest["imageId"]))[0]
+        release.require(image["Config"]["Labels"][release.REVISION_LABEL] == manifest["commit"],
+                        "Image commit label mismatch")
+        return image["Id"]
+
 
 class ReleaseTests(unittest.TestCase):
     def setUp(self):
@@ -131,7 +140,7 @@ class ReleaseTests(unittest.TestCase):
             "StorageMigration__Execute=false", "LegacyImageImport__RecoverPendingJobsOnStartup=false",
             "Storage__Provider=R2", "DataProtection__ApplicationName=AndersonMultiMarcas",
             "DataProtection__KeysPath=" + release.DP_PATH,
-            "ConnectionStrings__DefaultConnectionProd=Server=isolated.invalid;Password=" + SECRET,
+            "ConnectionStrings__DefaultConnectionProd=Server=isolated.invalid;User Id=amm_runtime;Password=" + SECRET,
         ]) + "\n", encoding="utf-8")
         self.env.chmod(0o600)
         self.enabled = self.root / "shared" / "deploy.enabled"
@@ -141,6 +150,37 @@ class ReleaseTests(unittest.TestCase):
         self.legacy = self.docker.container(LEGACY_IMAGE)
         self.docker.containers[self.server["legacyFallbackContainer"]] = self.legacy
         self.manager = release.ReleaseManager(self.root, docker=self.docker, health_timeout=1)
+        # Only synthetic, disposable fixture: real readiness is tested separately.
+        readiness = mock.patch.object(self.manager, "readiness")
+        self.readiness = readiness.start()
+        self.addCleanup(readiness.stop)
+
+    def test_dotted_dotnet_logging_key_is_a_valid_literal_docker_entry(self):
+        self.env.write_text(self.env.read_text() + 'Logging__LogLevel__Microsoft.AspNetCore=Warning\n')
+        self.assertEqual('Warning', release.validate_env(self.env)['Logging__LogLevel__Microsoft.AspNetCore'])
+
+    def test_administrative_sql_runtime_identity_is_rejected(self):
+        original = self.env.read_text()
+        for identity in ('sa', 'SA', '"sa"', "'sa'"):
+            self.env.write_text(original.replace('User Id=amm_runtime', 'User Id=' + identity))
+            with self.subTest(identity=identity), self.assertRaisesRegex(release.DeploymentError, 'non-sa'):
+                release.validate_env(self.env)
+        self.env.write_text(original.replace('User Id=amm_runtime;', ''))
+        with self.assertRaisesRegex(release.DeploymentError, 'non-sa'):
+            release.validate_env(self.env)
+
+    def test_readiness_failure_prevents_any_docker_mutation(self):
+        self.readiness.side_effect = release.DeploymentError("Backup/schema preflight refused")
+        with self.assertRaises(release.DeploymentError):
+            self.deploy()
+        self.assertEqual([], self.docker.calls)
+
+    def test_real_readiness_rejects_failed_or_malformed_checker(self):
+        manager = release.ReleaseManager(self.root, docker=self.docker)
+        for code, output in ((1, ''), (0, '{}'), (0, 'invalid')):
+            with mock.patch.object(release.subprocess, 'run', return_value=subprocess.CompletedProcess([], code, output)):
+                with self.assertRaises(release.DeploymentError):
+                    manager.readiness()
 
     def bundle(self, commit=FIRST):
         path = self.base / ("bundle-" + commit)
@@ -162,6 +202,22 @@ class ReleaseTests(unittest.TestCase):
         bundle, expected_sha = self.bundle(commit)
         with contextlib.redirect_stdout(io.StringIO()):
             self.manager.deploy(bundle, expected_sha)
+
+    def test_oci_runtime_identity_is_used_for_start_state_and_rollback(self):
+        original = self.docker.check_image
+        def local_identity(manifest, archive):
+            original(manifest, archive)
+            return 'sha256:' + hashlib.sha256(('local-oci-' + manifest['commit']).encode()).hexdigest()
+        self.docker.check_image = local_identity
+        self.deploy(FIRST)
+        expected = 'sha256:' + hashlib.sha256(('local-oci-' + FIRST).encode()).hexdigest()
+        self.assertEqual(expected, self.docker.containers[release.NAME]['Image'])
+        self.assertEqual(expected, self.manager.state()['current']['imageId'])
+        self.deploy(SECOND)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.manager.rollback()
+        self.assertEqual(expected, self.docker.containers[release.NAME]['Image'])
+        self.assertEqual(expected, self.manager.state()['current']['imageId'])
 
     def test_activation_gate_prevents_all_docker_operations(self):
         self.enabled.write_text("disabled\n")

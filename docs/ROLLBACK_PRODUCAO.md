@@ -1,121 +1,99 @@
-# Rollback da aplicação em produção
+# Rollback da aplicação
 
-Data: 2026-11-05. O mecanismo foi preparado localmente. **Não executar estes procedimentos em produção sem autorização explícita.** Nenhum rollback, restart ou alteração de banco foi realizado nesta atividade.
+Atualizado em 07/11/2026, horário de Brasília. Nesta rodada, **nenhum merge, deploy, troca de container/upstream ou ativação de gates está autorizado**.
 
-## Escopo e limites
+## Baseline preservado
 
-Rollback restaura a imagem e a configuração da aplicação anterior. Não desfaz SQL, alterações de dados, importações de mídia ou objetos R2. Uma restauração de banco tem impacto próprio, pode descartar gravações posteriores ao backup e exige autorização e procedimento específicos.
-
-A publicação só deve admitir mudanças de schema compatíveis com a versão anterior. Se esse requisito não puder ser demonstrado, interromper antes da publicação ou preparar um plano separado de recuperação. O executor não tenta tornar um schema incompatível seguro ao voltar a imagem.
-
-O estado saudável de `/health` significa liveness. A confirmação do retorno exige também `/health/release`, identidade esperada quando disponível, HTTPS público e validação operacional dos fluxos pertinentes.
-
-## Baseline legado da auditoria histórica
-
-Antes da primeira release do novo mecanismo, reconfirmar os valores observados abaixo. O retorno precisa funcionar mesmo sem uma release unificada anterior:
-
-| Identificador | Valor observado |
+| Item | Valor |
 | --- | --- |
-| Container antigo | `andersonmultimarcas-web` |
-| Imagem | `startingweb/andersonmultimarcas-release:latest` |
-| Digest atual | `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5` |
-| Commit Release | `fb8a205768dce239c960ffb1cfb043b2680de7b3` |
-| Diretório | `/opt/startingweb/apps/anderson-multimarcas` |
-| Rede | `startingweb_network` |
-| Upstream do proxy | `andersonmultimarcas-web:8080` |
-| Volume DP | `andersonmultimarcas-dataprotection-keys` |
+| Container vivo | `andersonmultimarcas-web` |
+| ID | `9842fa7e0f745dc589ddc9ee230813840524ff65c8aecb3d54cf6eaf7f0c2a78` |
+| Revisão Release | `fb8a205768dce239c960ffb1cfb043b2680de7b3` |
+| Imagem/digest | `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5` |
+| Rede/upstream | `startingweb_network`, `andersonmultimarcas-web:8080` |
+| DP | `andersonmultimarcas-dataprotection-keys`, app `AndersonMultiMarcas` |
+| Nome reservado depois do corte | `andersonmultimarcas-legacy-fb8a205768dc` — ainda não renomeado |
+| Snapshot privado | `/opt/startingweb/apps/anderson-multimarcas-unified/snapshots/preparation-20261106T003900Z` |
+| Arquivo da imagem | `legacy-image.tar.gz`, 151,708,109 bytes |
+| SHA-256 do arquivo | `230ddb5a956a4fbefe065670376e6502cbc60f5c73baf8a5a60cf4673414350a` |
+| Validação | Gzip/tar, hashes dos blobs OCI e docker load aprovados |
 
-Hashes de assemblies do checkout e do container foram correlacionados:
+Metadados completos do container e configuração real foram guardados em arquivo 0600 sob diretório 0700, fora do Git. Não imprimi-los em Actions ou incidentes. Os proxy hosts 4 e 5, seus certificados, aliases e mounts foram inventariados e não modificados. O arquivo de imagem não depende da tag latest nem do prune diário.
 
-| Arquivo | SHA-256 |
-| --- | --- |
-| Project.dll | `d5785c1a5fda6c94473c0a90ea181cd37d87b839db6fe25f08dd9cef56695a8f` |
-| Core.dll | `c5b73f63e3c619f779f59ce9210c28f81a73cb4ec1c185d69331ac95288d31c3` |
-| Data.dll | `9f0ee59eff1755afdb284313d4c4442dcd985b9d78f0a1e9929d8cc03fbba51f` |
-| Domain.dll | `351cc864850c26042435010565068716c5c150e03aa43f987cdbb5877a1a0c13` |
+## O que foi testado
 
-Não confiar exclusivamente na tag `latest` nem no SHA de fonte embutido nas DLLs. Os 26 commits posteriores de publicação não têm commits de fonte correspondentes; a matriz de recuperação em [RECUPERACAO_RELEASE.md](./RECUPERACAO_RELEASE.md) registra a reconciliação local. Reter a imagem pelo conteúdo e o pacote offline, junto à configuração correspondente.
+Nove cenários com Docker real e recursos descartáveis no Mac passaram: deploy válido; falha HTTP503; falha de executável; imagem inválida; checksum adulterado; configuração insegura; transferência interrompida; rollback manual pelo arquivo preservado; retorno ao mesmo container legado simulado. Conferiu-se ausência final de containers, volumes, redes e tags de teste.
 
-## Preparação obrigatória antes do corte
+O executor foi ampliado para a identidade OCI do servidor e retestado; a imagem .NET real foi carregada e ligada a SQL restaurado isolado. Houve retorno de gates locais pela chave SSH real e recusa de shell/SFTP/leitura. As chaves DP persistiram entre dois containers de aplicação de teste. O teste não parou/reiniciou o container legado real e não desviou tráfego pelo NPM.
 
-1. Registrar imagem, container, rede, aliases, mounts e revisão publicada; fazer backup protegido da configuração real.
-2. Guardar a imagem legada em arquivo offline verificado. A limpeza diária do host pode remover imagens não usadas; um container retido e um arquivo protegido reduzem esse risco.
-3. Preservar o checkout e o `deploy.sh` não rastreado, sem executar seu fetch/reset ou build para retornar a um baseline específico.
-4. Preservar o volume Data Protection e o nome da aplicação. Não gerar chaves novas nem trocar o volume durante rollback.
-5. Preservar mídias locais e R2. O diretório de uploads do host não é um volume da instalação atual; verificar sua função antes de qualquer cópia.
-6. Dispor de backup recente do banco correto e restauração testada isoladamente; o rollback de aplicação não usa esse backup automaticamente.
-7. Suspender os mecanismos legados somente com autorização de corte, para que não iniciem deploy concorrente durante a recuperação.
-8. Garantir que o operador conhece o alvo de retorno e o health esperado. Não considerar `localhost:8080` do host como health do Anderson; essa porta pertence a outro projeto.
-9. Antes de habilitar publicações, conferir revisores, prevenção de autoaprovação e regra main do Environment `production`, além de verificar manualmente na interface que o bypass por administradores está desabilitado. A variável `PRODUCTION_ADMIN_BYPASS_REVIEWED=true` é uma declaração dessa revisão humana; o GET Environment não comprova esse estado. Manter as três variáveis de ativação desligadas até a autorização final e reconferir regras alteradas antes de reativar o pipeline após um incidente.
+## Limites
 
-## Rollback automático preparado
+Rollback de aplicação volta imagem e snapshot de configuração. Não desfaz dados, SQL, migrations, importações ou objetos R2. Um restore produtivo pode perder gravações posteriores e exige autorização separada. A/B/C já foram aplicadas sob autorização explícita em 07/11; preservar o estado ampliado e o rótulo aprovado ao voltar o binário. Compatibilidade de escrita/rollback foi ensaiada na cópia; R2 real e paridade final ainda dependem de validação antes do corte.
 
-O executor [release.py](../scripts/deploy/release.py) valida o pacote e o contrato do servidor antes de assumir a operação. Container existente sem identidade do novo mecanismo é recusado; isso impede que um primeiro deploy se aproprie silenciosamente do legado.
+`/health` comprova liveness. Para release unificada, exigir também o commit em `/health/release`, HTTPS público e fluxos relevantes. O legado não tem esse endpoint: hoje retorna 404; usar seu ID/digest registrado e health, sem inventar um SHA de fonte para o binário.
 
-Na primeira ativação, o corte manual autorizado deve reter o container legado e registrar sua referência no contrato do servidor. Se a primeira release falhar após a troca, o mecanismo restaura esse container e seu upstream. A presença e a recuperabilidade do legado precisam ser verificadas antes de iniciar.
+## Primeira publicação: retorno ao legado
 
-Em releases posteriores, o executor preserva imagem e snapshot de configuração da aplicação anterior. Uma falha de inicialização, health ou identidade do commit deve causar retorno à versão anterior e registro do incidente no histórico, sem apagar os pacotes envolvidos. O script usa lock para impedir duas mutações simultâneas.
+Somente após autorização explícita do corte:
 
-Se o retorno automático também falhar, a operação deve terminar como falha e demandar intervenção; não marcar deploy como sucesso nem executar migrations para tentar reparar. Guardar os detalhes sanitizados e preservar os estados para diagnóstico.
+1. Suspender gatilhos do Release e verificar que não existe outra publicação em andamento.
+2. Confirmar imagem offline, snapshot privado, volume DP, backup recente e compatibilidade SQL.
+3. Parar e renomear o legado para o nome reservado, preservando o mesmo container e seus mounts/aliases. Não removê-lo.
+4. Instalar o pacote aprovado pelo executor. Se o health interno falhar, o journal permite voltar ao mesmo ID legado.
+5. Se o health interno passar e a verificação HTTPS/commit falhar, rollback sem alvo volta ao legado retido, mesmo sem release gerida anterior.
+6. Conferir o legado por ID/imagem, health interno, catálogo, HTTPS e imagens. Manter novas tentativas suspensas até diagnóstico.
 
-## Rollback manual futuro
+Nenhum passo de troca acima foi executado na preparação.
 
-Após autorização, o operador deve:
+## Executor e transações
 
-1. Confirmar que não há outra publicação em andamento e suspender novos gatilhos enquanto houver incidente.
-2. Consultar o histórico e escolher uma release local com pacote, imagem e configuração recuperáveis.
-3. Confirmar compatibilidade do banco atual com a release escolhida e integridade dos arquivos.
-4. Executar o comando de rollback com o executor revisado, no host correto.
-5. Conferir a versão que efetivamente ficou ativa, health interno, proxy, HTTPS e fluxos principais.
-6. Registrar o incidente, commit retirado, commit restaurado, horário, resultado e responsável, sem segredos ou dados de clientes.
+[release.py](../scripts/deploy/release.py) exige lock, habilitação local, aprovação de paridade e pacote íntegro. Recusa container vivo não gerido. Cada release guarda imagem/manifesto/configuração imutáveis. `current.json` referencia o ID imutável local; `release.json` preserva a identidade produzida no CI. O ID de configuração clássico pode diferir do ID OCI após load; ambos são vinculados pela configuração/rootfs autenticados.
 
-Comandos preparados, não executados em produção:
+O journal `transaction.json` registra o baseline antes da troca. Em interrupção, rollback sem alvo recupera a transação antes de permitir novo deploy. Falha de recuperação é reportada como falha e mantém evidências; não executar migrations para tentar corrigi-la. Uma falha de escrita no histórico não deve impedir a tentativa de voltar à aplicação.
+
+Comandos futuros, apenas sob autorização operacional:
 
 ```sh
-# Retorno ao alvo anterior registrado pelo mecanismo.
-python3 scripts/deploy/release.py rollback \
+python3 -I -B /opt/startingweb/apps/anderson-multimarcas-unified/bin/release.py rollback \
   --root /opt/startingweb/apps/anderson-multimarcas-unified
 
-# Retorno a uma release específica já instalada e preservada.
-python3 scripts/deploy/release.py rollback \
-  --root /opt/startingweb/apps/anderson-multimarcas-unified \
-  --release SHA_COMPLETO_DA_RELEASE
+# A partir da segunda release gerida, é possível escolher um pacote local retido.
+python3 -I -B /opt/startingweb/apps/anderson-multimarcas-unified/bin/release.py rollback \
+  --root /opt/startingweb/apps/anderson-multimarcas-unified --release SHA_COMPLETO_REVISADO
 ```
 
-Usar o caminho efetivo do executor aprovado no servidor. Não escolher um SHA só porque existe no Git: o alvo precisa ter o pacote e a configuração preservados localmente. Não executar `docker image prune`, `docker compose down -v` ou remoções de releases como parte da recuperação.
+Não escolher um commit apenas porque ele existe no Git: pacote e configuração precisam estar preservados e compatíveis com o banco atual. Não usar fetch/reset/build do deploy antigo como rollback. Não executar prune, compose down -v ou limpeza de volumes/release durante recuperação.
 
-Se existe uma transação interrompida, `rollback` sem `--release` recupera o baseline registrado no journal antes de permitir outra publicação. Esse baseline pode ser o legado, que não tem `/health/release`: validá-lo por imagem, hashes/revisão registrados e health apropriado; não inventar um SHA da fonte para o binário antigo.
+## Emergência e retenção
 
-Depois de uma **primeira publicação concluída com sucesso interno**, ainda não há release unificada anterior em `current.json`. Nesse estado, `rollback` sem alvo restaura o container legado explicitamente retido e confere seu ID de imagem contra a aprovação de paridade antes da troca. Isso permite o retorno automático se a validação HTTPS pública reprovar após o health interno. O legado precisa permanecer parado e recuperável com o nome configurado. Se a tentativa de restaurá-lo falhar, o executor tenta recuperar a aplicação gerida e mantém um journal para intervenção caso a recuperação também falhe.
+Se o executor não conseguir recuperar, preservar journal e snapshots, identificar o baseline e planejar manualmente a liberação do nome do container novo e retorno do antigo. Manter NPM, rede e volume DP. Se faltar imagem, conferir SHA e carregar o arquivo offline; não reconstruir a partir da main corrente. Se houver incompatibilidade de banco, interromper e adotar o plano de banco aprovado, sem restore automático.
 
-A partir da segunda publicação bem-sucedida, o alvo anterior gerido está disponível para o comando de rollback. O procedimento manual abaixo fica reservado a situações em que o estado ou os recursos exigidos pelo executor não permitem recuperação normal.
+Manter aplicação ativa, pelo menos um baseline anterior e legado inicial durante o período de observação a ser definido na autorização. Arquivos de configuração nos snapshots contêm segredos e exigem 0600/0700. Revalidar os gates, Environment automático e proteção/revisão da main e manter publicações suspensas durante incidentes. Ver [ATIVACAO_PRODUCAO.md](./ATIVACAO_PRODUCAO.md).
 
-## Recuperação de emergência do legado
+## Preflight e recuperação
 
-Se o novo estado estiver indisponível ou corrompido e o executor não conseguir realizar o retorno:
+O deploy novo exige backup íntegro/recente e schema conhecido compatível pelo checker fixo. Rollback não exige esse checker: uma falha de backup não deve impedir restaurar a aplicação anterior. Lock, gates locais, integridade do pacote, configurações e health continuam obrigatórios. Em falha de rollback o journal permanece; bloquear novas publicações e acionar recuperação manual. Não religar gates nem remover journal para forçar sucesso.
 
-1. Interromper novas tentativas e preservar evidências, sem imprimir arquivos `.env` ou logs potencialmente sensíveis.
-2. Identificar o container legado retido pelo inventário do corte, seu digest e os mounts originais.
-3. Planejar a liberação do nome/alias do container novo e a reativação do antigo, preservando a rede e o volume DP. Executar apenas com autorização operacional.
-4. Confirmar o upstream do NPM e os domínios. Não modificar o proxy se a restauração do nome/alias original resolver o encaminhamento.
-5. Se a imagem legada estiver ausente, carregar o arquivo offline previamente verificado e reconstruir somente a configuração documentada, sem novo build e sem atualizar o checkout Release.
-6. Se o banco estiver incompatível, parar e acionar o plano específico de banco; não realizar restore ou downgrade por conta própria.
+A ampliação proposta na PR #3 preserva dados/larguras, mas o novo ensaio da PR #3 demonstrou operações representativas de escrita do binário antigo depois dessas alterações, inclusive editando os máximos gravados pela aplicação nova. Em 07/11/2026, A/B/C foram aplicadas: índice único ativo e duplicidade resolvida com o rótulo aprovado, sem exclusão. O ensaio dos scripts produtivos exatos repetiu 78 checkpoints e nove negativas com retorno ao binário antigo aprovado. [Recibo](./evidence/PRODUCTION_SQL_2026-11-07.json). Assim, rollback binário não é autorização para alterar/reverter schema e o primeiro corte segue bloqueado.
 
-O script antigo de deploy não é um mecanismo seguro de rollback: ele busca a main corrente, reconstrói a imagem, não fixa a revisão e seu curl usa a porta errada do host.
+## Ensaio cruzado adicional
 
-## Retenção e aceitação
+Quatro fases em cópia restaurada passaram com 78 checkpoints: legado no original, legado após propostas, novo após propostas e retorno ao legado mantendo ampliação. Os máximos novos não foram truncados na edição pelo legado; upload, bytes, referência, remoção física de mídia, exclusão lógica e arquivos-sentinela passaram com SQL restrito. Esse resultado usa Local storage isolado; o rollback de arquivos no R2 real continua bloqueante.
 
-Manter a release ativa, ao menos um baseline anterior conhecido e o legado inicial pelo período acordado. A quantidade e o prazo finais precisam considerar espaço em disco, dados sensíveis nos snapshots, auditoria e a política de prune existente. Proteger os snapshots de configuração como segredos, mesmo quando ficam fora do Git.
+O undo de nomes/índice fornecido na PR #3 é uma ferramenta separada e restrita ao ensaio. Não faz parte do rollback binário e não pode ser usado para reduzir colunas ou restaurar banco automaticamente. Não revogar o login antigo nem remover o legado antes de autorização própria.
 
-Antes de considerar o novo fluxo operacional, testar isoladamente:
+## Runtime e migrations comerciais preparados
 
-- Pacote válido e identidade do commit correto.
-- Checksum inválido, manifesto inconsistente e caminhos maliciosos recusados antes da troca.
-- Ausência de autorização, configuração insegura e tentativa de assumir container não gerido recusadas.
-- Sucesso de publicação e histórico persistido.
-- Falha de health da aplicação nova com recuperação da versão anterior.
-- Falha na primeira publicação com retorno ao legado retido.
-- Retorno manual a release preservada e falha explícita para alvo inexistente.
-- Configuração/volume DP preservados e nenhum comando de banco executado.
+A conexão futura usa `anderson_runtime`; a conexão anterior foi preservada em arquivo privado 0600 e o login/configuração do legado não foi revogado. O instalador não iniciou a aplicação e não executou A/B/C. O retorno ao legado não depende de remover a nova identidade.
 
-Foram executados **32 testes unitários do executor**, **18 testes dos helpers CI/entrega** e **nove cenários com Docker real local**: deploy válido; falhas de inicialização e HTTP503 com recuperação automática; imagem inválida; pacote adulterado; configuração com migrations habilitadas; transferência interrompida; rollback manual por arquivo; retorno ao mesmo container legado simulado. Falha de SSH/SCP foi injetada na fronteira de processo, sem contato remoto, com verificação posterior da aplicação no Docker real. Todos os recursos tinham prefixo/label exclusivo e a ausência de containers, redes, volumes e tags foi conferida ao final. Os testes cobrem resposta pública inválida, solicitação de rollback e destruição das chaves temporárias. Veja resultados/comando em [CI_CD_DEPLOYMENT.md](./CI_CD_DEPLOYMENT.md). O smoke usa uma aplicação HTTP descartável: não comprova paridade do Anderson nem integração com NPM/SQL/R2 de produção. A validação operacional com proxy real, cópia restaurada do banco e configuração de R2 permanece pendente para uma etapa autorizada; o ensaio isolado não habilita a publicação.
+A/B/C produtivos têm journal próprio, sem down automático: A não deve reduzir colunas, B usa o rótulo já aprovado e preserva demais campos, C exige A/B e dados sem duplicidade. O undo técnico de ensaio não é um rollback comercial autorizado. Nome/nulabilidade já foram aprovados e aplicados; não solicitar de novo nem reaplicar. R2, governança, paridade e integração continuam exigidos antes de um corte futuro autorizado.
+
+## Estado após migrations de 07/11/2026
+
+Rollback normal conserva schema ampliado, LogoUrl NULL, rótulo aprovado e índice único; retorna apenas o binário/configuração compatíveis. Legado e suas credenciais/volumes continuam preservados, sem restart. Imagem antiga `sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5`; imagem nova ensaiada `sha256:08b3ab8301d123f5b99e359bc7ec5bb4c94a28b678f38aef7706fffe6b62680f`, ainda não publicada. Não reduzir colunas, desfazer o nome ou restaurar automaticamente banco produtivo: isso pode descartar gravações recentes. O backup pré-migration permanece para recuperação deliberada, conforme [backup](./BACKUP_ANDERSONMULTIMARCAS.md).
+
+## Revalidação operacional e de governança
+
+Nesta auditoria, IDs/imagens/StartedAt do legado, SQL e NPM foram comparados sem alteração; nenhuma transação/release nova foi criada. Os três gates GitHub continuam false e os arquivos locais de habilitação/paridade ausentes. As 42 verificações Python de integridade/transações/rollback passaram sem tocar produção; o novo ensaio de imagem final do CD usa containers sem rede e não muda o executor produtivo.
+
+A [política GitHub individual](./GITHUB_POLITICA_REPOSITORIO_INDIVIDUAL.md) é proposta, não autorização de merge ou bypass. O [aceite de backup somente local](./ACEITE_RISCO_BACKUP_LOCAL.md) preserva retenção/verificação/restauração/alertas; não equivale a recuperação após perda da VPS. Antes do futuro primeiro deploy exigir novo backup restaurável. Rollback binário não recupera as [fotos ausentes](./RECUPERACAO_MIDIAS_R2.md) nem valida escrita R2; reparo de objetos exige autorização própria.

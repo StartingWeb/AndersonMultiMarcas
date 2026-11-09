@@ -1,0 +1,7 @@
+# Workflow and production infrastructure changes require owner review on main.
+# Add an independent authorized maintainer before activating production.
+/.github/ @StartingWeb
+/scripts/ci/ @StartingWeb
+/scripts/deploy/ @StartingWeb
+/scripts/ops/ @StartingWeb
+/deploy/ @StartingWeb

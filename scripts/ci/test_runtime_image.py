@@ -32,14 +32,7 @@ def main():
         parser.error("Expected a full source commit")
     prefix = "amm-runtime-" + uuid.uuid4().hex[:12]
     names = []
-    report = {"run": prefix, "network": "none", "scenarios": []}
-    image = json.loads(docker("image", "inspect", args.image).stdout)[0]
-    if image["Architecture"] != "amd64" or image["Os"] != "linux" or image["Config"]["User"] != "app":
-        raise RuntimeError("Expected the linux/amd64 non-root production image")
-    if image["Config"].get("Labels", {}).get("org.opencontainers.image.revision") != args.commit:
-        raise RuntimeError("Runtime image source label mismatch")
-    report["imageId"] = image["Id"]
-    report["commit"] = args.commit
+    report = {"run": prefix, "network": "none", "commit": args.commit, "scenarios": []}
     environment = ["--env", "ConnectionStrings__DefaultConnectionProd=Server=synthetic.invalid;Database=Synthetic;User Id=unused;Password=SyntheticOnly1!;Encrypt=False",
                    "--env", "Storage__Provider=Local", "--env", "Deployment__Commit=" + args.commit]
 
@@ -60,6 +53,12 @@ def main():
         print("PASS: " + scenario, flush=True)
 
     try:
+        image = json.loads(docker("image", "inspect", args.image).stdout)[0]
+        report["imageId"] = image["Id"]
+        if image["Architecture"] != "amd64" or image["Os"] != "linux" or image["Config"]["User"] != "app":
+            raise RuntimeError("Expected the linux/amd64 non-root production image")
+        if image["Config"].get("Labels", {}).get("org.opencontainers.image.revision") != args.commit:
+            raise RuntimeError("Runtime image source label mismatch")
         name = start("application")
         for _ in range(60):
             health = curl(name, "/health")

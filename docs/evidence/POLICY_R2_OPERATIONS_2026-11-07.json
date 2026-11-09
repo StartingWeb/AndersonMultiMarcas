@@ -1,0 +1,309 @@
+{
+  "at": "2026-11-07T16:36:36.788309+00:00",
+  "host_alias": "startingweb-server",
+  "before": {
+    "at": "2026-11-07T16:24:37.293917+00:00",
+    "scope": "read-only operational audit",
+    "containers": [
+      {
+        "name": "/andersonmultimarcas-web",
+        "id": "9842fa7e0f745dc589ddc9ee230813840524ff65c8aecb3d54cf6eaf7f0c2a78",
+        "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+        "started_at": "2026-10-23T20:43:11.986710244Z",
+        "running": true,
+        "health": "healthy",
+        "restarts": 1
+      },
+      {
+        "name": "/sqlserver",
+        "id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+        "image": "sha256:ba4c8329f48fb8f02e1416be6a930ebfd71268caee78aa985f3af4315e457c89",
+        "started_at": "2026-10-23T20:42:42.696047444Z",
+        "running": true,
+        "health": null,
+        "restarts": 0
+      },
+      {
+        "name": "/nginx-proxy-manager",
+        "id": "620dc318761112b396079fdfd064c892a74a4a16f62ff17a658605bd5bc3c73b",
+        "image": "sha256:52b2c59994f3d36acfcf70a1626f29734df0ed8c71bacc0269f78b6f939858bb",
+        "started_at": "2026-10-23T20:42:42.756316196Z",
+        "running": true,
+        "health": null,
+        "restarts": 0
+      }
+    ],
+    "timers": {
+      "exit_code": 0,
+      "output": "TimersCalendar={ OnCalendar=*-*-* 03:00:00 America/Sao_Paulo ; next_elapse=Sun 2026-11-08 06:00:00 UTC }\nNextElapseUSecRealtime=Sun 2026-11-08 06:00:00 UTC\nActiveState=active\nUnitFileState=enabled\n\nTimersCalendar={ OnCalendar=*-*-* *:35:00 America/Sao_Paulo ; next_elapse=Sat 2026-11-07 16:35:00 UTC }\nNextElapseUSecRealtime=Sat 2026-11-07 16:35:00 UTC\nActiveState=active\nUnitFileState=enabled"
+    },
+    "services": {
+      "exit_code": 0,
+      "output": "Result=success\nExecMainExitTimestamp=Sat 2026-11-07 06:00:45 UTC\nExecMainStatus=0\n\nResult=success\nExecMainExitTimestamp=Sat 2026-11-07 15:35:47 UTC\nExecMainStatus=0"
+    },
+    "last-valid": {
+      "run_id": "20261107T150452Z-c36eef7e",
+      "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+      "size_bytes": 30334976,
+      "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "verified_at": "2026-11-07T12:04:59.333085-03:00"
+    },
+    "last-restore": {
+      "completed_at": "2026-11-07T12:07:28.792647-03:00",
+      "dbcc_checkdb": "passed",
+      "native_restore": "passed",
+      "report": "/opt/startingweb/apps/anderson-multimarcas-unified/snapshots/amm-restore-46fe30bdb760/restore-report.json",
+      "run_id": "46fe30bdb760",
+      "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "status": "verified"
+    },
+    "monitor-status": {
+      "checked_at": "2026-11-07T15:35:36.720334+00:00",
+      "last_valid": {
+        "run_id": "20261107T150452Z-c36eef7e",
+        "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+        "size_bytes": 30334976,
+        "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+        "verified_at": "2026-11-07T12:04:59.333085-03:00"
+      },
+      "last_valid_snapshot_present": true,
+      "notification": {
+        "attempt_history": [
+          {
+            "attempt": 1,
+            "result": "accepted_by_smtp"
+          }
+        ],
+        "attempts": 1,
+        "certificate_verified": true,
+        "data_response": 250,
+        "status": "accepted_by_smtp",
+        "tls_version": "TLSv1.3"
+      },
+      "status": "healthy"
+    },
+    "status": {
+      "run_id": "20261107T150452Z-c36eef7e",
+      "started_at": "2026-11-07T12:04:52.486245-03:00",
+      "completed_at": "2026-11-07T12:05:00.292716-03:00",
+      "sql_verify": "aprovado (VERIFYONLY WITH CHECKSUM)",
+      "notification": {
+        "attempt_history": [
+          {
+            "attempt": 1,
+            "result": "accepted_by_smtp"
+          }
+        ],
+        "attempts": 1,
+        "certificate_verified": true,
+        "data_response": 250,
+        "status": "accepted_by_smtp",
+        "tls_version": "TLSv1.3"
+      },
+      "copy_only": true,
+      "retention_deferred": "explicit pre-migration preservation"
+    },
+    "backup_config": {
+      "retention": {
+        "daily": 7,
+        "monthly": 3,
+        "weekly": 4
+      },
+      "storage_policy": "local_only",
+      "database": "AndersonMultiMarcas",
+      "sql_container": "sqlserver"
+    },
+    "gates": {
+      "deploy.enabled": false,
+      "source-parity.approved.json": false
+    },
+    "native_runs": [
+      "20261106T060000Z-ae701b0b",
+      "20261107T060000Z-ab4e6a7b",
+      "20261107T150452Z-c36eef7e"
+    ],
+    "r2": {
+      "account_identity_sha256": "8d21e5a4a87e2a487507317c01098119cf037e56af07a0b86d9e330ed4dacd08",
+      "endpoint_validated_against_runtime_account": true,
+      "region": "auto",
+      "production_bucket": "startingweb-storage",
+      "bucket_inventory": {
+        "http": 403,
+        "code": "AccessDenied"
+      },
+      "production_bucket_head": {
+        "http": 200
+      },
+      "management_audit": "Completed separately through local Safari in the same account"
+    }
+  },
+  "after": {
+    "at": "2026-11-07T16:36:36.788309+00:00",
+    "scope": "read-only operational audit",
+    "containers": [
+      {
+        "name": "/andersonmultimarcas-web",
+        "id": "9842fa7e0f745dc589ddc9ee230813840524ff65c8aecb3d54cf6eaf7f0c2a78",
+        "image": "sha256:605b1b3cd5f1485442fa2ddfb8bd6e7ac68edcffe63f95c1fa39f8ef98e66df5",
+        "started_at": "2026-10-23T20:43:11.986710244Z",
+        "running": true,
+        "health": "healthy",
+        "restarts": 1
+      },
+      {
+        "name": "/sqlserver",
+        "id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+        "image": "sha256:ba4c8329f48fb8f02e1416be6a930ebfd71268caee78aa985f3af4315e457c89",
+        "started_at": "2026-10-23T20:42:42.696047444Z",
+        "running": true,
+        "health": null,
+        "restarts": 0
+      },
+      {
+        "name": "/nginx-proxy-manager",
+        "id": "620dc318761112b396079fdfd064c892a74a4a16f62ff17a658605bd5bc3c73b",
+        "image": "sha256:52b2c59994f3d36acfcf70a1626f29734df0ed8c71bacc0269f78b6f939858bb",
+        "started_at": "2026-10-23T20:42:42.756316196Z",
+        "running": true,
+        "health": null,
+        "restarts": 0
+      }
+    ],
+    "timers": {
+      "exit_code": 0,
+      "output": "TimersCalendar={ OnCalendar=*-*-* 03:00:00 America/Sao_Paulo ; next_elapse=Sun 2026-11-08 06:00:00 UTC }\nNextElapseUSecRealtime=Sun 2026-11-08 06:00:00 UTC\nActiveState=active\nUnitFileState=enabled\n\nTimersCalendar={ OnCalendar=*-*-* *:35:00 America/Sao_Paulo ; next_elapse=Sat 2026-11-07 17:35:00 UTC }\nNextElapseUSecRealtime=Sat 2026-11-07 17:35:00 UTC\nActiveState=active\nUnitFileState=enabled"
+    },
+    "services": {
+      "exit_code": 0,
+      "output": "Result=success\nExecMainExitTimestamp=Sat 2026-11-07 06:00:45 UTC\nExecMainStatus=0\n\nResult=success\nExecMainExitTimestamp=Sat 2026-11-07 16:35:47 UTC\nExecMainStatus=0"
+    },
+    "last-valid": {
+      "run_id": "20261107T150452Z-c36eef7e",
+      "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+      "size_bytes": 30334976,
+      "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "verified_at": "2026-11-07T12:04:59.333085-03:00"
+    },
+    "last-restore": {
+      "completed_at": "2026-11-07T12:07:28.792647-03:00",
+      "dbcc_checkdb": "passed",
+      "native_restore": "passed",
+      "report": "/opt/startingweb/apps/anderson-multimarcas-unified/snapshots/amm-restore-46fe30bdb760/restore-report.json",
+      "run_id": "46fe30bdb760",
+      "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+      "status": "verified"
+    },
+    "monitor-status": {
+      "checked_at": "2026-11-07T16:35:36.187262+00:00",
+      "last_valid": {
+        "run_id": "20261107T150452Z-c36eef7e",
+        "sha256": "15b714753be43bba0336877b863d86d46c93d8fd90e897f61545ee52df725370",
+        "size_bytes": 30334976,
+        "snapshot": "28278403757ac1386d8a5c2e15821b200d04d423eaf2eb8a5c0da98a4b24df4b",
+        "verified_at": "2026-11-07T12:04:59.333085-03:00"
+      },
+      "last_valid_snapshot_present": true,
+      "notification": {
+        "attempt_history": [
+          {
+            "attempt": 1,
+            "result": "accepted_by_smtp"
+          }
+        ],
+        "attempts": 1,
+        "certificate_verified": true,
+        "data_response": 250,
+        "status": "accepted_by_smtp",
+        "tls_version": "TLSv1.3"
+      },
+      "status": "healthy"
+    },
+    "status": {
+      "run_id": "20261107T150452Z-c36eef7e",
+      "started_at": "2026-11-07T12:04:52.486245-03:00",
+      "completed_at": "2026-11-07T12:05:00.292716-03:00",
+      "sql_verify": "aprovado (VERIFYONLY WITH CHECKSUM)",
+      "notification": {
+        "attempt_history": [
+          {
+            "attempt": 1,
+            "result": "accepted_by_smtp"
+          }
+        ],
+        "attempts": 1,
+        "certificate_verified": true,
+        "data_response": 250,
+        "status": "accepted_by_smtp",
+        "tls_version": "TLSv1.3"
+      },
+      "copy_only": true,
+      "retention_deferred": "explicit pre-migration preservation"
+    },
+    "backup_config": {
+      "retention": {
+        "daily": 7,
+        "monthly": 3,
+        "weekly": 4
+      },
+      "storage_policy": "local_only",
+      "database": "AndersonMultiMarcas",
+      "sql_container": "sqlserver"
+    },
+    "gates": {
+      "deploy.enabled": false,
+      "source-parity.approved.json": false
+    },
+    "native_runs": [
+      "20261106T060000Z-ae701b0b",
+      "20261107T060000Z-ab4e6a7b",
+      "20261107T150452Z-c36eef7e"
+    ],
+    "r2": {
+      "account_identity_sha256": "8d21e5a4a87e2a487507317c01098119cf037e56af07a0b86d9e330ed4dacd08",
+      "endpoint_validated_against_runtime_account": true,
+      "region": "auto",
+      "production_bucket": "startingweb-storage",
+      "bucket_inventory": {
+        "http": 403,
+        "code": "AccessDenied"
+      },
+      "production_bucket_head": {
+        "http": 200
+      },
+      "management_audit": "Completed separately through local Safari in the same account"
+    }
+  },
+  "preserved": {
+    "containers": true,
+    "backup_config": true,
+    "gates": true,
+    "native_runs": true,
+    "last-valid": true,
+    "last-restore": true
+  },
+  "public_health": {
+    "/": {
+      "status": 200,
+      "https_verified": true
+    },
+    "/health": {
+      "status": 200,
+      "https_verified": true
+    },
+    "/health/release": {
+      "status": 404,
+      "https_verified": true
+    }
+  },
+  "application_database_operations": 0,
+  "container_mutations": 0,
+  "merges": 0,
+  "deployments": 0,
+  "backup_commands": [],
+  "limitations": [
+    "Existing restore receipt rechecked; no new restore performed. New restorable backup still required before first deployment.",
+    "SMTP receipt establishes provider acceptance, not inbox delivery.",
+    "No full backup/prune/forget/manual cleanup or injected alert was executed.",
+    "Cloudflare management absent from server credentials; management audit completed in local Safari."
+  ]
+}

@@ -1,0 +1,15 @@
+[Unit]
+Description=AndersonMultiMarcas backup freshness and notification monitor
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /opt/startingweb/backups/anderson-multimarcas/bin/backup.py monitor
+TimeoutStartSec=5min
+Nice=19
+CPUQuota=10%
+MemoryMax=192M
+TasksMax=64
+NoNewPrivileges=true
+RestrictSUIDSGID=true
+LockPersonality=true
