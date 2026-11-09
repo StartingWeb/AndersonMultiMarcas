@@ -2,6 +2,7 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+import shlex
 import sys
 import tempfile
 import unittest
@@ -234,6 +235,83 @@ class DeliveryConfigurationTests(unittest.TestCase):
                     deliver.main()
             commands = [call.args[0] for call in run.call_args_list]
             self.assertEqual(["ssh", "scp"], [command[0] for command in commands])
+            key_path = Path(commands[0][commands[0].index("-i") + 1])
+            self.assertFalse(key_path.exists())
+            health.assert_not_called()
+
+    @mock.patch.object(deliver, "public_health", return_value=True)
+    def test_native_scp_transfers_match_the_unchanged_forced_command_policy(self, health):
+        """Exercise the real sender/receiver protocol without SSH or network."""
+        spec = importlib.util.spec_from_file_location("delivery_gate", CI.parent / "ops/ssh_gate.py")
+        gate = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gate)
+        real_run = subprocess.run
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            bundle, deployer = self.delivery_fixture(root)
+            server = root / "server"
+            server.mkdir(mode=0o700)
+            (server / "incoming").mkdir(mode=0o700)
+            commands = root / "receive-commands"
+            receiver = root / "receive.py"
+            receiver.write_text(
+                "import importlib.util, sys\nfrom pathlib import Path\n"
+                f"spec = importlib.util.spec_from_file_location('gate', {str(CI.parent / 'ops/ssh_gate.py')!r})\n"
+                "gate = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(gate)\n"
+                f"gate.ROOT = Path({str(server)!r})\n"
+                f"with open({str(commands)!r}, 'a') as stream: stream.write(sys.argv[-1] + '\\n')\n"
+                "raise SystemExit(gate.execute(sys.argv[-1]))\n")
+            fake_ssh = root / "fake-ssh"
+            fake_ssh.write_text("#!/bin/sh\nexec " + shlex.quote(sys.executable) + " " +
+                                shlex.quote(str(receiver)) + ' "$@"\n')
+            fake_ssh.chmod(0o700)
+            expected = {path.name: path.read_bytes() for path in
+                        (bundle / "image.tar.gz", bundle / "release.json", bundle / "SHA256SUMS", deployer)}
+            activated = []
+
+            def transport(command, **kwargs):
+                if command[0] == "scp":
+                    return real_run(["/usr/bin/scp", "-S", str(fake_ssh), *command[1:]], timeout=10, **kwargs)
+                self.assertEqual("ssh", command[0])
+                operation, value = gate.classify(command[-1])
+                if operation == "mkdir":
+                    gate.execute(command[-1])
+                else:
+                    self.assertEqual("executor", operation)
+                    received = server / "incoming" / ("a" * 40 + "-1-1")
+                    self.assertEqual(expected, {path.name: path.read_bytes() for path in received.iterdir()})
+                    activated.append(value)
+                return subprocess.CompletedProcess(command, 0)
+
+            host, user, port, _, url = deliver.configuration(self.env)
+            env = dict(self.env, SOURCE_COMMIT="a" * 40, CI_RUN_ID="1", GITHUB_RUN_ATTEMPT="1")
+            with mock.patch.object(gate, "ROOT", server), \
+                    mock.patch.object(deliver, "configuration", return_value=(host, user, port, str(server), url)), \
+                    mock.patch.object(deliver.subprocess, "run", side_effect=transport), \
+                    mock.patch.dict(deliver.os.environ, env, clear=True), \
+                    mock.patch.object(sys, "argv", ["deliver.py", "--bundle", str(bundle), "--deployer", str(deployer)]):
+                deliver.main()
+                receiver_commands = commands.read_text().splitlines()
+                self.assertEqual(4, len(receiver_commands))
+                for command in receiver_commands:
+                    self.assertEqual("upload", gate.classify(command)[0])
+            self.assertEqual(1, len(activated))
+
+    @mock.patch.object(deliver, "public_health")
+    @mock.patch.object(deliver.subprocess, "run")
+    def test_partial_transfer_failure_does_not_request_activation(self, run, health):
+        run.side_effect = [subprocess.CompletedProcess(["ssh"], 0),
+                           subprocess.CompletedProcess(["scp"], 0),
+                           subprocess.CalledProcessError(1, ["scp"])]
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, deployer = self.delivery_fixture(directory)
+            env = dict(self.env, SOURCE_COMMIT="a" * 40, CI_RUN_ID="1")
+            with mock.patch.dict(deliver.os.environ, env, clear=True), \
+                    mock.patch.object(sys, "argv", ["deliver.py", "--bundle", str(bundle), "--deployer", str(deployer)]):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    deliver.main()
+            commands = [call.args[0] for call in run.call_args_list]
+            self.assertEqual(["ssh", "scp", "scp"], [command[0] for command in commands])
             key_path = Path(commands[0][commands[0].index("-i") + 1])
             self.assertFalse(key_path.exists())
             health.assert_not_called()

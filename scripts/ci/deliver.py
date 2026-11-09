@@ -125,11 +125,14 @@ def main():
         def ssh(command):
             subprocess.run(["ssh", *options, "-p", port, peer, command], check=True)
         ssh(f"umask 077; test -d {shlex.quote(root + '/incoming')} && mkdir {shlex.quote(destination)}")
-        # Receive-only SCP is deliberately paired with the server forced-command
-        # allowlist. General SFTP would expose the shared account's filesystem.
-        subprocess.run(["scp", "-O", *options, "-P", port, str(args.bundle / "image.tar.gz"),
-                        str(args.bundle / "release.json"), str(args.bundle / "SHA256SUMS"), str(args.deployer),
-                        peer + ":" + destination + "/"], check=True)
+        # One source per invocation keeps OpenSSH's receive command at `scp -t`.
+        # Multiple sources add `-d`, which the strict server allowlist refuses.
+        # All transfers must finish before requesting activation; keep SFTP and
+        # additional receive flags outside the reviewed delivery protocol.
+        for source in (args.bundle / "image.tar.gz", args.bundle / "release.json",
+                       args.bundle / "SHA256SUMS", args.deployer):
+            subprocess.run(["scp", "-O", *options, "-P", port, str(source),
+                            peer + ":" + destination + "/"], check=True)
         def operation(name, extra=()):
             return shlex.join(["python3", "-c", verify_and_run, remote_script, digest(args.deployer), name, "--root", root, *extra])
         ssh(operation("deploy", ["--bundle", destination, "--manifest-sha256", digest(args.bundle / "release.json")]))
