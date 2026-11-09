@@ -1,0 +1,19 @@
+{
+  "repository": "StartingWeb/AndersonMultiMarcas",
+  "sql_container": "sqlserver",
+  "sql_container_id": "34bf488b2a59fa8084c0d22ad58fd541be5cf9f08e8d6975c1312c7b92e103b2",
+  "sql_server_identity": "491cbc5de981",
+  "database": "AndersonMultiMarcas",
+  "database_guid": "9D811E45-14B7-48E2-A376-74B3D6A89ADF",
+  "schema_execution_approved": false,
+  "expected_marca_1": "Jaguar",
+  "expected_marca_4": "Jaguar",
+  "expected_vehicles_1": 1,
+  "expected_vehicles_4": 0,
+  "proposed_name": "Jaguar (cadastro adicional)",
+  "approved_name": null,
+  "name_approval_reference": null,
+  "allow_logo_nullability": false,
+  "logo_nullability_approval_reference": null,
+  "execution_authorization_reference": null
+}
