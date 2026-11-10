@@ -21,6 +21,34 @@ namespace Project.Tests.Recovery;
 
 public sealed class CatalogRecoveryTests
 {
+    [Theory]
+    [InlineData("preco-asc", false)]
+    [InlineData("preco-desc", true)]
+    public async Task ExplicitPriceOrderIsPreservedAcrossFeaturedCardsAndPages(string order, bool descending)
+    {
+        await using var db = CreateDb();
+        await Seed(db, 42);
+        var vehicles = await db.Veiculos.OrderBy(x => x.Id).ToListAsync();
+        for (var i = 0; i < vehicles.Count; i++)
+            vehicles[i].AtualizarPreco(new Dinheiro((i * 17 % 13) * 1000));
+        await db.SaveChangesAsync();
+        var expected = descending
+            ? vehicles.OrderByDescending(x => x.PrecoVenda).ThenBy(x => x.Id).Select(x => x.Id).ToArray()
+            : vehicles.OrderBy(x => x.PrecoVenda).ThenBy(x => x.Id).Select(x => x.Id).ToArray();
+
+        using var services = Services(db);
+        var actual = new List<int>();
+        for (var number = 1; number <= 2; number++)
+        {
+            var page = Page(db, services, "?page=" + number);
+            page.OrdenarPor = order;
+            await page.OnGetAsync(default);
+            actual.AddRange(page.Vm.DestaquesRecentes.Concat(page.Vm.OutrosVeiculos).Select(x => x.Id));
+        }
+
+        Assert.Equal(expected, actual);
+    }
+
     [Fact]
     public async Task PagesAndFeaturedSectionsHaveNoMissingOrRepeatedVehicles()
     {

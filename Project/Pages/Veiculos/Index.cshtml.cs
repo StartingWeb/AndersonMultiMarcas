@@ -131,7 +131,9 @@ public class IndexModel(ISender sender, ApplicationDbContext db, IStorageImageRe
 
         PaginaAtual = currentPage;
         var items = pageResult?.Items?.ToList() ?? [];
-        var destaquesRecentes = items.OrderByDescending(x => x.Destaque).ThenByDescending(x => x.Id).Take(3).ToList();
+        var destaquesRecentes = string.Equals(filtro.OrdenarPor, "recentes", StringComparison.OrdinalIgnoreCase)
+            ? items.OrderByDescending(x => x.Destaque).ThenByDescending(x => x.Id).Take(3).ToList()
+            : [];
         var featuredIds = destaquesRecentes.Select(x => x.Id).ToHashSet();
         var outros = items.Where(x => !featuredIds.Contains(x.Id)).ToList();
 
