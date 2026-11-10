@@ -53,8 +53,11 @@
                         <section class="vehicle-group">
                             <div class="vehicle-group-header">
                                 <div>
-                                    <h3>Outros carros</h3>
-                                    <p>O restante do estoque para continuar a busca sem repetir os mais recentes.</p>
+                                    <h3>@(Model.Vm.DestaquesRecentes.Count > 0 ? "Outros carros" : "Veiculos encontrados")</h3>
+                                    @if (Model.Vm.DestaquesRecentes.Count > 0)
+                                    {
+                                        <p>O restante do estoque para continuar a busca sem repetir os mais recentes.</p>
+                                    }
                                 </div>
                             </div>
                             <div class="row g-4">

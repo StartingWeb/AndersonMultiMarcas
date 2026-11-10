@@ -121,12 +121,12 @@
                                                     @FormatPhone(vendedor.Telefone)
                                                 </div>
                                             </div>
-                                            <a href="https://wa.me/@vendedor.Telefone"
+                                            <a href="https://wa.me/@(PhoneLinkHelper.ToInternational(vendedor.Telefone))"
                                                target="_blank"
                                                rel="noopener noreferrer"
                                                class="seller-contact-action"
                                                data-seller-name="@vendedor.Nome"
-                                               data-seller-phone="@vendedor.Telefone"
+                                               data-seller-phone="@PhoneLinkHelper.ToInternational(vendedor.Telefone)"
                                                aria-label="Chamar @vendedor.Nome no WhatsApp"
                                                title="Chamar no WhatsApp">
                                                 <span class="seller-contact-action-icon" aria-hidden="true">
