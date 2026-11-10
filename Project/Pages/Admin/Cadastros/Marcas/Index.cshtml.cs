@@ -29,7 +29,11 @@ public sealed class IndexModel(ApplicationDbContext db) : PageModel
 
         Marcas = await query
             .OrderBy(x => x.Nome)
-            .Select(x => new MarcaListItem(x.Id, x.Nome, string.IsNullOrWhiteSpace(x.LogoUrl) ? "-" : x.LogoUrl))
+            // A sale also deactivates the vehicle. Keep sold vehicles in the count,
+            // while excluding inactive unsold vehicles (the existing soft-delete state).
+            // Count in SQL through the FK, preserving query filters without loading vehicles.
+            .Select(x => new MarcaListItem(x.Id, x.Nome, string.IsNullOrWhiteSpace(x.LogoUrl) ? "-" : x.LogoUrl,
+                x.Veiculos.Count(v => v.Ativo || v.Vendido)))
             .ToListAsync(ct);
     }
 
@@ -39,16 +43,16 @@ public sealed class IndexModel(ApplicationDbContext db) : PageModel
 
         if (marca is null)
         {
-            TempData["ErrorMessage"] = "Marca nao encontrada.";
+            TempData["ErrorMessage"] = "Marca não encontrada.";
             return RedirectToPage(new { Filtro = filtro });
         }
 
         marca.Desativar();
         await db.SaveChangesAsync(ct);
 
-        TempData["SuccessMessage"] = "Marca excluida com sucesso.";
+        TempData["SuccessMessage"] = "Marca excluída com sucesso.";
         return RedirectToPage(new { Filtro = filtro });
     }
 
-    public sealed record MarcaListItem(int Id, string Nome, string LogoUrl);
+    public sealed record MarcaListItem(int Id, string Nome, string LogoUrl, int QuantidadeVeiculos);
 }

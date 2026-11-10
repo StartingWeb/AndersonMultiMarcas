@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Data;
 using Domain.Application;
+using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,87 @@ namespace Project.Tests.Cadastros;
 
 public sealed class MarcaWebTests(SecurityWebApplicationFactory factory) : IClassFixture<SecurityWebApplicationFactory>
 {
+    [Fact]
+    public async Task AuthorizedListingRendersCountsAccentsAndOnlyTheContentTitle()
+    {
+        using var client = await LoginAsync(authorized: true);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var prefix = $"Interface-{Guid.NewGuid():N}";
+        var empty = new Marca(prefix + " zero", null);
+        var populated = new Marca(prefix + " vários", null);
+        db.AddRange(empty, populated);
+        await db.SaveChangesAsync();
+        var sold = MarcaIndexTests.Vehicle(populated.Id);
+        sold.MarcarComoVendido(DateTime.UtcNow);
+        var deleted = MarcaIndexTests.Vehicle(populated.Id);
+        deleted.Desativar();
+        db.AddRange(MarcaIndexTests.Vehicle(populated.Id), sold, deleted);
+        await db.SaveChangesAsync();
+
+        using var response = await client.GetAsync("/Admin/Cadastros/Marcas?Filtro=" + prefix);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("utf-8", response.Content.Headers.ContentType!.CharSet);
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        Assert.Contains("<title>Marcas - Anderson Multimarcas</title>", html);
+        Assert.Single(Regex.Matches(html, "<h1[^>]*>.*?</h1>", RegexOptions.Singleline).Cast<Match>());
+        var header = Regex.Match(html, "<header class=\"admin-topbar\">.*?</header>", RegexOptions.Singleline).Value;
+        Assert.DoesNotContain("<strong>Marcas</strong>", header);
+        Assert.Contains("Anderson Multimarcas", header);
+        Assert.Contains("data-admin-toggle", header);
+        Assert.Contains("bi-tags-fill me-2\"></i>Marcas</h1>", html);
+        foreach (var text in new[] { "Lista e gerenciamento das marcas cadastradas", "Nova marca", "Veículos", "Ações", "Código", "Confirmar exclusão" })
+            Assert.Contains(text, html);
+        var rows = Regex.Matches(html, "<tr>.*?</tr>", RegexOptions.Singleline).Cast<Match>().Select(x => x.Value).ToArray();
+        Assert.Contains("class=\"text-end vehicle-count\">0</td>", rows.Single(x => x.Contains(empty.Nome)));
+        Assert.Contains("class=\"text-end vehicle-count\">2</td>", rows.Single(x => x.Contains(populated.Nome)));
+        Assert.Contains("class=\"table-responsive\"", html);
+        Assert.Contains($"/Admin/Cadastros/Marcas/Upsert/{populated.Id}", html);
+        Assert.DoesNotContain('\ufffd', html);
+
+        var otherPage = WebUtility.HtmlDecode(await client.GetStringAsync("/Admin/Cadastros/Vendedores"));
+        Assert.Contains("<strong>Vendedores</strong>", otherPage);
+    }
+
+    [Fact]
+    public async Task EmptyListingKeepsItsHelpfulMessageAndSingleContentTitle()
+    {
+        using var client = await LoginAsync(authorized: true);
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Admin/Cadastros/Marcas?Filtro=" + Guid.NewGuid()));
+        Assert.Contains("Nenhuma marca encontrada", html);
+        Assert.Contains("Ajuste os filtros e tente novamente.", html);
+        Assert.DoesNotContain("<strong>Marcas</strong>", html);
+    }
+
+    [Fact]
+    public async Task CreateAndEditRenderAccentedHelpLabelsAndValidation()
+    {
+        using var client = await LoginAsync(authorized: true);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var brand = new Marca("Edição-" + Guid.NewGuid(), null);
+        db.Add(brand);
+        await db.SaveChangesAsync();
+        foreach (var path in new[] { "/Admin/Cadastros/Marcas/Upsert", $"/Admin/Cadastros/Marcas/Upsert/{brand.Id}" })
+        {
+            var html = WebUtility.HtmlDecode(await client.GetStringAsync(path));
+            Assert.Contains("Preencha as informações principais para exibição e filtros.", html);
+            Assert.Contains("O nome deve ter no máximo 100 caracteres.", html);
+            Assert.Contains("A URL deve ter no máximo 400 caracteres.", html);
+            if (path.EndsWith($"/{brand.Id}")) Assert.Contains("Salvar alterações", html);
+        }
+        var form = await client.GetStringAsync($"/Admin/Cadastros/Marcas/Upsert/{brand.Id}");
+        using var response = await client.PostAsync($"/Admin/Cadastros/Marcas/Upsert/{brand.Id}", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Marca.Id"] = brand.Id.ToString(), ["Marca.Nome"] = brand.Nome,
+            ["Marca.LogoUrl"] = new string('x', 401), ["__RequestVerificationToken"] = Token(form)
+        }));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        Assert.Contains("A URL deve ter no máximo 400 caracteres.", result);
+        Assert.Contains("Salvar alterações", result);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -31,7 +113,7 @@ public sealed class MarcaWebTests(SecurityWebApplicationFactory factory) : IClas
         }));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
-        Assert.Contains(input == "over-limit" ? "O nome deve ter no maximo 100 caracteres." : "Informe o nome da marca.", result);
+        Assert.Contains(input == "over-limit" ? "O nome deve ter no máximo 100 caracteres." : "Informe o nome da marca.", result);
         Assert.DoesNotContain("Marca cadastrada com sucesso.", result);
         Assert.Equal(count, await db.Marcas.CountAsync());
     }
@@ -48,13 +130,16 @@ public sealed class MarcaWebTests(SecurityWebApplicationFactory factory) : IClas
         Assert.StartsWith("https://localhost/Login", response.Headers.Location!.ToString());
     }
 
-    [Fact]
-    public async Task ProfileWithoutBrandPermissionCannotOpenOrPostForm()
+    [Theory]
+    [InlineData("/Admin/Cadastros/Marcas")]
+    [InlineData("/Admin/Cadastros/Marcas/Upsert")]
+    [InlineData("/Admin/Cadastros/Marcas/Upsert/1")]
+    public async Task ProfileWithoutBrandPermissionCannotOpenOrPostBrandRoutes(string path)
     {
         using var client = await LoginAsync(authorized: false);
         foreach (var method in new[] { HttpMethod.Get, HttpMethod.Post })
         {
-            using var response = await client.SendAsync(new HttpRequestMessage(method, "/Admin/Cadastros/Marcas/Upsert"));
+            using var response = await client.SendAsync(new HttpRequestMessage(method, path));
             Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
             Assert.StartsWith("https://localhost/AccessDenied", response.Headers.Location!.ToString());
         }

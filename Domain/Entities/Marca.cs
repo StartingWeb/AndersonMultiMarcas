@@ -13,13 +13,13 @@ public sealed class Marca : BaseEntity
 
     public Marca(string nome, string? logoUrl)
     {
-        Nome = string.IsNullOrWhiteSpace(nome) ? throw new ArgumentException("Nome da marca obrigatorio.") : nome.Trim();
+        Nome = string.IsNullOrWhiteSpace(nome) ? throw new ArgumentException("Nome da marca obrigatório.") : nome.Trim();
         LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim();
     }
 
     public void Update(string nome, string? logoUrl)
     {
-        Nome = string.IsNullOrWhiteSpace(nome) ? throw new ArgumentException("Nome da marca obrigatorio.") : nome.Trim();
+        Nome = string.IsNullOrWhiteSpace(nome) ? throw new ArgumentException("Nome da marca obrigatório.") : nome.Trim();
         LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim();
     }
 }

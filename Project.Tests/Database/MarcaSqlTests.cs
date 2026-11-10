@@ -1,10 +1,15 @@
 using Data;
+using System.Data.Common;
 using Domain.Entities;
+using Domain.Enums;
+using Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Project.Pages.Admin.Cadastros.Marcas;
+using Project.Tests.Cadastros;
 using Xunit;
 using static Project.Tests.Cadastros.MarcaTestSupport;
 
@@ -12,6 +17,58 @@ namespace Project.Tests.Database;
 
 public sealed class MarcaSqlTests
 {
+    [SqlServerFact]
+    public async Task ListingCountsInOneSqlCommandIncludingSoldAndExcludingLogicalDeletion()
+    {
+        var probe = new ReadCommandProbe();
+        await WithDatabase(async db =>
+        {
+            var store = new Loja("Loja sintética", "Teste", null, new Email("loja@example.test"), new Telefone("16999990000"),
+                new Endereco("Rua A", "1", null, "Centro", "Taquaritinga", Uf.SP, "15900000"));
+            var empty = new Marca("A zero", null);
+            var one = new Marca("B um", null);
+            var many = new Marca("C vários", null);
+            var inactive = new Marca("D inativa", null);
+            inactive.Desativar();
+            db.AddRange(store, empty, one, many, inactive);
+            await db.SaveChangesAsync();
+            var sold = MarcaIndexTests.Vehicle(many.Id, storeId: store.Id);
+            sold.MarcarComoVendido(DateTime.UtcNow);
+            var deleted = MarcaIndexTests.Vehicle(many.Id, storeId: store.Id);
+            deleted.Desativar();
+            db.AddRange(MarcaIndexTests.Vehicle(one.Id, storeId: store.Id),
+                MarcaIndexTests.Vehicle(many.Id, storeId: store.Id), sold, deleted,
+                MarcaIndexTests.Vehicle(inactive.Id, storeId: store.Id));
+            await db.SaveChangesAsync();
+            // Multiple media records must never multiply a vehicle's contribution.
+            db.AddRange(new VeiculoMidia(sold.Id, "a.webp", "/a.webp", TipoMidia.Imagem, 0),
+                new VeiculoMidia(sold.Id, "b.webp", "/b.webp", TipoMidia.Imagem, 1));
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+            var page = MarcaIndexTests.Listing(db);
+
+            probe.Commands.Clear();
+            await page.OnGetAsync(default);
+            Assert.Equal([0, 1, 2], page.Marcas.Select(x => x.QuantidadeVeiculos));
+            Assert.Contains("COUNT(", Assert.Single(probe.Commands), StringComparison.OrdinalIgnoreCase);
+            Assert.Empty(db.ChangeTracker.Entries());
+
+            db.AddRange(Enumerable.Range(0, 20).Select(i => new Marca($"Extra {i:D2}", null)));
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+            probe.Commands.Clear();
+            await page.OnGetAsync(default);
+            Assert.Equal(23, page.Marcas.Count);
+            Assert.Single(probe.Commands);
+            Assert.All(page.Marcas.Skip(3), x => Assert.Equal(0, x.QuantidadeVeiculos));
+            page.Filtro = " C vários ";
+            probe.Commands.Clear();
+            await page.OnGetAsync(default);
+            Assert.Equal(2, Assert.Single(page.Marcas).QuantidadeVeiculos);
+            Assert.Single(probe.Commands);
+        }, probe);
+    }
+
     [SqlServerFact]
     public async Task NewNamesPersistAsActiveWithoutLogoAndEditKeepsIdentity()
     {
@@ -139,7 +196,7 @@ public sealed class MarcaSqlTests
         });
     }
 
-    private static async Task WithDatabase(Func<ApplicationDbContext, Task> action)
+    private static async Task WithDatabase(Func<ApplicationDbContext, Task> action, params IInterceptor[] interceptors)
     {
         // ANDERSON_TEST_SQL is supplied only for the owned disposable SQL container.
         var connection = new SqlConnectionStringBuilder(Environment.GetEnvironmentVariable("ANDERSON_TEST_SQL"))
@@ -147,7 +204,7 @@ public sealed class MarcaSqlTests
             InitialCatalog = "AndersonMarca_" + Guid.NewGuid().ToString("N")
         };
         await using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(connection.ConnectionString).Options);
+            .UseSqlServer(connection.ConnectionString).AddInterceptors(interceptors).Options);
         try
         {
             await db.Database.EnsureCreatedAsync();
@@ -157,5 +214,16 @@ public sealed class MarcaSqlTests
             await action(db);
         }
         finally { await db.Database.EnsureDeletedAsync(); }
+    }
+
+    private sealed class ReadCommandProbe : DbCommandInterceptor
+    {
+        internal List<string> Commands { get; } = [];
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command,
+            CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
+        {
+            Commands.Add(command.CommandText);
+            return ValueTask.FromResult(result);
+        }
     }
 }

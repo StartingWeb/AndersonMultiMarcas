@@ -37,7 +37,7 @@ public sealed class UpsertModel(ApplicationDbContext db, ILogger<UpsertModel> lo
         var marca = await db.Marcas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id.Value, ct);
         if (marca is null)
         {
-            TempData["ErrorMessage"] = "Marca nao encontrada.";
+            TempData["ErrorMessage"] = "Marca não encontrada.";
             return RedirectToPage("/Admin/Cadastros/Marcas/Index");
         }
 
@@ -63,7 +63,7 @@ public sealed class UpsertModel(ApplicationDbContext db, ILogger<UpsertModel> lo
                 var marca = await db.Marcas.FirstOrDefaultAsync(x => x.Id == Marca.Id, ct);
                 if (marca is null)
                 {
-                    TempData["ErrorMessage"] = "Marca nao encontrada.";
+                    TempData["ErrorMessage"] = "Marca não encontrada.";
                     return RedirectToPage("/Admin/Cadastros/Marcas/Index");
                 }
 
@@ -120,7 +120,7 @@ public sealed class UpsertModel(ApplicationDbContext db, ILogger<UpsertModel> lo
     {
         PageTitle = "Editar marca";
         PageSubtitle = "Atualize os dados da marca cadastrada";
-        SubmitLabel = "Salvar alteracoes";
+        SubmitLabel = "Salvar alterações";
     }
 
     public sealed class MarcaInputModel
@@ -128,11 +128,11 @@ public sealed class UpsertModel(ApplicationDbContext db, ILogger<UpsertModel> lo
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Informe o nome da marca.")]
-        [StringLength(100, ErrorMessage = "O nome deve ter no maximo 100 caracteres.")]
+        [StringLength(100, ErrorMessage = "O nome deve ter no máximo 100 caracteres.")]
         [Display(Name = "Nome")]
         public string Nome { get; set; } = string.Empty;
 
-        [StringLength(400, ErrorMessage = "A URL deve ter no maximo 400 caracteres.")]
+        [StringLength(400, ErrorMessage = "A URL deve ter no máximo 400 caracteres.")]
         [Display(Name = "Logo")]
         public string? LogoUrl { get; set; }
     }
