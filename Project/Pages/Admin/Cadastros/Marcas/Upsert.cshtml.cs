@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 using Data;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -9,8 +10,12 @@ using Microsoft.EntityFrameworkCore;
 namespace Project.Pages.Admin.Cadastros.Marcas;
 
 [Authorize]
-public sealed class UpsertModel(ApplicationDbContext db) : PageModel
+public sealed class UpsertModel(ApplicationDbContext db, ILogger<UpsertModel> logger) : PageModel
 {
+    private const string PersistenceError = "Não foi possível salvar a marca. Tente novamente ou entre em contato com o suporte.";
+    private const string DuplicateNameError = "Já existe uma marca cadastrada com este nome. Verifique a lista de marcas antes de continuar.";
+    private const string InactiveNameError = "Esta marca já está cadastrada, mas encontra-se inativa. Entre em contato com o administrador para reativá-la.";
+
     [BindProperty(SupportsGet = true)]
     public int? Id { get; set; }
 
@@ -44,6 +49,7 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
+        TempData.Remove("SuccessMessage");
         if (!ModelState.IsValid)
         {
             if (Marca.Id > 0) ApplyEditTexts();
@@ -62,20 +68,43 @@ public sealed class UpsertModel(ApplicationDbContext db) : PageModel
                 }
 
                 marca.Update(Marca.Nome, Marca.LogoUrl);
-                TempData["SuccessMessage"] = "Marca atualizada com sucesso.";
             }
             else
             {
                 db.Marcas.Add(new Marca(Marca.Nome, Marca.LogoUrl));
-                TempData["SuccessMessage"] = "Marca cadastrada com sucesso.";
             }
 
             await db.SaveChangesAsync(ct);
+            TempData["SuccessMessage"] = Marca.Id > 0 ? "Marca atualizada com sucesso." : "Marca cadastrada com sucesso.";
             return RedirectToPage("/Admin/Cadastros/Marcas/Index");
         }
-        catch (DbUpdateException)
+        catch (Exception ex) when (ex is DbUpdateException or DbException)
         {
-            ModelState.AddModelError(string.Empty, "Nao foi possivel salvar. Verifique se ja existe uma marca com este nome.");
+            var nameConflict = MarcaDatabaseErrors.IsNameDuplicate(ex);
+            logger.Log(nameConflict ? LogLevel.Warning : LogLevel.Error, ex,
+                "Falha ao salvar marca durante {Operation}.", Marca.Id > 0 ? "edição" : "cadastro");
+
+            var message = PersistenceError;
+            if (nameConflict)
+            {
+                try
+                {
+                    // Let SQL Server compare the trimmed name using the column's collation.
+                    // Keep query filters and never disclose a conflicting row outside the visible scope.
+                    var name = Marca.Nome.Trim();
+                    var active = await db.Marcas.AsNoTracking()
+                        .Where(x => x.Id != Marca.Id && x.Nome == name)
+                        .Select(x => (bool?)x.Ativo)
+                        .FirstOrDefaultAsync(ct);
+                    message = active switch { true => DuplicateNameError, false => InactiveNameError, null => PersistenceError };
+                }
+                catch (Exception lookupException) when (lookupException is DbException or DbUpdateException)
+                {
+                    logger.LogError(lookupException, "Falha ao consultar conflito de nome após erro ao salvar marca.");
+                }
+            }
+
+            ModelState.AddModelError(string.Empty, message);
             if (Marca.Id > 0) ApplyEditTexts();
             return Page();
         }
