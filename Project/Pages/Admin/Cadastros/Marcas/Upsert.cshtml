@@ -58,7 +58,7 @@
                         <span asp-validation-for="LogoArquivo" class="text-danger"></span>
                         <div id="logoHelp" class="form-text">JPG, PNG ou WebP, até 5 MB. Para manter a logo atual, não selecione outro arquivo.</div>
                         <div class="mt-3">
-                            <img id="logoPreview" src="@Model.CurrentLogoUrl" class="logo-preview" alt="Prévia da logo" hidden="@(string.IsNullOrWhiteSpace(Model.CurrentLogoUrl))" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
+                            <img id="logoPreview" src="@Url.Content(Model.CurrentLogoUrl)" class="logo-preview" alt="Prévia da logo" hidden="@(string.IsNullOrWhiteSpace(Model.CurrentLogoUrl))" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
                             <span id="logoPlaceholder" class="text-muted" hidden="@(!string.IsNullOrWhiteSpace(Model.CurrentLogoUrl))">Sem logo</span>
                         </div>
                         @if (!ViewData.ModelState.IsValid && Model.LogoArquivo is not null)
@@ -99,6 +99,12 @@
                 placeholder.hidden = !!source;
                 if (source) preview.src = source;
                 else preview.removeAttribute('src');
+            });
+            input.form.addEventListener('submit', event => {
+                if (!input.checkValidity()) {
+                    event.preventDefault();
+                    input.reportValidity();
+                }
             });
             window.addEventListener('pagehide', event => { if (!event.persisted && objectUrl) URL.revokeObjectURL(objectUrl); });
         })();
