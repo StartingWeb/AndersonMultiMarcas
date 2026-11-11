@@ -28,23 +28,6 @@ jobs:
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           global-json-file: global.json
-      - name: Diagnose package repository connectivity
-        run: |
-          python3 - <<'PY'
-          import os, socket, urllib.request
-          print("Runner proxy configured:", any(os.environ.get(key) for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy")))
-          for host in ("archive.ubuntu.com", "security.ubuntu.com"):
-              try:
-                  socket.getaddrinfo(host, 443)
-                  print(host, "runner DNS OK")
-              except OSError:
-                  print(host, "runner DNS unavailable")
-              try:
-                  with urllib.request.urlopen("https://" + host + "/ubuntu/dists/noble/InRelease", timeout=15) as response:
-                      print(host, "HTTPS", response.status)
-              except Exception as error:
-                  print(host, "HTTPS failed:", type(error).__name__)
-          PY
       - name: Restore
         run: dotnet restore Project/AndersonMultiMarcas.slnx --locked-mode
       - name: Build Release
@@ -98,12 +81,11 @@ jobs:
         run: |
           dotnet publish Project/Project.csproj --configuration Release --no-build --no-restore --output artifacts/application/publish
           python3 scripts/ci/application_manifest.py create --application artifacts/application --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID"
-      # Forward standard build-only proxies without persisting them in the image.
       - name: Build and verify linux/amd64 runtime image
         env:
           SOURCE_COMMIT: ${{ github.sha }}
         run: |
-          docker build --build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY --build-arg http_proxy --build-arg https_proxy --build-arg no_proxy --platform linux/amd64 --file deploy/Dockerfile --build-arg COMMIT_SHA="$SOURCE_COMMIT" --tag "andersonmultimarcas-ci:$SOURCE_COMMIT" artifacts/application
+          docker build --platform linux/amd64 --file deploy/Dockerfile --build-arg COMMIT_SHA="$SOURCE_COMMIT" --tag "andersonmultimarcas-ci:$SOURCE_COMMIT" artifacts/application
           test "$(docker image inspect --format '{{.Architecture}}' "andersonmultimarcas-ci:$SOURCE_COMMIT")" = amd64
           test "$(docker image inspect --format '{{.Config.User}}' "andersonmultimarcas-ci:$SOURCE_COMMIT")" = app
           python3 scripts/ci/test_runtime_image.py --image "andersonmultimarcas-ci:$SOURCE_COMMIT" --commit "$SOURCE_COMMIT" --report artifacts/test-results/runtime-image.json
