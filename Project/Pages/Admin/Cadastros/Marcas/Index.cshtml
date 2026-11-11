@@ -1,6 +1,10 @@
 @page "/Admin/Cadastros/Marcas"
 @model Project.Pages.Admin.Cadastros.Marcas.IndexModel
 
+@{
+    ViewData["HideTopbarTitle"] = true;
+}
+
 <style>
     :root {
         --brand-primary: #9f0a10;
@@ -34,6 +38,7 @@
     .admin-table tbody td { padding: .72rem .8rem; border-color: #f1f1f1; color: var(--brand-dark); }
     .title-cell { display: flex; flex-direction: column; gap: .2rem; min-width: 220px; }
     .title-main { font-size: .95rem; font-weight: 700; line-height: 1.3; }
+    .vehicle-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .table-action { width: 38px; height: 38px; min-width: 38px; padding: 0; }
     .table-row-actions { display: flex; justify-content: flex-end; gap: .45rem; flex-wrap: nowrap; align-items: center; }
     .empty-state { border: 1px dashed #dadada; border-radius: 1rem; padding: 2.2rem 1.2rem; text-align: center; background: #fff; }
@@ -48,7 +53,7 @@
     .confirm-delete-btn-cancel, .confirm-delete-btn-confirm { min-height: 46px; padding: .75rem 1rem; border-radius: .9rem; font-weight: 700; }
     .confirm-delete-btn-cancel { border: 1px solid #e5e7eb; background: #fff; color: #1f2937; }
     .confirm-delete-btn-confirm { border: 1px solid #b42318; background: #b42318; color: #fff; }
-    @@media (max-width: 768px) { .page-header, .results-topbar { flex-direction: column; align-items: stretch; } .table-row-actions { flex-direction: column; align-items: stretch; } }
+    @@media (max-width: 768px) { .page-header, .results-topbar { flex-direction: column; align-items: stretch; } .title-cell { min-width: 100px; } .admin-table thead th, .admin-table tbody td { padding-inline: .5rem; } .table-row-actions { flex-direction: column; align-items: stretch; } }
 </style>
 
 <div class="container-fluid">
@@ -102,7 +107,8 @@
                         <tr>
                             <th>Marca</th>
                             <th>Logo</th>
-                            <th class="text-end">Acao</th>
+                            <th scope="col" class="text-end">Veículos</th>
+                            <th class="text-end">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -112,10 +118,11 @@
                                 <td>
                                     <div class="title-cell">
                                         <span class="title-main">@marca.Nome</span>
-                                        <span class="muted-text">Codigo @marca.Id</span>
+                                        <span class="muted-text">Código @marca.Id</span>
                                     </div>
                                 </td>
                                 <td><span class="muted-text">@marca.LogoUrl</span></td>
+                                <td class="text-end vehicle-count">@marca.QuantidadeVeiculos</td>
                                 <td class="text-end">
                                     <div class="table-row-actions">
                                         <a class="btn btn-brand table-action" href="/Admin/Cadastros/Marcas/Upsert/@marca.Id" aria-label="Editar marca"><i class="bi bi-pencil-square"></i></a>
@@ -138,7 +145,7 @@
 
 <div id="confirmDeleteOverlay" class="confirm-delete-overlay" aria-hidden="true">
     <div class="confirm-delete-modal" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteTitle">
-        <div class="confirm-delete-header"><h2 id="confirmDeleteTitle" class="confirm-delete-title">Confirmar exclusao</h2></div>
+        <div class="confirm-delete-header"><h2 id="confirmDeleteTitle" class="confirm-delete-title">Confirmar exclusão</h2></div>
         <div class="confirm-delete-body"><p id="confirmDeleteMessage" class="mb-0">Deseja excluir este registro?</p></div>
         <div class="confirm-delete-actions">
             <button type="button" id="confirmDeleteCancel" class="confirm-delete-btn-cancel">Cancelar</button>

@@ -442,7 +442,10 @@
                         <i class="bi bi-list"></i>
                     </button>
                     <div class="admin-title">
-                        <strong>@title</strong>
+                        @if (ViewData["HideTopbarTitle"] is not true)
+                        {
+                            <strong>@title</strong>
+                        }
                         <span>Anderson Multimarcas</span>
                     </div>
                 </div>
