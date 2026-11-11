@@ -14,6 +14,39 @@ namespace Project.Tests.Cadastros;
 
 public sealed class MarcaWebTests(SecurityWebApplicationFactory factory) : IClassFixture<SecurityWebApplicationFactory>
 {
+    [Theory]
+    [InlineData("/uploads/marcas/synthetic-logo.png")]
+    [InlineData("https://images.example.test/logo.png")]
+    [InlineData(null)]
+    public async Task ListingRendersLogoAsImageAndHandlesMissingLogo(string? logo)
+    {
+        using var client = await LoginAsync(authorized: true);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var brand = new Marca("Logo-" + Guid.NewGuid().ToString("N"), logo);
+        db.Add(brand);
+        await db.SaveChangesAsync();
+
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Admin/Cadastros/Marcas?Filtro=" + brand.Nome));
+        var row = Regex.Matches(html, "<tr>.*?</tr>", RegexOptions.Singleline).Cast<Match>()
+            .Single(x => x.Value.Contains(brand.Nome)).Value;
+        Assert.Contains("Sem logo", row);
+        if (logo is null)
+        {
+            Assert.DoesNotContain("<img", row);
+        }
+        else
+        {
+            Assert.Contains($"<img src=\"{logo}\"", row);
+            Assert.Contains($"alt=\"Logo da marca {brand.Nome}\"", row);
+            Assert.Contains("class=\"brand-logo\"", row);
+            Assert.Contains("width=\"48\" height=\"48\"", row);
+            Assert.Contains("loading=\"lazy\"", row);
+            Assert.Contains("onerror=\"this.hidden=true;this.nextElementSibling.hidden=false;\"", row);
+            Assert.DoesNotContain($">{logo}</", row);
+        }
+    }
+
     [Fact]
     public async Task AuthorizedListingRendersCountsAccentsAndOnlyTheContentTitle()
     {
