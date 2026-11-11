@@ -1,5 +1,7 @@
 using System.Reflection;
+using Core.Storage;
 using Data;
+using ImageMagick;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -7,6 +9,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Project.Pages.Admin.Cadastros.Marcas;
+using Project.Tests.Security;
 
 namespace Project.Tests.Cadastros;
 
@@ -19,10 +22,10 @@ internal static class MarcaTestSupport
     internal static DbContextOptions<ApplicationDbContext> MemoryOptions() => new DbContextOptionsBuilder<ApplicationDbContext>()
         .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
 
-    internal static UpsertModel Page(ApplicationDbContext db, string name = "ZEEKR", int id = 0, TestLogger? logger = null)
+    internal static UpsertModel Page(ApplicationDbContext db, string name = "ZEEKR", int id = 0, TestLogger? logger = null, IStorageService? storage = null)
     {
         var http = new DefaultHttpContext();
-        return new(db, logger ?? new TestLogger())
+        return new(db, logger ?? new TestLogger(), storage ?? new MemoryStorageService())
         {
             PageContext = new PageContext
             {
@@ -36,6 +39,24 @@ internal static class MarcaTestSupport
     }
 
     internal static string Error(UpsertModel page) => page.ModelState.Values.SelectMany(x => x.Errors).Single().ErrorMessage;
+
+    internal static IFormFile LogoFile(string filename = "logo.png", byte[]? bytes = null)
+    {
+        if (bytes is null)
+        {
+            using var image = new MagickImage(MagickColors.Red, 1024, 256);
+            bytes = image.ToByteArray(Path.GetExtension(filename) switch
+            {
+                ".jpg" => MagickFormat.Jpeg,
+                ".webp" => MagickFormat.WebP,
+                _ => MagickFormat.Png
+            });
+        }
+        return new FormFile(new MemoryStream(bytes), 0, bytes.Length, "LogoArquivo", filename)
+        {
+            Headers = new HeaderDictionary(), ContentType = "application/octet-stream"
+        };
+    }
 
     internal static string SqlMessage(int number, string index = "IX_Marca_Nome", string table = "dbo.Marca") => number == 2601
         ? $"Cannot insert duplicate key row in object '{table}' with unique index '{index}'. The duplicate key value is (ZEEKR)."

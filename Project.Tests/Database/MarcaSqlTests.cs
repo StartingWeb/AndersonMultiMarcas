@@ -84,12 +84,14 @@ public sealed class MarcaSqlTests
             var brand = await db.Marcas.SingleAsync(x => x.Nome == "ZEEKR");
             Assert.True(brand.Ativo); Assert.Null(brand.LogoUrl);
             var edit = Page(db, "  ZEEKR editada  ", brand.Id);
-            edit.Marca.LogoUrl = " /synthetic.png ";
+            edit.LogoArquivo = LogoFile();
             Assert.IsType<RedirectToPageResult>(await edit.OnPostAsync(default));
             Assert.Equal("Marca atualizada com sucesso.", edit.TempData["SuccessMessage"]);
             db.ChangeTracker.Clear();
             var saved = await db.Marcas.SingleAsync(x => x.Id == brand.Id);
-            Assert.Equal("ZEEKR editada", saved.Nome); Assert.Equal("/synthetic.png", saved.LogoUrl);
+            Assert.Equal("ZEEKR editada", saved.Nome);
+            Assert.StartsWith("https://storage.example.test/uploads/marcas/", saved.LogoUrl);
+            Assert.EndsWith(".webp", saved.LogoUrl);
             Assert.True(saved.Ativo); Assert.Equal(2, await db.Marcas.CountAsync());
         });
     }
