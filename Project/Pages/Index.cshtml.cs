@@ -28,9 +28,9 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
             .Select(x => new VehicleCardProjection
             {
                 Id = x.Id,
-                Titulo = x.Versao == null || x.Versao == string.Empty
-                    ? x.Titulo
-                    : x.Titulo + " " + x.Versao,
+                MarcaNome = x.Marca.Nome,
+                Modelo = x.Modelo,
+                Versao = x.Versao,
                 Cor = x.Cor,
                 AnoFabricacao = x.AnoFabricacao,
                 AnoModelo = x.AnoModelo,
@@ -67,9 +67,9 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
             .Select(x => new VehicleCardProjection
             {
                 Id = x.Id,
-                Titulo = x.Versao == null || x.Versao == string.Empty
-                    ? x.Titulo
-                    : x.Titulo + " " + x.Versao,
+                MarcaNome = x.Marca.Nome,
+                Modelo = x.Modelo,
+                Versao = x.Versao,
                 Cor = x.Cor,
                 AnoFabricacao = x.AnoFabricacao,
                 AnoModelo = x.AnoModelo,
@@ -104,9 +104,9 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
             .Select(x => new VehicleCardProjection
             {
                 Id = x.Id,
-                Titulo = x.Versao == null || x.Versao == string.Empty
-                    ? x.Titulo
-                    : x.Titulo + " " + x.Versao,
+                MarcaNome = x.Marca.Nome,
+                Modelo = x.Modelo,
+                Versao = x.Versao,
                 Cor = x.Cor,
                 AnoFabricacao = x.AnoFabricacao,
                 AnoModelo = x.AnoModelo,
@@ -219,7 +219,7 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
             result.Add(new HomeVehicleCardViewModel
             {
                 Id = vehicle.Id,
-                Titulo = vehicle.Titulo,
+                Titulo = VehicleTitleHelper.Format(vehicle.MarcaNome, vehicle.Modelo, vehicle.Versao),
                 Cor = vehicle.Cor,
                 AnoFabricacao = vehicle.AnoFabricacao,
                 AnoModelo = vehicle.AnoModelo,
@@ -252,7 +252,9 @@ public class IndexModel(ApplicationDbContext db, IStorageImageResolver imageReso
     private sealed class VehicleCardProjection
     {
         public int Id { get; init; }
-        public string Titulo { get; init; } = string.Empty;
+        public string MarcaNome { get; init; } = string.Empty;
+        public string? Modelo { get; init; }
+        public string? Versao { get; init; }
         public string? Cor { get; init; }
         public int? AnoFabricacao { get; init; }
         public int AnoModelo { get; init; }

@@ -3,7 +3,7 @@
     var vm = new Project.Pages.ViewModels.HomeVehicleCardViewModel
     {
         Id = Model.Id,
-        Titulo = Model.Titulo,
+        Titulo = VehicleTitleHelper.Format(Model.MarcaNome, Model.Modelo),
         Cor = Model.Cor,
         AnoFabricacao = Model.AnoFabricacao,
         AnoModelo = Model.AnoModelo,
