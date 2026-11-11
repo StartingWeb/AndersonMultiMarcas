@@ -81,11 +81,12 @@ jobs:
         run: |
           dotnet publish Project/Project.csproj --configuration Release --no-build --no-restore --output artifacts/application/publish
           python3 scripts/ci/application_manifest.py create --application artifacts/application --commit "$SOURCE_COMMIT" --run-id "$CI_RUN_ID"
+      # Use the runner resolver for apt downloads; runtime tests still use --network none.
       - name: Build and verify linux/amd64 runtime image
         env:
           SOURCE_COMMIT: ${{ github.sha }}
         run: |
-          docker build --platform linux/amd64 --file deploy/Dockerfile --build-arg COMMIT_SHA="$SOURCE_COMMIT" --tag "andersonmultimarcas-ci:$SOURCE_COMMIT" artifacts/application
+          docker build --network=host --platform linux/amd64 --file deploy/Dockerfile --build-arg COMMIT_SHA="$SOURCE_COMMIT" --tag "andersonmultimarcas-ci:$SOURCE_COMMIT" artifacts/application
           test "$(docker image inspect --format '{{.Architecture}}' "andersonmultimarcas-ci:$SOURCE_COMMIT")" = amd64
           test "$(docker image inspect --format '{{.Config.User}}' "andersonmultimarcas-ci:$SOURCE_COMMIT")" = app
           python3 scripts/ci/test_runtime_image.py --image "andersonmultimarcas-ci:$SOURCE_COMMIT" --commit "$SOURCE_COMMIT" --report artifacts/test-results/runtime-image.json
