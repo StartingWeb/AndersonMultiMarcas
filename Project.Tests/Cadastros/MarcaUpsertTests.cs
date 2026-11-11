@@ -58,20 +58,19 @@ public sealed class MarcaUpsertTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task EditPersistsNameAndLogoOnlyAfterConfirmedSave(bool inactive)
+    public async Task EditWithoutUploadPreservesLogoAndOnlyAnnouncesSuccessAfterSave(bool inactive)
     {
         await using var db = new SaveProbeContext(MemoryOptions());
         var brand = new Marca("Nome anterior", "/old.png");
         if (inactive) brand.Desativar();
         db.Marcas.Add(brand); await db.SaveChangesAsync(); db.ChangeTracker.Clear();
         var page = Page(db, " ZEEKR ", brand.Id);
-        page.Marca.LogoUrl = " /new.png ";
         db.BeforeSave = () => Assert.False(page.TempData.ContainsKey("SuccessMessage"));
         Assert.IsType<RedirectToPageResult>(await page.OnPostAsync(default));
         db.ChangeTracker.Clear();
         var saved = await db.Marcas.SingleAsync();
         Assert.Equal("ZEEKR", saved.Nome);
-        Assert.Equal("/new.png", saved.LogoUrl);
+        Assert.Equal("/old.png", saved.LogoUrl);
         Assert.Equal(!inactive, saved.Ativo);
         Assert.Equal("Marca atualizada com sucesso.", page.TempData["SuccessMessage"]);
     }

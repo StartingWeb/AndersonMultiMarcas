@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Core.Storage;
 using Data;
 using Domain.Application;
 using Domain.Entities;
@@ -14,6 +15,59 @@ namespace Project.Tests.Cadastros;
 
 public sealed class MarcaWebTests(SecurityWebApplicationFactory factory) : IClassFixture<SecurityWebApplicationFactory>
 {
+    [Fact]
+    public async Task MultipartUploadPersistsLogoAndRendersItsPublicUrlInListing()
+    {
+        using var client = await LoginAsync(authorized: true);
+        var name = "Upload-" + Guid.NewGuid().ToString("N");
+        var form = await client.GetStringAsync("/Admin/Cadastros/Marcas/Upsert");
+        var file = MarcaTestSupport.LogoFile();
+        await using var bytes = new MemoryStream();
+        await file.CopyToAsync(bytes);
+        using var multipart = new MultipartFormDataContent
+        {
+            { new StringContent("0"), "Marca.Id" },
+            { new StringContent(name), "Marca.Nome" },
+            { new StringContent(Token(form)), "__RequestVerificationToken" },
+            { new ByteArrayContent(bytes.ToArray()), "LogoArquivo", "logo.png" }
+        };
+        using var response = await client.PostAsync("/Admin/Cadastros/Marcas/Upsert", multipart);
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var brand = await db.Marcas.AsNoTracking().SingleAsync(x => x.Nome == name);
+        Assert.StartsWith("https://storage.example.test/uploads/marcas/", brand.LogoUrl);
+        var key = new Uri(brand.LogoUrl!).AbsolutePath.TrimStart('/');
+        Assert.True(await scope.ServiceProvider.GetRequiredService<IStorageService>().ExistsAsync(key, default));
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Admin/Cadastros/Marcas?Filtro=" + name));
+        Assert.Contains($"<img src=\"{brand.LogoUrl}\"", html);
+    }
+
+    [Fact]
+    public async Task EditWithoutFileKeepsStoredLogoAndIgnoresForgedUrlFields()
+    {
+        using var client = await LoginAsync(authorized: true);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var brand = new Marca("Preservar-" + Guid.NewGuid().ToString("N"), "/img/logo.png");
+        db.Add(brand); await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+        var path = $"/Admin/Cadastros/Marcas/Upsert/{brand.Id}";
+        var html = await client.GetStringAsync(path);
+        Assert.Contains("src=\"/img/logo.png\"", html);
+        using var multipart = new MultipartFormDataContent
+        {
+            { new StringContent(brand.Id.ToString()), "Marca.Id" },
+            { new StringContent(brand.Nome + " editada"), "Marca.Nome" },
+            { new StringContent("https://untrusted.example.test/forged.png"), "Marca.LogoUrl" },
+            { new StringContent(Token(html)), "__RequestVerificationToken" }
+        };
+        using var response = await client.PostAsync(path, multipart);
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        var saved = await db.Marcas.AsNoTracking().SingleAsync(x => x.Id == brand.Id);
+        Assert.Equal("/img/logo.png", saved.LogoUrl);
+        Assert.Equal(brand.Nome + " editada", saved.Nome);
+    }
+
     [Theory]
     [InlineData("/uploads/marcas/synthetic-logo.png")]
     [InlineData("https://images.example.test/logo.png")]
@@ -113,18 +167,25 @@ public sealed class MarcaWebTests(SecurityWebApplicationFactory factory) : IClas
             var html = WebUtility.HtmlDecode(await client.GetStringAsync(path));
             Assert.Contains("Preencha as informações principais para exibição e filtros.", html);
             Assert.Contains("O nome deve ter no máximo 100 caracteres.", html);
-            Assert.Contains("A URL deve ter no máximo 400 caracteres.", html);
+            Assert.Contains("enctype=\"multipart/form-data\"", html);
+            Assert.Contains("type=\"file\"", html);
+            Assert.Contains("name=\"LogoArquivo\"", html);
+            Assert.Contains("JPG, PNG ou WebP, até 5 MB.", html);
+            Assert.DoesNotContain("name=\"Marca.LogoUrl\"", html);
             if (path.EndsWith($"/{brand.Id}")) Assert.Contains("Salvar alterações", html);
         }
         var form = await client.GetStringAsync($"/Admin/Cadastros/Marcas/Upsert/{brand.Id}");
-        using var response = await client.PostAsync($"/Admin/Cadastros/Marcas/Upsert/{brand.Id}", new FormUrlEncodedContent(new Dictionary<string, string>
+        using var multipart = new MultipartFormDataContent
         {
-            ["Marca.Id"] = brand.Id.ToString(), ["Marca.Nome"] = brand.Nome,
-            ["Marca.LogoUrl"] = new string('x', 401), ["__RequestVerificationToken"] = Token(form)
-        }));
+            { new StringContent(brand.Id.ToString()), "Marca.Id" },
+            { new StringContent(brand.Nome), "Marca.Nome" },
+            { new StringContent(Token(form)), "__RequestVerificationToken" },
+            { new ByteArrayContent("invalid image"u8.ToArray()), "LogoArquivo", "fake.png" }
+        };
+        using var response = await client.PostAsync($"/Admin/Cadastros/Marcas/Upsert/{brand.Id}", multipart);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
-        Assert.Contains("A URL deve ter no máximo 400 caracteres.", result);
+        Assert.Contains("O arquivo não é uma imagem válida. Use JPG, PNG ou WebP.", result);
         Assert.Contains("Salvar alterações", result);
     }
 

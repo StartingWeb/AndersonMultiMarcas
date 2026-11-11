@@ -18,6 +18,7 @@
     .form-control { border-radius: .85rem; border: 1px solid #e6e6e6; min-height: 46px; box-shadow: none !important; }
     .form-control:focus { border-color: rgba(159,10,16,.35); box-shadow: 0 0 0 .2rem rgba(159,10,16,.08) !important; }
     .text-danger { font-size: .8rem; }
+    .logo-preview { width: 96px; height: 96px; object-fit: contain; border: 1px solid #e6e6e6; border-radius: .85rem; padding: .4rem; }
     .btn-brand, .btn-soft-dark { border-radius: .85rem; font-weight: 600; min-height: 46px; padding: 0 1.25rem; display: inline-flex; justify-content: center; align-items: center; }
     .btn-brand { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; }
     .btn-brand:hover { background: var(--brand-primary-dark); border-color: var(--brand-primary-dark); color: #fff; }
@@ -35,7 +36,7 @@
         <a href="/Admin/Cadastros/Marcas" class="btn btn-soft-dark"><i class="bi bi-arrow-left me-2"></i>Voltar</a>
     </div>
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Marca.Id">
         <div class="form-card">
@@ -52,9 +53,18 @@
                         <span asp-validation-for="Marca.Nome" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label" asp-for="Marca.LogoUrl"></label>
-                        <input asp-for="Marca.LogoUrl" class="form-control" maxlength="400" placeholder="/uploads/marcas/logo.png">
-                        <span asp-validation-for="Marca.LogoUrl" class="text-danger"></span>
+                        <label class="form-label" asp-for="LogoArquivo"></label>
+                        <input asp-for="LogoArquivo" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-describedby="logoHelp">
+                        <span asp-validation-for="LogoArquivo" class="text-danger"></span>
+                        <div id="logoHelp" class="form-text">JPG, PNG ou WebP, até 5 MB. Para manter a logo atual, não selecione outro arquivo.</div>
+                        <div class="mt-3">
+                            <img id="logoPreview" src="@Url.Content(Model.CurrentLogoUrl)" class="logo-preview" alt="Prévia da logo" hidden="@(string.IsNullOrWhiteSpace(Model.CurrentLogoUrl))" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
+                            <span id="logoPlaceholder" class="text-muted" hidden="@(!string.IsNullOrWhiteSpace(Model.CurrentLogoUrl))">Sem logo</span>
+                        </div>
+                        @if (!ViewData.ModelState.IsValid && Model.LogoArquivo is not null)
+                        {
+                            <div class="form-text">Selecione a imagem novamente antes de tentar salvar.</div>
+                        }
                     </div>
                 </div>
 
@@ -69,4 +79,34 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const input = document.getElementById('LogoArquivo');
+            const preview = document.getElementById('logoPreview');
+            const placeholder = document.getElementById('logoPlaceholder');
+            const initialUrl = preview.getAttribute('src');
+            let objectUrl = null;
+            input.addEventListener('change', () => {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                objectUrl = null;
+                input.setCustomValidity('');
+                const file = input.files[0];
+                if (file && (file.size > @Project.Pages.Admin.Cadastros.Marcas.UpsertModel.MaxLogoBytes || !/\.(jpe?g|png|webp)$/i.test(file.name))) {
+                    input.setCustomValidity('Selecione uma imagem JPG, PNG ou WebP de até 5 MB.');
+                }
+                const source = file && !input.validationMessage ? (objectUrl = URL.createObjectURL(file)) : initialUrl;
+                preview.hidden = !source;
+                placeholder.hidden = !!source;
+                if (source) preview.src = source;
+                else preview.removeAttribute('src');
+            });
+            input.form.addEventListener('submit', event => {
+                if (!input.checkValidity()) {
+                    event.preventDefault();
+                    input.reportValidity();
+                }
+            });
+            window.addEventListener('pagehide', event => { if (!event.persisted && objectUrl) URL.revokeObjectURL(objectUrl); });
+        })();
+    </script>
 }
